@@ -7,5 +7,6 @@ class Parameters;
 
 bool genomeInsertOverlayLoad(Parameters &P);
 void genomeInsertOverlayWrite(Parameters &P);
+string genomeInsertDeltaFilePath(const string &dir);
 
 #endif

@@ -1,6 +1,7 @@
 Unreleased
 ==========
 * Added --runMode genomeInsert to persistently add named FASTA sequences and insert-only GTF annotations to an existing genome index and write a complete updated index to a new directory.
+* Added genomeInsert overlay and delta output modes for alignment-time reuse of inserted named sequences without writing a full updated index.
 * Added regression and benchmark scripts for persistent genome sequence insertion.
 
 STAR 2.7.11b --- 2024/01/24 ::: Minor in one parameter.

@@ -13,6 +13,7 @@ public:
     string gInsertOutDir;
     string gInsertOutMode;
     bool gInsertOverlay;
+    string gInsertOverlayDeltaFile;
     
     uint32 gType;//type code
     string gTypeString;

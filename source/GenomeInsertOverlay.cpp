@@ -10,11 +10,13 @@
 
 namespace {
 const string overlayFileName = "genomeInsertOverlay.tsv";
+const string deltaFileName = "genomeInsertDelta.bin";
 
 struct GenomeInsertOverlay {
     string baseGenomeDir;
     vector<string> genomeFastaFiles;
     string sjdbGTFfile;
+    string deltaFile;
     uint sjdbOverhang;
 };
 
@@ -125,7 +127,7 @@ void validateOverlayGTF(const string &gtfFile, const unordered_set<string> &inse
         string chrName=line.substr(0, fieldEnd);
         if (insertedNames.find(chrName)==insertedNames.end()) {
             ostringstream errOut;
-            errOut << "EXITING because of fatal INPUT FILE error: --runMode genomeInsert with --genomeInsertOutMode Overlay expects --sjdbGTFfile to contain only annotations for inserted sequences\n";
+            errOut << "EXITING because of fatal INPUT FILE error: --runMode genomeInsert with overlay output modes expects --sjdbGTFfile to contain only annotations for inserted sequences\n";
             errOut << "Offending GTF chromosome: " << chrName << "\n";
             exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
         };
@@ -136,6 +138,7 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
 {
     GenomeInsertOverlay overlay;
     overlay.sjdbGTFfile="-";
+    overlay.deltaFile="-";
     overlay.sjdbOverhang=0;
 
     const string path=manifestPath(overlayDir);
@@ -175,6 +178,9 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
         } else if (key=="sjdbGTFfile") {
             lineStream >> overlay.sjdbGTFfile;
             overlay.sjdbGTFfile=resolveManifestPath(overlay.sjdbGTFfile, overlayDir);
+        } else if (key=="genomeInsertDeltaFile") {
+            lineStream >> overlay.deltaFile;
+            overlay.deltaFile=resolveManifestPath(overlay.deltaFile, overlayDir);
         } else if (key=="sjdbOverhang") {
             lineStream >> overlay.sjdbOverhang;
         };
@@ -188,6 +194,11 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
 
     return overlay;
 }
+}
+
+string genomeInsertDeltaFilePath(const string &dir)
+{
+    return stripTrailingSlash(dir) + "/" + deltaFileName;
 }
 
 bool genomeInsertOverlayLoad(Parameters &P)
@@ -224,6 +235,12 @@ bool genomeInsertOverlayLoad(Parameters &P)
     P.pGe.gFastaFiles=overlay.genomeFastaFiles;
     P.pGe.sjdbGTFfile=overlay.sjdbGTFfile;
     P.pGe.gInsertOverlay=true;
+    P.pGe.gInsertOverlayDeltaFile=overlay.deltaFile;
+    if (P.pGe.gInsertOverlayDeltaFile!="-" && !fileExists(P.pGe.gInsertOverlayDeltaFile)) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: could not find genome insert delta file " << P.pGe.gInsertOverlayDeltaFile << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
     if (overlay.sjdbOverhang>0) {
         P.pGe.sjdbOverhang=overlay.sjdbOverhang;
     };
@@ -258,6 +275,9 @@ void genomeInsertOverlayWrite(Parameters &P)
     };
     overlayOut << "\n";
     overlayOut << "sjdbGTFfile\t" << gtfFile << "\n";
+    if (P.pGe.gInsertOutMode=="Delta") {
+        overlayOut << "genomeInsertDeltaFile\t" << deltaFileName << "\n";
+    };
     overlayOut << "sjdbOverhang\t" << P.pGe.sjdbOverhang << "\n";
     overlayOut.close();
 

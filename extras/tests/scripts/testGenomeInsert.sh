@@ -89,6 +89,7 @@ base_index="${out_root}/base_index"
 incremental_index="${out_root}/incremental_index"
 incremental_repeat_index="${out_root}/incremental_repeat_index"
 overlay_index="${out_root}/overlay_index"
+delta_index="${out_root}/delta_index"
 full_rebuild_index="${out_root}/full_rebuild_index"
 
 common_generate_args=(
@@ -205,6 +206,34 @@ for file in Genome SA SAindex; do
 done
 
 "${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutMode Delta \
+    --genomeInsertOutDir "${delta_index}" \
+    --outFileNamePrefix "${out_root}/delta_" \
+    > "${out_root}/delta.stdout" 2>&1
+
+if [[ ! -s "${delta_index}/genomeInsertOverlay.tsv" ]]; then
+    echo "ERROR: genomeInsert delta did not write genomeInsertOverlay.tsv" >&2
+    exit 1
+fi
+
+if [[ ! -s "${delta_index}/genomeInsertDelta.bin" ]]; then
+    echo "ERROR: genomeInsert delta did not write genomeInsertDelta.bin" >&2
+    exit 1
+fi
+
+for file in Genome SA SAindex; do
+    if [[ -e "${delta_index}/${file}" ]]; then
+        echo "ERROR: genomeInsert delta unexpectedly wrote ${file}" >&2
+        exit 1
+    fi
+done
+
+"${star_bin}" \
     "${common_generate_args[@]}" \
     --sjdbGTFfile "${combined_gtf}" \
     --genomeDir "${full_rebuild_index}" \
@@ -279,13 +308,22 @@ align_and_extract_body() {
 align_and_extract_body "${incremental_index}" "${out_root}/align_incremental/"
 align_and_extract_body "${full_rebuild_index}" "${out_root}/align_full/"
 align_and_extract_body "${overlay_index}" "${out_root}/align_overlay/"
+align_and_extract_body "${delta_index}" "${out_root}/align_delta/"
 
 diff -u "${out_root}/align_incremental/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_body.diff"
 diff -u "${out_root}/align_incremental/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_sj.diff"
 diff -u "${out_root}/align_overlay/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_overlay_body.diff"
 diff -u "${out_root}/align_overlay/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_overlay_sj.diff"
+diff -u "${out_root}/align_delta/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_delta_body.diff"
+diff -u "${out_root}/align_delta/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_delta_sj.diff"
 diff -u "${out_root}/align_incremental/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts.diff"
 diff -u "${out_root}/align_overlay/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts_overlay.diff"
+diff -u "${out_root}/align_delta/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts_delta.diff"
+
+if ! grep -q "Loaded genome insert delta" "${out_root}/align_delta/Log.out"; then
+    echo "ERROR: delta overlay alignment did not load genomeInsertDelta.bin" >&2
+    exit 1
+fi
 
 {
     printf 'addGFP\n'
@@ -303,6 +341,8 @@ diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_al
     printf 'insert_only_gtf_guard\tpass\n'
     printf 'base_sjdb_present\tpass\n'
     printf 'genomeInsert_overlay_manifest\tpass\n'
+    printf 'genomeInsert_delta_manifest\tpass\n'
+    printf 'genomeInsert_delta_file\tpass\n'
     printf 'genomeInsert_idempotence\tpass\n'
     printf 'genomeInsert_vs_full_rebuild_core_files\tpass\n'
     printf 'SA_vs_full_rebuild\t%s\n' "${sa_full_rebuild_status}"
@@ -313,6 +353,10 @@ diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_al
     printf 'overlay_alignment_body_vs_full_rebuild\tpass\n'
     printf 'overlay_alignment_SJ_vs_full_rebuild\tpass\n'
     printf 'overlay_gene_counts_vs_full_rebuild\tpass\n'
+    printf 'delta_alignment_body_vs_full_rebuild\tpass\n'
+    printf 'delta_alignment_SJ_vs_full_rebuild\tpass\n'
+    printf 'delta_gene_counts_vs_full_rebuild\tpass\n'
+    printf 'delta_replay_used\tpass\n'
     printf 'alignment_references_expected\tpass\n'
 } > "${out_root}/checks.tsv"
 

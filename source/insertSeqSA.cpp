@@ -5,6 +5,7 @@
 #include "insertSeqSA.h"
 #include "ErrorWarning.h"
 #include "SuffixArrayFuns.h"
+#include "GenomeInsertOverlay.h"
 #include "SequenceFuns.h"
 #include "serviceFuns.cpp"
 #include "streamFuns.h"
@@ -12,9 +13,132 @@
 #include "funCompareUintAndSuffixes.h"
 #include "funCompareUintAndSuffixesMemcmp.h"
 #include <cmath>
+#include <map>
 #include "sortSuffixesBucket.h"
 
 namespace {
+const string deltaMagic = "STARgenomeInsertDeltaV1";
+
+uint64 genomeInsertDeltaHash(const char *seq, uint64 length)
+{
+    uint64 hash=14695981039346656037ULL;
+    for (uint64 ii=0; ii<length; ii++) {
+        hash ^= (uint64) (unsigned char) seq[ii];
+        hash *= 1099511628211ULL;
+    };
+    return hash;
+}
+
+uint64 genomeInsertDeltaHeaderValue(const map<string,uint64> &header, const string &key, const string &fileName, Parameters &P)
+{
+    map<string,uint64>::const_iterator value=header.find(key);
+    if (value==header.end()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file is missing header value " << key << "\n";
+        errOut << "Delta file: " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+    return value->second;
+}
+
+void writeGenomeInsertDelta(const string &fileName, uint64 *indArray, uint64 nInd, uint64 nG, uint64 nG1, uint64 nG2, const char *G1, PackedArray &SA, Parameters &P, Genome &mapGen)
+{
+    ofstream deltaOut(fileName.c_str(), ios::out | ios::binary);
+    if (deltaOut.fail()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal OUTPUT FILE error: could not create genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_FILE_OPEN, P);
+    };
+
+    deltaOut << deltaMagic << "\n";
+    deltaOut << "nG\t" << nG << "\n";
+    deltaOut << "nG1\t" << nG1 << "\n";
+    deltaOut << "nG2\t" << nG2 << "\n";
+    deltaOut << "nSA\t" << SA.length << "\n";
+    deltaOut << "SAwordLength\t" << SA.wordLength << "\n";
+    deltaOut << "gSAindexNbases\t" << mapGen.pGe.gSAindexNbases << "\n";
+    deltaOut << "gSuffixLengthMax\t" << mapGen.pGe.gSuffixLengthMax << "\n";
+    deltaOut << "insertSeqHash\t" << genomeInsertDeltaHash(G1, nG1) << "\n";
+    deltaOut << "nInd\t" << nInd << "\n";
+    deltaOut << "END\n";
+    deltaOut.write((char*) indArray, (streamsize) (2*nInd*sizeof(uint64)));
+    if (deltaOut.fail()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal OUTPUT FILE error while writing genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_FILE_WRITE, P);
+    };
+    deltaOut.close();
+};
+
+uint64 readGenomeInsertDelta(const string &fileName, uint64 *indArray, uint64 indArrayCapacity, uint64 nG, uint64 nG1, uint64 nG2, const char *G1, PackedArray &SA, Parameters &P, Genome &mapGen)
+{
+    ifstream deltaIn(fileName.c_str(), ios::in | ios::binary);
+    if (deltaIn.fail()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: could not open genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    string line;
+    getline(deltaIn, line);
+    if (line!=deltaMagic) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: unsupported genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    map<string,uint64> header;
+    while (getline(deltaIn, line)) {
+        if (line=="END") {
+            break;
+        };
+        istringstream lineStream(line);
+        string key;
+        uint64 value=0;
+        if (!(lineStream >> key >> value)) {
+            ostringstream errOut;
+            errOut << "EXITING because of fatal INPUT FILE error: malformed genome insert delta header in " << fileName << "\n";
+            exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+        };
+        header[key]=value;
+    };
+    if (line!="END") {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: malformed genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    if (genomeInsertDeltaHeaderValue(header, "nG", fileName, P)!=nG
+            || genomeInsertDeltaHeaderValue(header, "nG1", fileName, P)!=nG1
+            || genomeInsertDeltaHeaderValue(header, "nG2", fileName, P)!=nG2
+            || genomeInsertDeltaHeaderValue(header, "nSA", fileName, P)!=SA.length
+            || genomeInsertDeltaHeaderValue(header, "SAwordLength", fileName, P)!=SA.wordLength
+            || genomeInsertDeltaHeaderValue(header, "gSAindexNbases", fileName, P)!=mapGen.pGe.gSAindexNbases
+            || genomeInsertDeltaHeaderValue(header, "gSuffixLengthMax", fileName, P)!=mapGen.pGe.gSuffixLengthMax
+            || genomeInsertDeltaHeaderValue(header, "insertSeqHash", fileName, P)!=genomeInsertDeltaHash(G1, nG1)) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file does not match the loaded base genome/index or inserted FASTA files\n";
+        errOut << "Delta file: " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    uint64 nInd=genomeInsertDeltaHeaderValue(header, "nInd", fileName, P);
+    if (nInd>indArrayCapacity) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file contains too many suffix indices: " << nInd << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    deltaIn.read((char*) indArray, (streamsize) (2*nInd*sizeof(uint64)));
+    if (deltaIn.fail()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal INPUT FILE error while reading genome insert delta file " << fileName << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+
+    return nInd;
+};
+
 // Update the prefix table for newly inserted suffixes without rebuilding it from the expanded SA.
 void insertSeqSAi(PackedArray &SAi, char **seq1, uint64 *indArray, uint64 nInd, Parameters &P, Genome &mapGen)
 {
@@ -134,34 +258,39 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     complementSeqNumbers(seq1[0], seq1[1], 2*nG1);//complement
 
     uint64* indArray=new uint64[nG1*2*2+2];// for each base, 1st number - insertion place in SA, 2nd number - index, *2 for reverse compl
-
-
-    #pragma omp parallel num_threads(P.runThreadN)
-    #pragma omp for schedule (dynamic,64)
-    for (uint ii=0; ii<2*nG1; ii++) {//find insertion points for each of the sequences
-
-        if (seq1[0][ii]>3)
-        {//no index for suffices starting with N
-            indArray[ii*2]=-1;
-        } else
-        {
-            indArray[ii*2] =  suffixArraySearch1(mapGen, seq1, ii, 10000, nG, (ii<nG1 ? true:false), 0, SA.length-1, 0, nG, nG1, nG2) ;
-            indArray[ii*2+1] = ii;
-        };
-    };
-
     uint64 nInd=0;//true number of new indices
-    for (uint ii=0; ii<2*nG1; ii++) {//remove entries that cannot be inserted, this cannot be done in the parallel cycle above
-        if (indArray[ii*2]!= (uint) -1) {
-            indArray[nInd*2]=indArray[ii*2];
-            indArray[nInd*2+1]=indArray[ii*2+1];
-            ++nInd;
-        };
-    };
 
     time_t rawtime;
-    time ( &rawtime );
-    P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished SA search, number of new SA indices = "<<nInd<<endl;
+    if (P.pGe.gInsertOverlayDeltaFile!="-") {
+        nInd=readGenomeInsertDelta(P.pGe.gInsertOverlayDeltaFile, indArray, 2*nG1, nG, nG1, nG2, G1, SA, P, mapGen);
+        time ( &rawtime );
+        P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Loaded genome insert delta, number of new SA indices = "<<nInd<<endl;
+    } else {
+
+        #pragma omp parallel num_threads(P.runThreadN)
+        #pragma omp for schedule (dynamic,64)
+        for (uint ii=0; ii<2*nG1; ii++) {//find insertion points for each of the sequences
+
+            if (seq1[0][ii]>3)
+            {//no index for suffices starting with N
+                indArray[ii*2]=-1;
+            } else
+            {
+                indArray[ii*2] =  suffixArraySearch1(mapGen, seq1, ii, 10000, nG, (ii<nG1 ? true:false), 0, SA.length-1, 0, nG, nG1, nG2) ;
+                indArray[ii*2+1] = ii;
+            };
+        };
+
+        for (uint ii=0; ii<2*nG1; ii++) {//remove entries that cannot be inserted, this cannot be done in the parallel cycle above
+            if (indArray[ii*2]!= (uint) -1) {
+                indArray[nInd*2]=indArray[ii*2];
+                indArray[nInd*2+1]=indArray[ii*2+1];
+                ++nInd;
+            };
+        };
+
+        time ( &rawtime );
+        P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished SA search, number of new SA indices = "<<nInd<<endl;
 
     /*//old-debug
     uint64* indArray1=new uint64[nG1*2*2+2];
@@ -172,13 +301,21 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished qsort - old " <<endl;
     */
 
-    g_funCompareUintAndSuffixesMemcmp_G=seq1[0];
-    g_funCompareUintAndSuffixesMemcmp_L=mapGen.pGe.gSuffixLengthMax/sizeof(uint64_t);
-    qsort((void*) indArray, nInd, 2*sizeof(uint64_t), funCompareUintAndSuffixesMemcmp);
+        g_funCompareUintAndSuffixesMemcmp_G=seq1[0];
+        g_funCompareUintAndSuffixesMemcmp_L=mapGen.pGe.gSuffixLengthMax/sizeof(uint64_t);
+        qsort((void*) indArray, nInd, 2*sizeof(uint64_t), funCompareUintAndSuffixesMemcmp);
 
 //     qsort((void*) indArray, nInd, 2*sizeof(uint64), funCompareUint2);
-    time ( &rawtime );
-    P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished qsort" <<endl;
+        time ( &rawtime );
+        P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished qsort" <<endl;
+        if (P.pGe.gInsertOutMode=="Delta") {
+            const string deltaFileName=genomeInsertDeltaFilePath(P.pGe.gInsertOutDir);
+            writeGenomeInsertDelta(deltaFileName, indArray, nInd, nG, nG1, nG2, G1, SA, P, mapGen);
+            time ( &rawtime );
+            P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Wrote genome insert delta: " << deltaFileName << endl;
+            return nInd;
+        };
+    };
 
 
 

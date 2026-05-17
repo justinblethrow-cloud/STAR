@@ -16,7 +16,7 @@ runMode                         alignReads
     string: type of the run.
                                 alignReads             ... map reads
                                 genomeGenerate         ... generate genome files
-                                genomeInsert           ... add named FASTA sequences to an existing genome index and write a complete updated index to a new directory
+                                genomeInsert           ... add named FASTA sequences to an existing genome index and write a complete updated index, overlay, or cached delta directory
                                 inputAlignmentsFromBAM ... input alignments from BAM. Presently only works with --outWigType and --bamRemoveDuplicates options.
                                 liftOver               ... lift-over of GTF files (--sjdbGTFfile) between genome assemblies using chain file(s) from --genomeChainFiles.
                                 soloCellFiltering  </path/to/raw/count/dir/>   </path/to/output/prefix>    ... STARsolo cell filtering ("calling") without remapping, followed by the path to raw count directory and output (filtered) prefix
@@ -50,12 +50,13 @@ genomeFastaFiles            -
                             Required for the genome generation (--runMode genomeGenerate). Can also be used in the mapping (--runMode alignReads) to add extra (new) sequences to the genome (e.g. spike-ins), or with --runMode genomeInsert to persistently add named sequences to an existing genome index.
 
 genomeInsertOutDir          -
-    string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Use --sjdbGTFfile to add annotations for inserted sequences only.
+    string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; the contents written to --genomeInsertOutDir are controlled by --genomeInsertOutMode. Use --sjdbGTFfile to add annotations for inserted sequences only.
 
 genomeInsertOutMode         Full
     string: output mode for --runMode genomeInsert.
                             Full    ... write a complete updated genome index to --genomeInsertOutDir.
                             Overlay ... write a small overlay directory that refers to the base --genomeDir and inserted FASTA/GTF files. The overlay can be used as --genomeDir with --runMode alignReads.
+                            Delta   ... write an overlay directory plus a cached suffix insertion plan. The delta can be used as --genomeDir with --runMode alignReads to avoid repeating suffix search and sorting for the inserted FASTA.
 
 genomeChainFiles            -
     string: chain files for genomic liftover. Only used with --runMode liftOver .

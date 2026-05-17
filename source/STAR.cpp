@@ -116,6 +116,15 @@ int main(int argInN, char *argIn[])
                              << flush;
             exit(0);
         };
+        if (P.pGe.gInsertOutMode=="Delta") {
+            genomeInsertOverlayWrite(P);
+            Genome genomeMain(P, P.pGe);
+            genomeMain.genomeLoad();
+            sysRemoveDir(P.outFileTmp);
+            P.inOut->logMain << "DONE: Genome sequence insertion delta, EXITING\n"
+                             << flush;
+            exit(0);
+        };
 
         Genome genomeMain(P, P.pGe);
         genomeMain.genomeLoad();
