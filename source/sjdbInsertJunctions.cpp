@@ -52,6 +52,13 @@ void sjdbInsertJunctions(Parameters & P, Genome & mapGen, Genome & mapGen1, Sjdb
         };
     };
 
+    if (mapGen.genomeInsertSA.yes) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal PARAMETERS error: delta genome insert overlay does not support run-time splice junction insertion\n";
+        errOut << "SOLUTION: use a full genomeInsert output directory when inserted annotations define splice junctions or when using two-pass mapping\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_PARAMETER, P);
+    };
+
     //char *Gsj=new char [2*mapGen.sjdbLength*sjdbLoci.chr.size()*(P.var.yes ? 2:1)+1];//array to store junction sequences, will be filled in sjdbPrepare
     char *Gsj=new char [2*mapGen.sjdbLength*sjdbLoci.chr.size()+1];//array to store junction sequences, will be filled in sjdbPrepare
 

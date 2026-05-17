@@ -7,6 +7,7 @@ void ParametersGenome::initialize(Parameters *pPin)
     pP=pPin;
     gInsertOverlay=false;
     gInsertOverlayDeltaFile="-";
+    gInsertOverlayGTFhasJunctions=false;
     
     if (gDir.back()!='/') {
         gDir += '/';

@@ -428,6 +428,16 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     time ( &rawtime );
     P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished sorting SA indices"<<endl;
 
+    if (P.pGe.gInsertOverlayDeltaFile!="-" && !P.pGe.gInsertOverlayGTFhasJunctions && P.runMode=="alignReads") {
+        insertSeqSAi(SAi, seq1, indArray, nInd, P, mapGen);
+        mapGen.genomeInsertSAsetup(indArray, nInd, nG, nG1, nG2, N2bit);
+        mapGen.nSA=SA.length+nInd;
+
+        time ( &rawtime );
+        P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Using virtual genome insert SA overlay, expanded SA indices = " << mapGen.nSA << endl;
+        return nInd;
+    };
+
     indArray[2*nInd]=-999; //mark the last junction
     indArray[2*nInd+1]=-999; //mark the last junction
 

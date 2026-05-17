@@ -37,7 +37,9 @@ base_fasta="${out_root}/inputs/base.fa"
 insert_fasta="${out_root}/inputs/insert.fa"
 base_gtf="${out_root}/inputs/base.gtf"
 insert_gtf="${out_root}/inputs/insert.gtf"
+insert_nojunction_gtf="${out_root}/inputs/insert_nojunction.gtf"
 combined_gtf="${out_root}/inputs/combined.gtf"
+combined_nojunction_gtf="${out_root}/inputs/combined_nojunction.gtf"
 reads_fastq="${out_root}/inputs/reads.fq"
 
 cat > "${base_fasta}" <<'EOF_FASTA'
@@ -68,7 +70,13 @@ EOF_FASTA
     printf 'addGST\ttest\texon\t1\t103\t.\t+\t.\tgene_id "geneGST"; transcript_id "txGST";\n'
 } > "${insert_gtf}"
 
+{
+    printf 'addGFP\ttest\texon\t1\t104\t.\t+\t.\tgene_id "geneGFP"; transcript_id "txGFP";\n'
+    printf 'addGST\ttest\texon\t1\t103\t.\t+\t.\tgene_id "geneGST"; transcript_id "txGST";\n'
+} > "${insert_nojunction_gtf}"
+
 cat "${base_gtf}" "${insert_gtf}" > "${combined_gtf}"
+cat "${base_gtf}" "${insert_nojunction_gtf}" > "${combined_nojunction_gtf}"
 
 emit_fastq() {
     local read_name="$1"
@@ -90,7 +98,9 @@ incremental_index="${out_root}/incremental_index"
 incremental_repeat_index="${out_root}/incremental_repeat_index"
 overlay_index="${out_root}/overlay_index"
 delta_index="${out_root}/delta_index"
+delta_nojunction_index="${out_root}/delta_nojunction_index"
 full_rebuild_index="${out_root}/full_rebuild_index"
+full_rebuild_nojunction_index="${out_root}/full_rebuild_nojunction_index"
 
 common_generate_args=(
     --runMode genomeGenerate
@@ -216,6 +226,17 @@ done
     --outFileNamePrefix "${out_root}/delta_" \
     > "${out_root}/delta.stdout" 2>&1
 
+"${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_nojunction_gtf}" \
+    --genomeInsertOutMode Delta \
+    --genomeInsertOutDir "${delta_nojunction_index}" \
+    --outFileNamePrefix "${out_root}/delta_nojunction_" \
+    > "${out_root}/delta_nojunction.stdout" 2>&1
+
 if [[ ! -s "${delta_index}/genomeInsertOverlay.tsv" ]]; then
     echo "ERROR: genomeInsert delta did not write genomeInsertOverlay.tsv" >&2
     exit 1
@@ -226,9 +247,23 @@ if [[ ! -s "${delta_index}/genomeInsertDelta.bin" ]]; then
     exit 1
 fi
 
+if [[ ! -s "${delta_nojunction_index}/genomeInsertOverlay.tsv" ]]; then
+    echo "ERROR: genomeInsert no-junction delta did not write genomeInsertOverlay.tsv" >&2
+    exit 1
+fi
+
+if [[ ! -s "${delta_nojunction_index}/genomeInsertDelta.bin" ]]; then
+    echo "ERROR: genomeInsert no-junction delta did not write genomeInsertDelta.bin" >&2
+    exit 1
+fi
+
 for file in Genome SA SAindex; do
     if [[ -e "${delta_index}/${file}" ]]; then
         echo "ERROR: genomeInsert delta unexpectedly wrote ${file}" >&2
+        exit 1
+    fi
+    if [[ -e "${delta_nojunction_index}/${file}" ]]; then
+        echo "ERROR: genomeInsert no-junction delta unexpectedly wrote ${file}" >&2
         exit 1
     fi
 done
@@ -240,6 +275,14 @@ done
     --genomeFastaFiles "${base_fasta}" "${insert_fasta}" \
     --outFileNamePrefix "${out_root}/full_rebuild_" \
     > "${out_root}/full_rebuild.stdout" 2>&1
+
+"${star_bin}" \
+    "${common_generate_args[@]}" \
+    --sjdbGTFfile "${combined_nojunction_gtf}" \
+    --genomeDir "${full_rebuild_nojunction_index}" \
+    --genomeFastaFiles "${base_fasta}" "${insert_fasta}" \
+    --outFileNamePrefix "${out_root}/full_rebuild_nojunction_" \
+    > "${out_root}/full_rebuild_nojunction.stdout" 2>&1
 
 required_equivalent_files=(
     Genome
@@ -309,6 +352,8 @@ align_and_extract_body "${incremental_index}" "${out_root}/align_incremental/"
 align_and_extract_body "${full_rebuild_index}" "${out_root}/align_full/"
 align_and_extract_body "${overlay_index}" "${out_root}/align_overlay/"
 align_and_extract_body "${delta_index}" "${out_root}/align_delta/"
+align_and_extract_body "${full_rebuild_nojunction_index}" "${out_root}/align_full_nojunction/"
+align_and_extract_body "${delta_nojunction_index}" "${out_root}/align_delta_nojunction/"
 
 diff -u "${out_root}/align_incremental/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_body.diff"
 diff -u "${out_root}/align_incremental/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_sj.diff"
@@ -316,12 +361,25 @@ diff -u "${out_root}/align_overlay/Aligned.body.sam" "${out_root}/align_full/Ali
 diff -u "${out_root}/align_overlay/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_overlay_sj.diff"
 diff -u "${out_root}/align_delta/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_delta_body.diff"
 diff -u "${out_root}/align_delta/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_delta_sj.diff"
+diff -u "${out_root}/align_delta_nojunction/Aligned.body.sam" "${out_root}/align_full_nojunction/Aligned.body.sam" > "${out_root}/alignment_delta_nojunction_body.diff"
+diff -u "${out_root}/align_delta_nojunction/SJ.out.tab" "${out_root}/align_full_nojunction/SJ.out.tab" > "${out_root}/alignment_delta_nojunction_sj.diff"
 diff -u "${out_root}/align_incremental/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts.diff"
 diff -u "${out_root}/align_overlay/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts_overlay.diff"
 diff -u "${out_root}/align_delta/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts_delta.diff"
+diff -u "${out_root}/align_delta_nojunction/ReadsPerGene.out.tab" "${out_root}/align_full_nojunction/ReadsPerGene.out.tab" > "${out_root}/gene_counts_delta_nojunction.diff"
 
 if ! grep -q "Loaded genome insert delta" "${out_root}/align_delta/Log.out"; then
     echo "ERROR: delta overlay alignment did not load genomeInsertDelta.bin" >&2
+    exit 1
+fi
+
+if ! grep -q "Loaded genome insert delta" "${out_root}/align_delta_nojunction/Log.out"; then
+    echo "ERROR: no-junction delta overlay alignment did not load genomeInsertDelta.bin" >&2
+    exit 1
+fi
+
+if ! grep -q "Using virtual genome insert SA overlay" "${out_root}/align_delta_nojunction/Log.out"; then
+    echo "ERROR: no-junction delta overlay alignment did not use the virtual SA overlay" >&2
     exit 1
 fi
 
@@ -356,7 +414,11 @@ diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_al
     printf 'delta_alignment_body_vs_full_rebuild\tpass\n'
     printf 'delta_alignment_SJ_vs_full_rebuild\tpass\n'
     printf 'delta_gene_counts_vs_full_rebuild\tpass\n'
+    printf 'delta_nojunction_alignment_body_vs_full_rebuild\tpass\n'
+    printf 'delta_nojunction_alignment_SJ_vs_full_rebuild\tpass\n'
+    printf 'delta_nojunction_gene_counts_vs_full_rebuild\tpass\n'
     printf 'delta_replay_used\tpass\n'
+    printf 'delta_virtual_SA_overlay_used\tpass\n'
     printf 'alignment_references_expected\tpass\n'
 } > "${out_root}/checks.tsv"
 

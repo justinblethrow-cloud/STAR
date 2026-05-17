@@ -14,6 +14,7 @@ public:
     string gInsertOutMode;
     bool gInsertOverlay;
     string gInsertOverlayDeltaFile;
+    bool gInsertOverlayGTFhasJunctions;
     
     uint32 gType;//type code
     string gTypeString;

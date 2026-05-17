@@ -17,7 +17,7 @@ uint compareSeqToGenome(Genome &mapGen, char** s2, uint S, uint N, uint L, uint 
 
     register int64 ii;
 
-    uint SAstr=mapGen.SA[iSA];
+    uint SAstr=mapGen.SAvalue(iSA);
     bool dirG = (SAstr>>mapGen.GstrandBit) == 0; //forward or reverse strand of the genome
     SAstr &= mapGen.GstrandMask;
 
@@ -261,7 +261,7 @@ uint compareSeqToGenome1(Genome &mapGen, char** s2, uint S, uint N, uint L, uint
 
     register int64 ii;
 
-    uint SAstr=genomeInsertSAshift(mapGen.SA[iSA], nG, nG1, nG2, mapGen.GstrandBit);
+    uint SAstr=genomeInsertSAshift(mapGen.SAvalue(iSA), nG, nG1, nG2, mapGen.GstrandBit);
     bool dirG = (SAstr>>mapGen.GstrandBit) == 0; //forward or reverse strand of the genome
     SAstr &= mapGen.GstrandMask;
     char *g=mapGen.G;

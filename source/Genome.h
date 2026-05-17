@@ -59,6 +59,12 @@ public:
     uint genomeInsertL; //total length of the extra sequence inserted into the loaded genome
     uint genomeInsertChrIndFirst; //index of the first inserted chromosome
     vector<string> genomeFastaFilesLoaded; //FASTA paths recorded in the loaded index
+    struct {
+        bool yes;
+        uint64 *indArray; //pairs of expanded insertion point and inserted sequence offset
+        uint64 nInd, nG, nG1, nG2;
+        uint N2bit;
+    } genomeInsertSA;
 
     //SuperTranscriptome genome
     SuperTranscriptome *superTr;
@@ -77,6 +83,8 @@ public:
     void insertSequences();
     void validateGenomeInsertAnnotations();
     void writeGenomeIndex(const string dirOut);
+    void genomeInsertSAsetup(uint64 *indArray, uint64 nInd, uint64 nG, uint64 nG1, uint64 nG2, uint N2bit);
+    uint SAvalue(uint iSA);
 
     //void consensusSequence(); DEPRECATED
     

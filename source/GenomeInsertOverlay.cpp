@@ -18,6 +18,8 @@ struct GenomeInsertOverlay {
     string sjdbGTFfile;
     string deltaFile;
     uint sjdbOverhang;
+    bool gtfHasJunctions;
+    bool gtfHasJunctionsSet;
 };
 
 string stripTrailingSlash(string path)
@@ -102,10 +104,28 @@ unordered_set<string> readFastaNames(const vector<string> &fastaFiles, Parameter
     return names;
 }
 
-void validateOverlayGTF(const string &gtfFile, const unordered_set<string> &insertedNames, Parameters &P)
+string gtfTranscriptId(const string &attributes)
+{
+    const string tag="transcript_id";
+    size_t tagPos=attributes.find(tag);
+    if (tagPos==string::npos) {
+        return "";
+    };
+    size_t quote1=attributes.find('"', tagPos+tag.size());
+    if (quote1==string::npos) {
+        return "";
+    };
+    size_t quote2=attributes.find('"', quote1+1);
+    if (quote2==string::npos) {
+        return "";
+    };
+    return attributes.substr(quote1+1, quote2-quote1-1);
+}
+
+bool validateOverlayGTF(const string &gtfFile, const unordered_set<string> &insertedNames, Parameters &P)
 {
     if (gtfFile=="-") {
-        return;
+        return false;
     };
 
     ifstream gtfIn(gtfFile.c_str());
@@ -116,22 +136,44 @@ void validateOverlayGTF(const string &gtfFile, const unordered_set<string> &inse
     };
 
     string line;
+    bool hasJunctions=false;
+    unordered_set<string> seenTranscripts;
     while (getline(gtfIn, line)) {
         if (line.size()==0 || line.at(0)=='#') {
             continue;
         };
-        size_t fieldEnd=line.find('\t');
-        if (fieldEnd==string::npos) {
+        vector<string> fields;
+        size_t fieldStart=0;
+        for (size_t fieldEnd=line.find('\t'); fieldEnd!=string::npos; fieldEnd=line.find('\t', fieldStart)) {
+            fields.push_back(line.substr(fieldStart, fieldEnd-fieldStart));
+            fieldStart=fieldEnd+1;
+        };
+        fields.push_back(line.substr(fieldStart));
+        if (fields.size()<9) {
             continue;
         };
-        string chrName=line.substr(0, fieldEnd);
+        string chrName=fields.at(0);
         if (insertedNames.find(chrName)==insertedNames.end()) {
             ostringstream errOut;
             errOut << "EXITING because of fatal INPUT FILE error: --runMode genomeInsert with overlay output modes expects --sjdbGTFfile to contain only annotations for inserted sequences\n";
             errOut << "Offending GTF chromosome: " << chrName << "\n";
             exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
         };
+        if (fields.at(2)=="exon") {
+            string transcriptId=gtfTranscriptId(fields.at(8));
+            if (transcriptId=="") {
+                hasJunctions=true;
+                continue;
+            };
+            string transcriptKey=chrName+"\t"+fields.at(6)+"\t"+transcriptId;
+            if (seenTranscripts.find(transcriptKey)!=seenTranscripts.end()) {
+                hasJunctions=true;
+            } else {
+                seenTranscripts.insert(transcriptKey);
+            };
+        };
     };
+    return hasJunctions;
 }
 
 GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
@@ -140,6 +182,8 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
     overlay.sjdbGTFfile="-";
     overlay.deltaFile="-";
     overlay.sjdbOverhang=0;
+    overlay.gtfHasJunctions=false;
+    overlay.gtfHasJunctionsSet=false;
 
     const string path=manifestPath(overlayDir);
     ifstream fileIn(path.c_str());
@@ -183,6 +227,11 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
             overlay.deltaFile=resolveManifestPath(overlay.deltaFile, overlayDir);
         } else if (key=="sjdbOverhang") {
             lineStream >> overlay.sjdbOverhang;
+        } else if (key=="genomeInsertGTFhasJunctions") {
+            uint hasJunctions=0;
+            lineStream >> hasJunctions;
+            overlay.gtfHasJunctions=hasJunctions!=0;
+            overlay.gtfHasJunctionsSet=true;
         };
     };
 
@@ -190,6 +239,10 @@ GenomeInsertOverlay readOverlay(const string &overlayDir, Parameters &P)
         ostringstream errOut;
         errOut << "EXITING because of fatal INPUT FILE error: malformed genome insert overlay file " << path << "\n";
         exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+    };
+    if (!overlay.gtfHasJunctionsSet) {
+        unordered_set<string> fastaNames=readFastaNames(overlay.genomeFastaFiles, P);
+        overlay.gtfHasJunctions=validateOverlayGTF(overlay.sjdbGTFfile, fastaNames, P);
     };
 
     return overlay;
@@ -236,6 +289,7 @@ bool genomeInsertOverlayLoad(Parameters &P)
     P.pGe.sjdbGTFfile=overlay.sjdbGTFfile;
     P.pGe.gInsertOverlay=true;
     P.pGe.gInsertOverlayDeltaFile=overlay.deltaFile;
+    P.pGe.gInsertOverlayGTFhasJunctions=overlay.gtfHasJunctions;
     if (P.pGe.gInsertOverlayDeltaFile!="-" && !fileExists(P.pGe.gInsertOverlayDeltaFile)) {
         ostringstream errOut;
         errOut << "EXITING because of fatal INPUT FILE error: could not find genome insert delta file " << P.pGe.gInsertOverlayDeltaFile << "\n";
@@ -263,7 +317,7 @@ void genomeInsertOverlayWrite(Parameters &P)
     const string gtfFile=P.pGe.sjdbGTFfile=="-" ? "-" : absoluteExistingPath(P.pGe.sjdbGTFfile, "inserted GTF", P);
 
     unordered_set<string> fastaNames=readFastaNames(fastaFiles, P);
-    validateOverlayGTF(gtfFile, fastaNames, P);
+    bool gtfHasJunctions=validateOverlayGTF(gtfFile, fastaNames, P);
 
     const string path=manifestPath(outDir);
     ofstream &overlayOut=ofstrOpen(path, ERROR_OUT, P);
@@ -278,6 +332,7 @@ void genomeInsertOverlayWrite(Parameters &P)
     if (P.pGe.gInsertOutMode=="Delta") {
         overlayOut << "genomeInsertDeltaFile\t" << deltaFileName << "\n";
     };
+    overlayOut << "genomeInsertGTFhasJunctions\t" << (gtfHasJunctions ? 1 : 0) << "\n";
     overlayOut << "sjdbOverhang\t" << P.pGe.sjdbOverhang << "\n";
     overlayOut.close();
 
