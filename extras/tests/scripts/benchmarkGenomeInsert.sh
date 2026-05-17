@@ -9,7 +9,10 @@ set -euo pipefail
 #
 # To run the full rebuild comparison, also provide:
 #   BASE_FASTA_FILES="/path/reference.fa /path/ercc.fa"
-#   SJDB_GTF_FILE=/path/genes.gtf    # optional, but should match the base index
+#   SJDB_GTF_FILE=/path/combined.gtf # optional full rebuild GTF
+#
+# To benchmark inserted-sequence annotations, also provide:
+#   INSERT_GTF_FILE=/path/inserted_sequences.gtf
 #
 # Output:
 #   config.tsv, summary.tsv, *.time, *.command.txt, iostat snapshots, and
@@ -27,6 +30,7 @@ insert_fasta_files_input="${INSERT_FASTA_FILES:-}"
 base_fasta_files_input="${BASE_FASTA_FILES:-}"
 run_full_rebuild="${RUN_FULL_REBUILD:-auto}"
 sjdb_gtf_file="${SJDB_GTF_FILE:-}"
+insert_gtf_file="${INSERT_GTF_FILE:-}"
 sjdb_overhang="${SJDB_OVERHANG:-}"
 genome_saindex_nbases="${GENOME_SAINDEX_NBASES:-14}"
 genome_chrbin_nbits="${GENOME_CHRBIN_NBITS:-18}"
@@ -69,6 +73,11 @@ done
 
 if [[ -n "${sjdb_gtf_file}" && ! -r "${sjdb_gtf_file}" ]]; then
     echo "ERROR: SJDB_GTF_FILE is not readable: ${sjdb_gtf_file}" >&2
+    exit 1
+fi
+
+if [[ -n "${insert_gtf_file}" && ! -r "${insert_gtf_file}" ]]; then
+    echo "ERROR: INSERT_GTF_FILE is not readable: ${insert_gtf_file}" >&2
     exit 1
 fi
 
@@ -127,6 +136,7 @@ parse_time() {
     printf 'BASE_GENOME_DIR\t%s\n' "${base_genome_dir}"
     printf 'BASE_FASTA_FILES\t%s\n' "${base_fasta_files_input:-NA}"
     printf 'INSERT_FASTA_FILES\t%s\n' "${insert_fasta_files_input}"
+    printf 'INSERT_GTF_FILE\t%s\n' "${insert_gtf_file:-NA}"
     printf 'RUN_FULL_REBUILD\t%s\n' "${run_full_rebuild}"
     printf 'SJDB_GTF_FILE\t%s\n' "${sjdb_gtf_file:-NA}"
     printf 'SJDB_OVERHANG\t%s\n' "${sjdb_overhang:-NA}"
@@ -146,6 +156,9 @@ insert_cmd=(
     --genomeInsertOutDir "${incremental_index}"
     --outFileNamePrefix "${out_root}/incremental_"
 )
+if [[ -n "${insert_gtf_file}" ]]; then
+    insert_cmd+=(--sjdbGTFfile "${insert_gtf_file}")
+fi
 if [[ -n "${extra_insert_args}" ]]; then
     read -r -a extra_insert_args_array <<< "${extra_insert_args}"
     insert_cmd+=("${extra_insert_args_array[@]}")

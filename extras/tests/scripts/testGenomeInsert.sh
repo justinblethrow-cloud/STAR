@@ -4,9 +4,10 @@ set -euo pipefail
 # Fast regression test for --runMode genomeInsert.
 #
 # The test builds a tiny annotated base genome, inserts two extra named
-# sequences persistently, and compares the result against a full rebuild from
-# base+insert FASTA. SA is intentionally not required to match the full rebuild
-# byte-for-byte because equivalent suffix tie ordering can differ.
+# sequences persistently with insert-only annotations, and compares the result
+# against a full rebuild from base+insert FASTA/GTF. SA is intentionally not
+# required to match the full rebuild byte-for-byte because equivalent suffix tie
+# ordering can differ.
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../../.." && pwd)"
@@ -35,6 +36,8 @@ mkdir -p "${out_root}/inputs"
 base_fasta="${out_root}/inputs/base.fa"
 insert_fasta="${out_root}/inputs/insert.fa"
 base_gtf="${out_root}/inputs/base.gtf"
+insert_gtf="${out_root}/inputs/insert.gtf"
+combined_gtf="${out_root}/inputs/combined.gtf"
 reads_fastq="${out_root}/inputs/reads.fq"
 
 cat > "${base_fasta}" <<'EOF_FASTA'
@@ -59,6 +62,14 @@ EOF_FASTA
     printf 'chrB\ttest\texon\t20\t120\t.\t-\t.\tgene_id "geneB"; transcript_id "txB";\n'
 } > "${base_gtf}"
 
+{
+    printf 'addGFP\ttest\texon\t1\t40\t.\t+\t.\tgene_id "geneGFP"; transcript_id "txGFP";\n'
+    printf 'addGFP\ttest\texon\t71\t104\t.\t+\t.\tgene_id "geneGFP"; transcript_id "txGFP";\n'
+    printf 'addGST\ttest\texon\t1\t103\t.\t+\t.\tgene_id "geneGST"; transcript_id "txGST";\n'
+} > "${insert_gtf}"
+
+cat "${base_gtf}" "${insert_gtf}" > "${combined_gtf}"
+
 emit_fastq() {
     local read_name="$1"
     local seq="$2"
@@ -70,6 +81,7 @@ emit_fastq() {
 {
     emit_fastq chrBaseOnly_read "ATGCGTACAACTGACTGGTACCGTACGTTAGGACCTGTAACGTTACCGGATCT"
     emit_fastq addGFP_read "GCTAGTACCGATGACTGATCGGATCTACGATCGTACCGGATGCTAGTTCGATCGATG"
+    emit_fastq addGFP_spliced_read "GGATCTACGATCGTACCGGAGGATGCTACCGATGATCCGATGCTAGTACC"
     emit_fastq addGST_read "TACCGATGGTACCTAGGATCGTTAACCGTAGCTAGGCTTACGATCGTAGGATCCG"
 } > "${reads_fastq}"
 
@@ -84,12 +96,12 @@ common_generate_args=(
     --limitGenomeGenerateRAM 10000000
     --genomeSAindexNbases 2
     --genomeChrBinNbits 4
-    --sjdbGTFfile "${base_gtf}"
     --sjdbOverhang 9
 )
 
 "${star_bin}" \
     "${common_generate_args[@]}" \
+    --sjdbGTFfile "${base_gtf}" \
     --genomeDir "${base_index}" \
     --genomeFastaFiles "${base_fasta}" \
     --outFileNamePrefix "${out_root}/base_" \
@@ -119,11 +131,35 @@ if ! grep -q -- "--genomeInsertOutDir cannot be the same directory as --genomeDi
     exit 1
 fi
 
+set +e
 "${star_bin}" \
     --runMode genomeInsert \
     --runThreadN "${threads}" \
     --genomeDir "${base_index}" \
     --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${base_gtf}" \
+    --genomeInsertOutDir "${out_root}/bad_base_gtf_index" \
+    --outFileNamePrefix "${out_root}/bad_base_gtf_" \
+    > "${out_root}/bad_base_gtf.stdout" 2>&1
+bad_base_gtf_status="$?"
+set -e
+
+if [[ "${bad_base_gtf_status}" -eq 0 ]]; then
+    echo "ERROR: genomeInsert unexpectedly allowed a GTF containing base genome annotations" >&2
+    exit 1
+fi
+
+if ! grep -q -- "only annotations for inserted sequences" "${out_root}/bad_base_gtf.stdout"; then
+    echo "ERROR: genomeInsert base-GTF failure did not report the expected message" >&2
+    exit 1
+fi
+
+"${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
     --genomeInsertOutDir "${incremental_index}" \
     --outFileNamePrefix "${out_root}/incremental_" \
     > "${out_root}/incremental.stdout" 2>&1
@@ -133,12 +169,14 @@ fi
     --runThreadN "${threads}" \
     --genomeDir "${base_index}" \
     --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
     --genomeInsertOutDir "${incremental_repeat_index}" \
     --outFileNamePrefix "${out_root}/incremental_repeat_" \
     > "${out_root}/incremental_repeat.stdout" 2>&1
 
 "${star_bin}" \
     "${common_generate_args[@]}" \
+    --sjdbGTFfile "${combined_gtf}" \
     --genomeDir "${full_rebuild_index}" \
     --genomeFastaFiles "${base_fasta}" "${insert_fasta}" \
     --outFileNamePrefix "${out_root}/full_rebuild_" \
@@ -226,6 +264,7 @@ diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_al
 {
     printf 'check\tstatus\n'
     printf 'same_directory_guard\tpass\n'
+    printf 'insert_only_gtf_guard\tpass\n'
     printf 'genomeInsert_idempotence\tpass\n'
     printf 'genomeInsert_vs_full_rebuild_core_files\tpass\n'
     printf 'SA_vs_full_rebuild\t%s\n' "${sa_full_rebuild_status}"

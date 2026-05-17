@@ -75,6 +75,7 @@ public:
     void loadSJDB(string &genDir);
 
     void insertSequences();
+    void validateGenomeInsertAnnotations();
     void writeGenomeIndex(const string dirOut);
 
     //void consensusSequence(); DEPRECATED

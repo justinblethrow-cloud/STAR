@@ -1056,10 +1056,10 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
 
-    if (runMode=="genomeInsert" && sjdbInsert.yes) {
+    if (runMode=="genomeInsert" && pGe.sjdbFileChrStartEnd.at(0)!="-") {
         ostringstream errOut;
-        errOut << "EXITING because of fatal PARAMETERS error: --runMode genomeInsert cannot be combined with on-the-fly junction insertion parameters\n";
-        errOut << "SOLUTION: omit --sjdbFileChrStartEnd, --sjdbGTFfile, and --twopassMode when adding reference sequences to an existing index\n" <<flush;
+        errOut << "EXITING because of fatal PARAMETERS error: --runMode genomeInsert does not support --sjdbFileChrStartEnd\n";
+        errOut << "SOLUTION: use --sjdbGTFfile to annotate inserted sequences, or omit splice junction insertion parameters\n" <<flush;
         exitWithError(errOut.str(),std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     };
 
@@ -1076,6 +1076,15 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
         if (mkdir (sjdbInsert.outDir.c_str(),runDirPerm)!=0) {
             ostringstream errOut;
             errOut <<"EXITING because of fatal ERROR: could not make run-time genome directory directory: "<< sjdbInsert.outDir<<"\n";
+            errOut <<"SOLUTION: please check the path and writing permissions \n";
+            exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
+        };
+    } else if (runMode=="genomeInsert" && sjdbInsert.yes ) {
+        sjdbInsert.outDir=outFileTmp+"/genomeInsertSJDB/";
+        sysRemoveDir (sjdbInsert.outDir);
+        if (mkdir (sjdbInsert.outDir.c_str(),runDirPerm)!=0) {
+            ostringstream errOut;
+            errOut <<"EXITING because of fatal ERROR: could not make genomeInsert annotation directory: "<< sjdbInsert.outDir<<"\n";
             errOut <<"SOLUTION: please check the path and writing permissions \n";
             exitWithError(errOut.str(), std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
         };

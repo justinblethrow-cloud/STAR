@@ -110,6 +110,14 @@ int main(int argInN, char *argIn[])
     {
         Genome genomeMain(P, P.pGe);
         genomeMain.genomeLoad();
+
+        if (P.sjdbInsert.pass1) {
+            SjdbClass sjdbLoci;
+            genomeMain.validateGenomeInsertAnnotations();
+            Genome genomeMain1 = genomeMain;
+            sjdbInsertJunctions(P, genomeMain, genomeMain1, sjdbLoci);
+        };
+
         genomeMain.writeGenomeIndex(P.pGe.gInsertOutDir);
         sysRemoveDir(P.outFileTmp);
         P.inOut->logMain << "DONE: Genome sequence insertion, EXITING\n"

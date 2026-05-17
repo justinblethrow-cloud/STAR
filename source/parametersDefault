@@ -50,7 +50,7 @@ genomeFastaFiles            -
                             Required for the genome generation (--runMode genomeGenerate). Can also be used in the mapping (--runMode alignReads) to add extra (new) sequences to the genome (e.g. spike-ins), or with --runMode genomeInsert to persistently add named sequences to an existing genome index.
 
 genomeInsertOutDir          -
-    string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Adding new GTF annotations for inserted sequences is not supported in this mode.
+    string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Use --sjdbGTFfile to add annotations for inserted sequences only.
 
 genomeChainFiles            -
     string: chain files for genomic liftover. Only used with --runMode liftOver .
@@ -112,7 +112,7 @@ sjdbFileChrStartEnd                     -
     string(s): path to the files with genomic coordinates (chr <tab> start <tab> end <tab> strand) for the splice junction introns. Multiple files can be supplied and will be concatenated.
 
 sjdbGTFfile                             -
-    string: path to the GTF file with annotations
+    string: path to the GTF file with annotations. With --runMode genomeInsert, this GTF must contain annotations for inserted sequences only.
 
 sjdbGTFchrPrefix                        -
     string: prefix for chromosome names in a GTF file (e.g. 'chr' for using ENSMEBL annotations with UCSC genomes)

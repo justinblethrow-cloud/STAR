@@ -61,7 +61,7 @@
   \optLine{Required for the genome generation (--runMode genomeGenerate). Can also be used in the mapping (--runMode alignReads) to add extra (new) sequences to the genome (e.g. spike-ins), or with --runMode genomeInsert to persistently add named sequences to an existing genome index.}
 \optName{genomeInsertOutDir}
   \optValue{-}
-  \optLine{string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Adding new GTF annotations for inserted sequences is not supported in this mode.}
+  \optLine{string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Use --sjdbGTFfile to add annotations for inserted sequences only.}
 \optName{genomeChainFiles}
   \optValue{-}
   \optLine{string: chain files for genomic liftover. Only used with --runMode liftOver .} 
@@ -114,7 +114,7 @@
   \optLine{string(s): path to the files with genomic coordinates (chr {\textless}tab{\textgreater} start {\textless}tab{\textgreater} end {\textless}tab{\textgreater} strand) for the splice junction introns. Multiple files can be supplied and will be concatenated.} 
 \optName{sjdbGTFfile}
   \optValue{-}
-  \optLine{string: path to the GTF file with annotations} 
+  \optLine{string: path to the GTF file with annotations. With --runMode genomeInsert, this GTF must contain annotations for inserted sequences only.}
 \optName{sjdbGTFchrPrefix}
   \optValue{-}
   \optLine{string: prefix for chromosome names in a GTF file (e.g. 'chr' for using ENSMEBL annotations with UCSC genomes)} 
