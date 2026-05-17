@@ -88,6 +88,7 @@ emit_fastq() {
 base_index="${out_root}/base_index"
 incremental_index="${out_root}/incremental_index"
 incremental_repeat_index="${out_root}/incremental_repeat_index"
+overlay_index="${out_root}/overlay_index"
 full_rebuild_index="${out_root}/full_rebuild_index"
 
 common_generate_args=(
@@ -106,6 +107,12 @@ common_generate_args=(
     --genomeFastaFiles "${base_fasta}" \
     --outFileNamePrefix "${out_root}/base_" \
     > "${out_root}/base.stdout" 2>&1
+
+base_sjdb_n="$(wc -l < "${base_index}/sjdbList.out.tab")"
+if [[ "${base_sjdb_n}" -eq 0 ]]; then
+    echo "ERROR: base test genome did not build any SJDB junctions" >&2
+    exit 1
+fi
 
 set +e
 (
@@ -175,6 +182,29 @@ fi
     > "${out_root}/incremental_repeat.stdout" 2>&1
 
 "${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutMode Overlay \
+    --genomeInsertOutDir "${overlay_index}" \
+    --outFileNamePrefix "${out_root}/overlay_" \
+    > "${out_root}/overlay.stdout" 2>&1
+
+if [[ ! -s "${overlay_index}/genomeInsertOverlay.tsv" ]]; then
+    echo "ERROR: genomeInsert overlay did not write genomeInsertOverlay.tsv" >&2
+    exit 1
+fi
+
+for file in Genome SA SAindex; do
+    if [[ -e "${overlay_index}/${file}" ]]; then
+        echo "ERROR: genomeInsert overlay unexpectedly wrote ${file}" >&2
+        exit 1
+    fi
+done
+
+"${star_bin}" \
     "${common_generate_args[@]}" \
     --sjdbGTFfile "${combined_gtf}" \
     --genomeDir "${full_rebuild_index}" \
@@ -239,6 +269,7 @@ align_and_extract_body() {
         --runThreadN "${threads}" \
         --genomeDir "${genome_dir}" \
         --readFilesIn "${reads_fastq}" \
+        --quantMode GeneCounts \
         --outSAMtype SAM \
         --outFileNamePrefix "${prefix}" \
         > "${prefix}stdout" 2>&1
@@ -247,9 +278,14 @@ align_and_extract_body() {
 
 align_and_extract_body "${incremental_index}" "${out_root}/align_incremental/"
 align_and_extract_body "${full_rebuild_index}" "${out_root}/align_full/"
+align_and_extract_body "${overlay_index}" "${out_root}/align_overlay/"
 
 diff -u "${out_root}/align_incremental/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_body.diff"
 diff -u "${out_root}/align_incremental/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_sj.diff"
+diff -u "${out_root}/align_overlay/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_overlay_body.diff"
+diff -u "${out_root}/align_overlay/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_overlay_sj.diff"
+diff -u "${out_root}/align_incremental/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts.diff"
+diff -u "${out_root}/align_overlay/ReadsPerGene.out.tab" "${out_root}/align_full/ReadsPerGene.out.tab" > "${out_root}/gene_counts_overlay.diff"
 
 {
     printf 'addGFP\n'
@@ -265,11 +301,18 @@ diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_al
     printf 'check\tstatus\n'
     printf 'same_directory_guard\tpass\n'
     printf 'insert_only_gtf_guard\tpass\n'
+    printf 'base_sjdb_present\tpass\n'
+    printf 'genomeInsert_overlay_manifest\tpass\n'
     printf 'genomeInsert_idempotence\tpass\n'
     printf 'genomeInsert_vs_full_rebuild_core_files\tpass\n'
     printf 'SA_vs_full_rebuild\t%s\n' "${sa_full_rebuild_status}"
     printf 'alignment_body_vs_full_rebuild\tpass\n'
     printf 'alignment_SJ_vs_full_rebuild\tpass\n'
+    printf 'lazy_shift_sjdb_alignment_equivalence\tpass\n'
+    printf 'gene_counts_vs_full_rebuild\tpass\n'
+    printf 'overlay_alignment_body_vs_full_rebuild\tpass\n'
+    printf 'overlay_alignment_SJ_vs_full_rebuild\tpass\n'
+    printf 'overlay_gene_counts_vs_full_rebuild\tpass\n'
     printf 'alignment_references_expected\tpass\n'
 } > "${out_root}/checks.tsv"
 

@@ -11,6 +11,8 @@ public:
     string gDir;
     string gLoad;
     string gInsertOutDir;
+    string gInsertOutMode;
+    bool gInsertOverlay;
     
     uint32 gType;//type code
     string gTypeString;

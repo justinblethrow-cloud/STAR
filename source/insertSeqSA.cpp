@@ -113,26 +113,6 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     };
 
     uint N2bit= 1LLU << (SA.wordLength-1);
-    uint strandMask=~N2bit;
-    for (uint64 isa=0;isa<SA.length; isa++)
-    {
-        uint64 ind1=SA[isa];
-        if ( (ind1 & N2bit)>0 )
-        {//- strand
-            if ( (ind1 & strandMask)>=nG2 )
-            {//the first nG bases
-                ind1+=nG1; //reverse complementary indices are all shifted by the length of the sequence
-                SA.writePacked(isa,ind1);
-            };
-        } else
-        {//+ strand
-            if ( ind1>=nG )
-            {//the last nG2 bases
-                ind1+=nG1; //reverse complementary indices are all shifted by the length of the sequence
-                SA.writePacked(isa,ind1);
-            };
-        };
-    };
 
     char** seq1=new char*[2];
 
@@ -157,7 +137,7 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
 
 
     #pragma omp parallel num_threads(P.runThreadN)
-    #pragma omp for schedule (dynamic,1000)
+    #pragma omp for schedule (dynamic,64)
     for (uint ii=0; ii<2*nG1; ii++) {//find insertion points for each of the sequences
 
         if (seq1[0][ii]>3)
@@ -165,7 +145,7 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
             indArray[ii*2]=-1;
         } else
         {
-            indArray[ii*2] =  suffixArraySearch1(mapGen, seq1, ii, 10000, nG, (ii<nG1 ? true:false), 0, SA.length-1, 0) ;
+            indArray[ii*2] =  suffixArraySearch1(mapGen, seq1, ii, 10000, nG, (ii<nG1 ? true:false), 0, SA.length-1, 0, nG, nG1, nG2) ;
             indArray[ii*2+1] = ii;
         };
     };
@@ -259,7 +239,7 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
 
         };
 
-        SA1.writePacked(isa2,SA[isa]); //TODO make sure that the first sj index is not before the first array index
+        SA1.writePacked(isa2,genomeInsertSAshift(SA[isa], nG, nG1, nG2, SA.wordLength-1)); //TODO make sure that the first sj index is not before the first array index
             /*testing
             if (SA1[isa2]!=SAo[isa2]) {
                cout <<isa2 <<" "<< SA1[isa2]<<" "<<SAo[isa2]<<endl;

@@ -27,6 +27,7 @@
 #include "Solo.h"
 #include "samHeaders.h"
 #include "systemFunctions.h"
+#include "GenomeInsertOverlay.h"
 
 #include "twoPassRunPass1.h"
 
@@ -108,6 +109,14 @@ int main(int argInN, char *argIn[])
     }
     else if (P.runMode == "genomeInsert")
     {
+        if (P.pGe.gInsertOutMode=="Overlay") {
+            genomeInsertOverlayWrite(P);
+            sysRemoveDir(P.outFileTmp);
+            P.inOut->logMain << "DONE: Genome sequence insertion overlay, EXITING\n"
+                             << flush;
+            exit(0);
+        };
+
         Genome genomeMain(P, P.pGe);
         genomeMain.genomeLoad();
 

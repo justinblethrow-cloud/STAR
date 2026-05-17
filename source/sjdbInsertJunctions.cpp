@@ -7,6 +7,7 @@
 #include "sjdbBuildIndex.h"
 #include "streamFuns.h"
 #include "genomeParametersWrite.h"
+#include "GenomeInsertAnnotations.h"
 
 void sjdbInsertJunctions(Parameters & P, Genome & mapGen, Genome & mapGen1, SjdbClass & sjdbLoci)
 {
@@ -38,9 +39,17 @@ void sjdbInsertJunctions(Parameters & P, Genome & mapGen, Genome & mapGen1, Sjdb
         //loading junctions from GTF or tab or from the saved genome is only allowed at the 1st pass
         //at the 2nd pass these are already in the sjdbLoci
         //with runMode=="genomeGenerate", the junctions from GTF and File are already loaded
+        uint64 sjdbNbefore= sjdbLoci.chr.size();
         sjdbLoadFromFiles(P, sjdbLoci);
         GTF gtf(mapGen, P, P.sjdbInsert.outDir, sjdbLoci);
         gtf.transcriptGeneSJ(P.sjdbInsert.outDir);
+        if (P.pGe.gInsertOverlay && P.pGe.sjdbGTFfile!="-" && sjdbLoci.chr.size()==sjdbNbefore) {
+            genomeInsertMergeAnnotationSidecars(P.pGe.gDir, P.sjdbInsert.outDir, P.sjdbInsert.outDir, P, false);
+            time ( &rawtime );
+            P.inOut->logMain << timeMonthDayTime(rawtime) << "   Merged genome insert overlay annotation sidecars" <<endl;
+            P.inOut->logMain << timeMonthDayTime(rawtime) << "   Skipped junction index insertion: inserted GTF added no junctions" <<endl;
+            return;
+        };
     };
 
     //char *Gsj=new char [2*mapGen.sjdbLength*sjdbLoci.chr.size()*(P.var.yes ? 2:1)+1];//array to store junction sequences, will be filled in sjdbPrepare
@@ -49,6 +58,12 @@ void sjdbInsertJunctions(Parameters & P, Genome & mapGen, Genome & mapGen1, Sjdb
     sjdbPrepare (sjdbLoci, P, mapGen.chrStart[mapGen.nChrReal], P.sjdbInsert.outDir, mapGen, Gsj);//mapGen.nGenome - change when replacing junctions
     time ( &rawtime );
     P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished preparing junctions" <<endl;
+
+    if (P.pGe.gInsertOverlay && P.pGe.sjdbGTFfile!="-") {
+        genomeInsertMergeAnnotationSidecars(P.pGe.gDir, P.sjdbInsert.outDir, P.sjdbInsert.outDir, P, false);
+        time ( &rawtime );
+        P.inOut->logMain << timeMonthDayTime(rawtime) << "   Merged genome insert overlay annotation sidecars" <<endl;
+    };
 
     if (mapGen.sjdbN>P.limitSjdbInsertNsj)
     {

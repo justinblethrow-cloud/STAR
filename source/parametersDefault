@@ -52,6 +52,11 @@ genomeFastaFiles            -
 genomeInsertOutDir          -
     string: path to the output genome directory for --runMode genomeInsert. The input --genomeDir is read but not modified; a complete updated genome index is written to --genomeInsertOutDir. Use --sjdbGTFfile to add annotations for inserted sequences only.
 
+genomeInsertOutMode         Full
+    string: output mode for --runMode genomeInsert.
+                            Full    ... write a complete updated genome index to --genomeInsertOutDir.
+                            Overlay ... write a small overlay directory that refers to the base --genomeDir and inserted FASTA/GTF files. The overlay can be used as --genomeDir with --runMode alignReads.
+
 genomeChainFiles            -
     string: chain files for genomic liftover. Only used with --runMode liftOver .
 

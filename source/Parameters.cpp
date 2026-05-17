@@ -10,6 +10,7 @@
 #include "signalFromBAM.h"
 #include "bamRemoveDuplicates.h"
 #include "streamFuns.h"
+#include "GenomeInsertOverlay.h"
 
 //for mkfifo
 #include <sys/stat.h>
@@ -59,6 +60,7 @@ Parameters::Parameters() {//initalize parameters info
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeLoad", &pGe.gLoad));
     parArray.push_back(new ParameterInfoVector <string> (-1, -1, "genomeFastaFiles", &pGe.gFastaFiles));
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeInsertOutDir", &pGe.gInsertOutDir));
+    parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeInsertOutMode", &pGe.gInsertOutMode));
     parArray.push_back(new ParameterInfoVector <string> (-1, -1, "genomeChainFiles", &pGe.gChainFiles));
     parArray.push_back(new ParameterInfoScalar <uint> (-1, -1, "genomeSAindexNbases", &pGe.gSAindexNbases));
     parArray.push_back(new ParameterInfoScalar <uint> (-1, -1, "genomeChrBinNbits", &pGe.gChrBinNbits));
@@ -496,6 +498,7 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
     iReadAll=0;
     
     pGe.initialize(this);
+    genomeInsertOverlayLoad(*this);
 
     //directory permissions TODO: this needs to be done before outPrefixFileName is created
     if (runDirPermIn=="User_RWX") {
