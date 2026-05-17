@@ -29,6 +29,92 @@ uint64 genomeInsertDeltaHash(const char *seq, uint64 length)
     return hash;
 }
 
+uint64 genomeInsertCountBefore(uint64 *indArray, uint64 nInd, uint64 oldSAindex)
+{
+    uint64 left=0;
+    uint64 right=nInd;
+    while (left<right) {
+        uint64 middle=(left+right)/2;
+        if (indArray[2*middle]<oldSAindex) {
+            left=middle+1;
+        } else {
+            right=middle;
+        };
+    };
+    return left;
+}
+
+uint genomeInsertInsertedSAvalue(uint64 insertIndex, uint64 nG, uint64 nG1, uint64 nG2, uint N2bit)
+{
+    if (insertIndex<nG1) {
+        return insertIndex+nG;
+    } else {
+        return (insertIndex-nG1+nG2) | N2bit;
+    };
+}
+
+bool genomeInsertOutputByteAligned(uint64 outputIndex, uint wordLength)
+{
+    return ((outputIndex*wordLength) % 8)==0;
+}
+
+uint64 genomeInsertOutputIndex(uint64 oldSAindex, uint64 *indArray, uint64 nInd)
+{
+    return oldSAindex + genomeInsertCountBefore(indArray, nInd, oldSAindex);
+}
+
+uint64 genomeInsertFindAlignedBoundary(uint64 oldSAindex, uint64 oldSAend, uint64 *indArray, uint64 nInd, uint wordLength)
+{
+    for (uint64 old1=oldSAindex; old1<oldSAend; old1++) {
+        if (genomeInsertOutputByteAligned(genomeInsertOutputIndex(old1, indArray, nInd), wordLength)) {
+            return old1;
+        };
+    };
+    return oldSAend;
+}
+
+void writePackedToZeroedBytes(char *charArray, uint wordLength, uint64 index, uint value)
+{
+    // Chunk writers own disjoint byte-aligned ranges, so byte-wise OR avoids
+    // the overlapping unaligned writes used by PackedArray::writePacked.
+    unsigned char *byteArray=(unsigned char*) charArray;
+    uint64 bitIndex=index*wordLength;
+    uint64 byteIndex=bitIndex/8;
+    uint bitShift=bitIndex%8;
+    uint valueMask = wordLength>=sizeof(uint)*8 ? (uint) -1 : ((1LLU << wordLength) - 1);
+    uint valueShifted=(value & valueMask) << bitShift;
+    uint nBytes=(wordLength+bitShift+7)/8;
+
+    for (uint ii=0; ii<nBytes; ii++) {
+        byteArray[byteIndex+ii] |= (unsigned char) ((valueShifted >> (8*ii)) & 0xFF);
+    };
+}
+
+void insertSeqSAwriteChunk(PackedArray &SA1, vector<uint> &oldSAvalues, uint64 oldValuesBegin, uint wordLength, uint64 *indArray, uint64 nInd, uint64 oldBegin, uint64 oldEnd, uint64 nG, uint64 nG1, uint64 nG2, uint N2bit)
+{
+    uint64 insertBegin=genomeInsertCountBefore(indArray, nInd, oldBegin);
+    uint64 insertEnd=genomeInsertCountBefore(indArray, nInd, oldEnd);
+    uint64 outputBegin=oldBegin+insertBegin;
+    uint64 outputEnd=oldEnd+insertEnd;
+    uint64 byteBegin=outputBegin*wordLength/8;
+    uint64 byteEnd=outputEnd*wordLength/8;
+    char *chunkOut=SA1.charArray+byteBegin;
+
+    memset(chunkOut, 0, byteEnd-byteBegin);
+
+    uint64 insert1=insertBegin;
+    uint64 output1=0;
+    for (uint64 old1=oldBegin; old1<oldEnd; old1++) {
+        while (insert1<insertEnd && old1==indArray[2*insert1]) {
+            writePackedToZeroedBytes(chunkOut, wordLength, output1, genomeInsertInsertedSAvalue(indArray[2*insert1+1], nG, nG1, nG2, N2bit));
+            ++output1;
+            ++insert1;
+        };
+        writePackedToZeroedBytes(chunkOut, wordLength, output1, genomeInsertSAshift(oldSAvalues[old1-oldValuesBegin], nG, nG1, nG2, wordLength-1));
+        ++output1;
+    };
+}
+
 uint64 genomeInsertDeltaHeaderValue(const map<string,uint64> &header, const string &key, const string &fileName, Parameters &P)
 {
     map<string,uint64>::const_iterator value=header.find(key);
@@ -356,16 +442,68 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     oldSAin.close();
     */
 
-    uint isa1=0, isa2=0;
-    for (uint isa=0;isa<SA.length;isa++) {
-        while (isa==indArray[isa1*2]) {//insert new index before the existing index
-            uint ind1=indArray[isa1*2+1];
-            if (ind1<nG1) {
-                ind1+=nG;
-            } else {//reverse strand
-                ind1=(ind1-nG1+nG2) | N2bit;
+    vector<uint64> waveBoundaries;
+    waveBoundaries.push_back(0);
+    if (P.runThreadN>1 && SA.length>0 && SA.wordLength+7<=sizeof(uint)*8) {
+        // SA points into the tail of SA1's larger buffer. Process waves from
+        // left to right and buffer each wave before writing so expanded output
+        // never overwrites unread source SA records.
+        const uint64 waveTargetBytes=1LLU << 30;
+        uint nWaves=(SA.length*sizeof(uint)+waveTargetBytes-1)/waveTargetBytes;
+        if (nWaves<2) {
+            nWaves=2;
+        };
+        if (nWaves>(uint) P.runThreadN) {
+            nWaves=(uint) P.runThreadN;
+        };
+        if (nWaves>64) {
+            nWaves=64;
+        };
+        for (uint ii=1; ii<nWaves; ii++) {
+            uint64 oldTarget=SA.length*ii/nWaves;
+            uint64 oldBoundary=genomeInsertFindAlignedBoundary(oldTarget, SA.length, indArray, nInd, SA.wordLength);
+            if (oldBoundary>waveBoundaries.back() && oldBoundary<SA.length) {
+                waveBoundaries.push_back(oldBoundary);
             };
-            SA1.writePacked(isa2,ind1);
+        };
+    };
+
+    uint64 oldSerialStart=0;
+    if (waveBoundaries.size()>1) {
+        for (uint64 iWave=0; iWave<waveBoundaries.size()-1; iWave++) {
+            uint64 oldWaveBegin=waveBoundaries[iWave];
+            uint64 oldWaveEnd=waveBoundaries[iWave+1];
+            vector<uint> oldSAvalues(oldWaveEnd-oldWaveBegin);
+
+            #pragma omp parallel for schedule(static) num_threads(P.runThreadN)
+            for (uint64 old1=oldWaveBegin; old1<oldWaveEnd; old1++) {
+                oldSAvalues[old1-oldWaveBegin]=SA[old1];
+            };
+
+            vector<uint64> oldBoundaries;
+            oldBoundaries.push_back(oldWaveBegin);
+            for (uint ii=1; ii<(uint) P.runThreadN; ii++) {
+                uint64 oldTarget=oldWaveBegin+(oldWaveEnd-oldWaveBegin)*ii/P.runThreadN;
+                uint64 oldBoundary=genomeInsertFindAlignedBoundary(oldTarget, oldWaveEnd, indArray, nInd, SA.wordLength);
+                if (oldBoundary>oldBoundaries.back() && oldBoundary<oldWaveEnd) {
+                    oldBoundaries.push_back(oldBoundary);
+                };
+            };
+            oldBoundaries.push_back(oldWaveEnd);
+
+            #pragma omp parallel for schedule(static) num_threads(P.runThreadN)
+            for (uint64 ii=0; ii<oldBoundaries.size()-1; ii++) {
+                insertSeqSAwriteChunk(SA1, oldSAvalues, oldWaveBegin, SA.wordLength, indArray, nInd, oldBoundaries[ii], oldBoundaries[ii+1], nG, nG1, nG2, N2bit);
+            };
+        };
+        oldSerialStart=waveBoundaries.back();
+    };
+
+    uint64 isa1=genomeInsertCountBefore(indArray, nInd, oldSerialStart);
+    uint64 isa2=oldSerialStart+isa1;
+    for (uint64 isa=oldSerialStart;isa<SA.length;isa++) {
+        while (isa==indArray[isa1*2]) {//insert new index before the existing index
+            SA1.writePacked(isa2,genomeInsertInsertedSAvalue(indArray[isa1*2+1], nG, nG1, nG2, N2bit));
             /*testing
             if (SA1[isa2]!=SAo[isa2]) {
                cout <<isa2 <<" "<< SA1[isa2]<<" "<<SAo[isa2]<<endl;
@@ -387,20 +525,12 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
     };
     for (;isa1<nInd;isa1++)
     {//insert the last indices
-        uint ind1=indArray[isa1*2+1];
-        if (ind1<nG1)
-        {
-            ind1+=nG;
-        } else
-        {//reverse strand
-            ind1=(ind1-nG1+nG2) | N2bit;
-        };
-        SA1.writePacked(isa2,ind1);
+        SA1.writePacked(isa2,genomeInsertInsertedSAvalue(indArray[isa1*2+1], nG, nG1, nG2, N2bit));
         ++isa2;
     };
 
     time ( &rawtime );
-    P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished inserting SA indices" <<endl;
+    P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Finished inserting SA indices" << (waveBoundaries.size()>1 ? " in parallel" : "") <<endl;
 
     insertSeqSAi(SAi, seq1, indArray, nInd, P, mapGen);
 
