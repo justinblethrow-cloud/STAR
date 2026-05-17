@@ -106,6 +106,16 @@ int main(int argInN, char *argIn[])
                          << flush;
         exit(0);
     }
+    else if (P.runMode == "genomeInsert")
+    {
+        Genome genomeMain(P, P.pGe);
+        genomeMain.genomeLoad();
+        genomeMain.writeGenomeIndex(P.pGe.gInsertOutDir);
+        sysRemoveDir(P.outFileTmp);
+        P.inOut->logMain << "DONE: Genome sequence insertion, EXITING\n"
+                         << flush;
+        exit(0);
+    }
     else if (P.runMode == "liftOver")
     {
         for (uint ii = 0; ii < P.pGe.gChainFiles.size(); ii++)

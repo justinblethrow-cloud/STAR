@@ -56,8 +56,9 @@ public:
     uint8 *sjdbStrand; //junctions strand, not used yet
 
    //sequence insert parameters
-    uint genomeInsertL; //total length of the sequence to be inserted on the fly
+    uint genomeInsertL; //total length of the extra sequence inserted into the loaded genome
     uint genomeInsertChrIndFirst; //index of the first inserted chromosome
+    vector<string> genomeFastaFilesLoaded; //FASTA paths recorded in the loaded index
 
     //SuperTranscriptome genome
     SuperTranscriptome *superTr;
@@ -74,6 +75,7 @@ public:
     void loadSJDB(string &genDir);
 
     void insertSequences();
+    void writeGenomeIndex(const string dirOut);
 
     //void consensusSequence(); DEPRECATED
     

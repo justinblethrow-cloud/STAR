@@ -59,6 +59,7 @@ void Genome::genomeLoad(){//allocate and load Genome
 
         P1.inOut = P.inOut;
         P1.scanAllLines(parFile,3,-1);
+        genomeFastaFilesLoaded = P1.pGe.gFastaFiles;
         parFile.close();
     } else {
         ostringstream errOut;

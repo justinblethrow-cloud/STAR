@@ -9,6 +9,9 @@ void ParametersGenome::initialize(Parameters *pPin)
     if (gDir.back()!='/') {
         gDir += '/';
     };
+    if (gInsertOutDir!="-" && gInsertOutDir.back()!='/') {
+        gInsertOutDir += '/';
+    };
     
     //genome transformation
     if (transform.typeString=="None") {
