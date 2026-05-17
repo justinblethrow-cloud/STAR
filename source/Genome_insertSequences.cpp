@@ -24,8 +24,8 @@ if (pGe.gFastaFiles.at(0)!="-")
     uint64 nGenomeOld=nGenome;
     nGenome=chrStart.back()+sjdblen;
     //insert new sequences into the SA
-    insertSeqSA(SA, SAinsert, SAi, G, G+chrStart.back()-genomeInsertL, nGenomeOld-sjdblen, genomeInsertL, sjdblen, P, *this);
+    insertSeqSA(SA, SAinsert, SAi, G+chrStart.back()-genomeInsertL, nGenomeOld-sjdblen, genomeInsertL, sjdblen, P, *this);
 
-    //insertSeqSA updates the SA and rebuilds SAi for the expanded genome.
+    //insertSeqSA updates the SA and SAi for the expanded genome.
 };
 };
