@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Fast regression test for --runMode genomeInsert.
+#
+# The test builds a tiny annotated base genome, inserts two extra named
+# sequences persistently, and compares the result against a full rebuild from
+# base+insert FASTA. SA is intentionally not required to match the full rebuild
+# byte-for-byte because equivalent suffix tie ordering can differ.
+
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+repo_root="$(cd "${script_dir}/../../.." && pwd)"
+
+star_bin="${STAR_BIN:-${repo_root}/source/STAR}"
+threads="${THREADS:-4}"
+keep_output="${KEEP_TEST_OUTPUT:-0}"
+out_root="${OUT_DIR:-$(mktemp -d "${TMPDIR:-/tmp}/star-genome-insert-test.XXXXXX")}"
+
+if [[ ! -x "${star_bin}" ]]; then
+    echo "ERROR: STAR_BIN is not executable: ${star_bin}" >&2
+    exit 1
+fi
+
+cleanup() {
+    if [[ "${keep_output}" == "1" ]]; then
+        echo "Keeping test output: ${out_root}" >&2
+    else
+        rm -rf "${out_root}"
+    fi
+}
+trap cleanup EXIT
+
+mkdir -p "${out_root}/inputs"
+
+base_fasta="${out_root}/inputs/base.fa"
+insert_fasta="${out_root}/inputs/insert.fa"
+base_gtf="${out_root}/inputs/base.gtf"
+reads_fastq="${out_root}/inputs/reads.fq"
+
+cat > "${base_fasta}" <<'EOF_FASTA'
+>chrA
+ACGTTGCACCATGGTACGATCGTACGTTAGCTAGGCTAACCGTTAACGATGCTAGCTTACGATCGATGCGTACCATCGTTAACGTGCAACGGTACCTAGCATCGATCGTAGGCTAACGTACGATGCTTACCGATCGTAGCTAGCATGCTAGGATCCGATCGTACGTAAGATCGTACGTTAGCATGCCGTAACGATCGTAGCTAACGTTGCACCATGGTACGATCGTACGTTAGCTAGGCTAACCGTTAACGA
+>chrB
+TTGACCGTAGCTAACGATCGTACCGTTAGCATCGATGCTAACCGTAGGCTTACGATCGTAGCATGCGTTAACCGATCGTACCTAGCTAACGTTAGGCTACGATGCTAGCATCGTTAACGATCCGTAGCTTACGTTGCATCGATGGTACCGTAGCATGCTAACGATCGTTTGACCGTAGCTAACGATCGTACCGTTAGCATCGATGCTAACCGTAGGCTTACGATCGTAGCATGCGTTAACCGATCGTACCTA
+>chrBaseOnly
+ATGCGTACAACTGACTGGTACCGTACGTTAGGACCTGTAACGTTACCGGATCTAGTCCGATGATCGTACGATCGATAGCTAGTCCGTAGCATTCGATGCAA
+EOF_FASTA
+
+cat > "${insert_fasta}" <<'EOF_FASTA'
+>addGFP
+GCTAGTACCGATGACTGATCGGATCTACGATCGTACCGGATGCTAGTTCGATCGATGACCTAGGCTAATCGGATGCTACCGATGATCCGATGCTAGTACCGATG
+>addGST
+TACCGATGGTACCTAGGATCGTTAACCGTAGCTAGGCTTACGATCGTAGGATCCGTAACGATGCTAGCTACCGATGGTACCGATGCTTAGGCTACCGATGTAA
+EOF_FASTA
+
+{
+    printf 'chrA\ttest\texon\t1\t80\t.\t+\t.\tgene_id "geneA"; transcript_id "txA";\n'
+    printf 'chrA\ttest\texon\t141\t220\t.\t+\t.\tgene_id "geneA"; transcript_id "txA";\n'
+    printf 'chrB\ttest\texon\t20\t120\t.\t-\t.\tgene_id "geneB"; transcript_id "txB";\n'
+} > "${base_gtf}"
+
+emit_fastq() {
+    local read_name="$1"
+    local seq="$2"
+    local qual
+    qual="$(printf '%*s' "${#seq}" '' | tr ' ' 'I')"
+    printf '@%s\n%s\n+\n%s\n' "${read_name}" "${seq}" "${qual}"
+}
+
+{
+    emit_fastq chrBaseOnly_read "ATGCGTACAACTGACTGGTACCGTACGTTAGGACCTGTAACGTTACCGGATCT"
+    emit_fastq addGFP_read "GCTAGTACCGATGACTGATCGGATCTACGATCGTACCGGATGCTAGTTCGATCGATG"
+    emit_fastq addGST_read "TACCGATGGTACCTAGGATCGTTAACCGTAGCTAGGCTTACGATCGTAGGATCCG"
+} > "${reads_fastq}"
+
+base_index="${out_root}/base_index"
+incremental_index="${out_root}/incremental_index"
+incremental_repeat_index="${out_root}/incremental_repeat_index"
+full_rebuild_index="${out_root}/full_rebuild_index"
+
+common_generate_args=(
+    --runMode genomeGenerate
+    --runThreadN "${threads}"
+    --limitGenomeGenerateRAM 10000000
+    --genomeSAindexNbases 2
+    --genomeChrBinNbits 4
+    --sjdbGTFfile "${base_gtf}"
+    --sjdbOverhang 9
+)
+
+"${star_bin}" \
+    "${common_generate_args[@]}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${base_fasta}" \
+    --outFileNamePrefix "${out_root}/base_" \
+    > "${out_root}/base.stdout" 2>&1
+
+set +e
+(
+    cd "${out_root}"
+    "${star_bin}" \
+        --runMode genomeInsert \
+        --runThreadN "${threads}" \
+        --genomeDir base_index \
+        --genomeFastaFiles inputs/insert.fa \
+        --genomeInsertOutDir ./base_index \
+        --outFileNamePrefix same_dir_
+) > "${out_root}/same_dir.stdout" 2>&1
+same_dir_status="$?"
+set -e
+
+if [[ "${same_dir_status}" -eq 0 ]]; then
+    echo "ERROR: genomeInsert unexpectedly allowed --genomeInsertOutDir to alias --genomeDir" >&2
+    exit 1
+fi
+
+if ! grep -q -- "--genomeInsertOutDir cannot be the same directory as --genomeDir" "${out_root}/same_dir.stdout"; then
+    echo "ERROR: genomeInsert same-directory failure did not report the expected message" >&2
+    exit 1
+fi
+
+"${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --genomeInsertOutDir "${incremental_index}" \
+    --outFileNamePrefix "${out_root}/incremental_" \
+    > "${out_root}/incremental.stdout" 2>&1
+
+"${star_bin}" \
+    --runMode genomeInsert \
+    --runThreadN "${threads}" \
+    --genomeDir "${base_index}" \
+    --genomeFastaFiles "${insert_fasta}" \
+    --genomeInsertOutDir "${incremental_repeat_index}" \
+    --outFileNamePrefix "${out_root}/incremental_repeat_" \
+    > "${out_root}/incremental_repeat.stdout" 2>&1
+
+"${star_bin}" \
+    "${common_generate_args[@]}" \
+    --genomeDir "${full_rebuild_index}" \
+    --genomeFastaFiles "${base_fasta}" "${insert_fasta}" \
+    --outFileNamePrefix "${out_root}/full_rebuild_" \
+    > "${out_root}/full_rebuild.stdout" 2>&1
+
+required_equivalent_files=(
+    Genome
+    SAindex
+    chrName.txt
+    chrStart.txt
+    chrLength.txt
+    chrNameLength.txt
+    sjdbInfo.txt
+    sjdbList.out.tab
+    sjdbList.fromGTF.out.tab
+    exonInfo.tab
+    exonGeTrInfo.tab
+    geneInfo.tab
+    transcriptInfo.tab
+)
+
+idempotent_files=(
+    "${required_equivalent_files[@]}"
+    SA
+)
+
+compare_files() {
+    local label="$1"
+    local dir_a="$2"
+    local dir_b="$3"
+    shift 3
+    local file
+
+    for file in "$@"; do
+        if [[ ! -e "${dir_a}/${file}" || ! -e "${dir_b}/${file}" ]]; then
+            echo "ERROR: ${label}: missing ${file}" >&2
+            exit 1
+        fi
+        if ! cmp -s "${dir_a}/${file}" "${dir_b}/${file}"; then
+            echo "ERROR: ${label}: ${file} differs" >&2
+            exit 1
+        fi
+    done
+}
+
+compare_files "genomeInsert idempotence" "${incremental_index}" "${incremental_repeat_index}" "${idempotent_files[@]}"
+compare_files "genomeInsert versus full rebuild" "${incremental_index}" "${full_rebuild_index}" "${required_equivalent_files[@]}"
+
+if cmp -s "${incremental_index}/SA" "${full_rebuild_index}/SA"; then
+    sa_full_rebuild_status="byte-identical"
+else
+    sa_full_rebuild_status="different-equivalent-ordering"
+fi
+
+align_and_extract_body() {
+    local genome_dir="$1"
+    local prefix="$2"
+    mkdir -p "${prefix%/}"
+    "${star_bin}" \
+        --runThreadN "${threads}" \
+        --genomeDir "${genome_dir}" \
+        --readFilesIn "${reads_fastq}" \
+        --outSAMtype SAM \
+        --outFileNamePrefix "${prefix}" \
+        > "${prefix}stdout" 2>&1
+    grep -v '^@' "${prefix}Aligned.out.sam" > "${prefix}Aligned.body.sam"
+}
+
+align_and_extract_body "${incremental_index}" "${out_root}/align_incremental/"
+align_and_extract_body "${full_rebuild_index}" "${out_root}/align_full/"
+
+diff -u "${out_root}/align_incremental/Aligned.body.sam" "${out_root}/align_full/Aligned.body.sam" > "${out_root}/alignment_body.diff"
+diff -u "${out_root}/align_incremental/SJ.out.tab" "${out_root}/align_full/SJ.out.tab" > "${out_root}/alignment_sj.diff"
+
+{
+    printf 'addGFP\n'
+    printf 'addGST\n'
+    printf 'chrBaseOnly\n'
+} > "${out_root}/expected_alignment_references.txt"
+
+awk '$3!="*" {print $3}' "${out_root}/align_incremental/Aligned.body.sam" \
+    | sort -u > "${out_root}/observed_alignment_references.txt"
+diff -u "${out_root}/expected_alignment_references.txt" "${out_root}/observed_alignment_references.txt" > "${out_root}/alignment_references.diff"
+
+{
+    printf 'check\tstatus\n'
+    printf 'same_directory_guard\tpass\n'
+    printf 'genomeInsert_idempotence\tpass\n'
+    printf 'genomeInsert_vs_full_rebuild_core_files\tpass\n'
+    printf 'SA_vs_full_rebuild\t%s\n' "${sa_full_rebuild_status}"
+    printf 'alignment_body_vs_full_rebuild\tpass\n'
+    printf 'alignment_SJ_vs_full_rebuild\tpass\n'
+    printf 'alignment_references_expected\tpass\n'
+} > "${out_root}/checks.tsv"
+
+cat "${out_root}/checks.tsv"
