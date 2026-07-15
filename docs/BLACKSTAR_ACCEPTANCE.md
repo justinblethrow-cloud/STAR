@@ -2,9 +2,9 @@
 
 ## Verdict
 
-The narrow BlackSTAR release line is ready for full-size performance recertification and pipeline shadow testing. The release-blocking correctness defects found in the July 2026 production-readiness audit are fixed and covered by automated regression or adversarial tests.
+The narrow BlackSTAR release line has passed clean-tree full-size `genomeGenerate` recertification and is ready for pipeline shadow testing. The release-blocking correctness defects found in the July 2026 production-readiness audit are fixed and covered by automated regression or adversarial tests.
 
-This is not yet a production-promotion approval. Historical CHM13, GRCh38, and real-order timings remain directional evidence until repeated from a clean tagged candidate. GitHub Actions also remains unexecuted until GitHub changes are explicitly approved.
+This is not yet a production-promotion approval. One clean CHM13 candidate run is recorded below, but comparative CHM13, GRCh38, and real-order timings remain directional until paired randomized repeats are complete. GitHub Actions also remains unexecuted until GitHub changes are explicitly approved.
 
 ## Supported Boundary
 
@@ -62,6 +62,34 @@ The local acceptance pass completed successfully with:
 
 The release builder fixes source date, embedded provenance, build location, locale, timezone, file modes, archive order, ownership, timestamps, and gzip metadata. It records compiler/linkage details and publishes through same-filesystem staging.
 
+### Full-size candidate recertification
+
+The clean candidate at commit `55873468383b94060ad8d33c92e3990e7e410376` was built twice with byte-identical binaries and release archives. The binary used for the run had SHA-256 `f4545d56ac740fc3bdbf1bdf832c95a7b721cb7232b059c9ec0245f1c69f4c30`.
+
+On July 15, 2026, the candidate built the CHM13v2 plus ERCC index with the production annotation using 96 threads, `genomeSAindexNbases 14`, `genomeChrBinNbits 18`, `limitGenomeGenerateRAM 300000000000`, and `sjdbOverhang 93`.
+
+| Result | Value |
+| --- | --- |
+| Start | `2026-07-15 05:58:05 UTC` |
+| Finish | `2026-07-15 06:08:04 UTC` |
+| Wall time | 600.39 seconds |
+| User/system CPU | 17,208.92 / 1,109.24 seconds |
+| Maximum resident set | 80,877,308 KiB |
+| SA prefix planning / sorting / packing | 53 / 215 / 73 seconds |
+| SAindex construction | 35 seconds |
+| Junction insertion and SAi work | 111 seconds |
+| Final Genome / SA / SAindex writes | 6 / 44 / 5 seconds |
+
+The bounded SAindex path processed 227,756,190 events with a 256,000,000-byte event budget. `Genome`, `SA`, `SAindex`, all chromosome metadata, both splice-junction lists, `sjdbInfo.txt`, and all gene, transcript, and exon tables were byte-identical to the previously accepted CHM13 candidate. `genomeParameters.txt` differed only in executable and output paths.
+
+The retained input SHA-256 values are:
+
+- CHM13v2 FASTA: `15a4ba1246f6021a89699bf5083da7f2bad3f79c86acd7bc1eb0ca3a13164e85`
+- ERCC FASTA: `ab9720a49d9af5463e535fe0c3f6ea2a8c7f9fbf4a4afe29969fb5c1b9e3a2b4`
+- production GTF: `e06d8b086c61269d5454d8337845f4c6ba817a8a8728bb5fb44cdfe93e116b63`
+
+The immediately preceding accepted optimized run took 685.29 seconds with the same reference and principal parameters. The observed 84.90-second, 12.4% difference is promising but remains a cross-date comparison rather than a paired randomized performance claim. Command, logs, stage timings, CPU samples, and I/O telemetry are retained under `benchmarks/full_chm13_hardened_rc_5587346_20260715T0557Z/` in the local project workspace.
+
 ## Segregated Residual Debt
 
 The following is inherited upstream STAR debt, not a BlackSTAR regression:
@@ -75,11 +103,10 @@ These items should be tracked separately. They do not invalidate the passing sem
 
 ## Remaining Release Gates
 
-1. Commit and build from a clean release-candidate tree; retain generated checksums and build metadata.
-2. Run GitHub Actions after explicit approval and require it on the release branch.
-3. Repeat paired randomized CHM13 or GRCh38 full-index benchmarks on a quiet host, preserving system and I/O telemetry.
-4. Repeat Delta creation and base-versus-Delta alignment on broad real paired-end data plus synthetic added-reference reads.
-5. Compare normalized alignment records, junctions, gene counts, UMI-deduplicated outputs, final matrices, and downstream UI/DGE inputs.
-6. Shadow the candidate in the Plasmidsaurus pipeline, then canary with automatic fallback to stock STAR.
+1. Run GitHub Actions after explicit approval and require it on the release branch.
+2. Repeat paired randomized CHM13 or GRCh38 full-index benchmarks on a quiet host, preserving system and I/O telemetry.
+3. Repeat Delta creation and base-versus-Delta alignment on broad real paired-end data plus synthetic added-reference reads.
+4. Compare normalized alignment records, junctions, gene counts, UMI-deduplicated outputs, final matrices, and downstream UI/DGE inputs.
+5. Shadow the candidate in the Plasmidsaurus pipeline, then canary with automatic fallback to stock STAR.
 
-No historical performance number should be promoted from this record as a newly certified release result.
+The 600.39-second candidate result is newly measured. No cross-date performance comparison should be promoted as a release claim until the paired benchmark gate is complete.
