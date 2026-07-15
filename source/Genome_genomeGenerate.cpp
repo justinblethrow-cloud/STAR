@@ -43,11 +43,10 @@ static uint systemAvailableMemoryBytes()
     return 0;
 };
 
-
 inline int funCompareSuffixesFromWord ( const void *a, const void *b, uint wordStart){
 
-    uint *ga=(uint*)((globalG-7LLU)+(*((uint*)a)))-wordStart;
-    uint *gb=(uint*)((globalG-7LLU)+(*((uint*)b)))-wordStart;
+    const char *ga=(globalG-7LLU)+(*((uint*)a));
+    const char *gb=(globalG-7LLU)+(*((uint*)b));
 
     uint jj=0;
     int  ii=0;
@@ -55,8 +54,8 @@ inline int funCompareSuffixesFromWord ( const void *a, const void *b, uint wordS
     uint8 *va1, *vb1;
 
     while (jj+wordStart < globalL) {
-        va=*(ga-jj);
-        vb=*(gb-jj);
+        memcpy(&va, ga-(jj+wordStart)*sizeof(uint), sizeof(va));
+        memcpy(&vb, gb-(jj+wordStart)*sizeof(uint), sizeof(vb));
 
         #define has5(v) ((((v)^0x0505050505050505) - 0x0101010101010101) & ~((v)^0x0505050505050505) & 0x8080808080808080)
 
