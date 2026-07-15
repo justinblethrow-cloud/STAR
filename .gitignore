@@ -17,6 +17,8 @@ extras/doc-latex/*.toc
 
 # Don't track the STAR binary once it has being built
 source/STAR
+source/parametersDefault.xxd
+/dist/
 .DS_Store
 *.xcworkspacedata
 *.pbxproj

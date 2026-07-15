@@ -1,0 +1,85 @@
+name: BlackSTAR CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blackstar-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      OMP_DYNAMIC: "FALSE"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make zlib1g-dev
+
+      - name: Build BlackSTAR
+        env:
+          JOBS: "2"
+        run: extras/scripts/buildBlackSTARRelease.sh
+
+      - name: Verify release identity and OpenMP linkage
+        run: |
+          test "$(source/STAR --version)" = "2.7.11b-blackstar.1"
+          ldd source/STAR | grep -Eq 'libgomp|libomp'
+
+      - name: Build upstream 2.7.11b compatibility oracle
+        run: |
+          git worktree add "${RUNNER_TEMP}/star-upstream-2.7.11b" 2.7.11b
+          make -C "${RUNNER_TEMP}/star-upstream-2.7.11b/source" -j2 STAR
+          echo "UPSTREAM_STAR_BIN=${RUNNER_TEMP}/star-upstream-2.7.11b/source/STAR" >> "${GITHUB_ENV}"
+
+      - name: Run focused sanitizer tests
+        run: |
+          extras/tests/scripts/testPackedArray.sh
+          extras/tests/scripts/testSuffixComparator.sh
+          extras/tests/scripts/testTranscriptInitialization.sh
+          extras/tests/scripts/testParametersGenomeInitialization.sh
+          extras/tests/scripts/testJunctionAlignment.sh
+          extras/tests/scripts/testBlackstarSha256.sh
+
+      - name: Run genome-insert acceptance tests
+        env:
+          KEEP_TEST_OUTPUT: "1"
+          OUT_DIR: ${{ runner.temp }}/genome-insert-hardening
+          THREADS: "4"
+        run: extras/tests/scripts/testGenomeInsertHardening.sh
+
+      - name: Run SAindex strategy equivalence tests
+        env:
+          KEEP_TEST_OUTPUT: "1"
+          OUT_DIR: ${{ runner.temp }}/saindex-strategies
+          PARALLEL_THREADS: "16"
+        run: extras/tests/scripts/testSAindexParallel.sh
+
+      - name: Check generated-tree cleanliness
+        run: |
+          git diff --check
+          test -z "$(git status --porcelain --untracked-files=no)"
+
+      - name: Upload acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blackstar-acceptance-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: |
+            dist
+            ${{ runner.temp }}/genome-insert-hardening
+            ${{ runner.temp }}/saindex-strategies

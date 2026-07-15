@@ -1,8 +1,10 @@
-STAR 2.7.11b
-==========
+BlackSTAR 2.7.11b-blackstar.1
+============================
 Spliced Transcripts Alignment to a Reference
 © Alexander Dobin, 2009-2024
 https://www.ncbi.nlm.nih.gov/pubmed/23104886
+
+BlackSTAR is a focused performance and genome-insert fork of STAR 2.7.11b. See [the BlackSTAR release boundary](docs/BLACKSTAR_RELEASE.md) for supported changes and explicit exclusions, [the acceptance record](docs/BLACKSTAR_ACCEPTANCE.md) for current verification status, and [the genome-insert guide](docs/STARgenomeInsert.md) for Full, Overlay, and Delta usage.
 
 AUTHOR/SUPPORT
 ==============
@@ -13,7 +15,9 @@ https://groups.google.com/d/forum/rna-star
 HARDWARE/SOFTWARE REQUIREMENTS
 ==============================
   * x86-64 compatible processors
-  * 64 bit Linux or Mac OS X
+  * 64-bit Linux for the tested BlackSTAR release target
+
+The inherited macOS source path remains available but has not been recertified for BlackSTAR-specific features or release artifacts.
 
 MANUAL
 ======
@@ -59,8 +63,8 @@ make STAR CXXFLAGS_SIMD=sse
 ```
 
 
-Compile under Mac OS X
-----------------------
+Upstream compile guidance for Mac OS X (not BlackSTAR release-gated)
+-------------------------------------------------------------------
 
 ```bash
 # 1. Install brew (http://brew.sh/)

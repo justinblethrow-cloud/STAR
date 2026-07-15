@@ -2,7 +2,11 @@ Unreleased
 ==========
 * Added --runMode genomeInsert to persistently add named FASTA sequences and insert-only GTF annotations to an existing genome index and write a complete updated index to a new directory.
 * Added genomeInsert overlay and delta output modes for alignment-time reuse of inserted named sequences without writing a full updated index.
-* Added regression and benchmark scripts for persistent genome sequence insertion.
+* Hardened genomeInsert with packaged inputs, strict versioned manifests, base-index identities, fixed-format Delta payloads, atomic publication, completion manifests, and namespace collision checks.
+* Added memory-adaptive multithreaded genomeGenerate suffix-array, SAindex, and junction-index construction while preserving byte-identical index outputs.
+* Added focused sanitizer tests, biological equivalence tests, adversarial artifact tests, deterministic parallel-path tests, and benchmark failure propagation.
+* Added fork-specific version reporting and documented the supported release boundary; experimental alignReadsMulti and threaded BAM compression are not included.
+* Fixed inherited undefined or uninitialized state in packed-array access, transcriptome setup, genome-transform quantification output, inserted-suffix comparison, and in-memory splice-junction records.
 
 STAR 2.7.11b --- 2024/01/24 ::: Minor in one parameter.
 ===========================================
