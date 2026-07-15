@@ -4,7 +4,7 @@ Spliced Transcripts Alignment to a Reference
 © Alexander Dobin, 2009-2024
 https://www.ncbi.nlm.nih.gov/pubmed/23104886
 
-BlackSTAR is a focused performance and genome-insert fork of STAR 2.7.11b. See [the BlackSTAR release boundary](docs/BLACKSTAR_RELEASE.md) for supported changes and explicit exclusions, [the acceptance record](docs/BLACKSTAR_ACCEPTANCE.md) for current verification status, and [the genome-insert guide](docs/STARgenomeInsert.md) for Full, Overlay, and Delta usage.
+BlackSTAR is a focused performance and genome-insert fork of STAR 2.7.11b. See [the BlackSTAR release boundary](docs/BLACKSTAR_RELEASE.md) for supported changes and explicit exclusions, [the acceptance record](docs/BLACKSTAR_ACCEPTANCE.md) for current verification status, [the promotion runbook](docs/BLACKSTAR_PROMOTION.md) for canary and rollback, and [the genome-insert guide](docs/STARgenomeInsert.md) for Full, Overlay, and Delta usage.
 
 AUTHOR/SUPPORT
 ==============

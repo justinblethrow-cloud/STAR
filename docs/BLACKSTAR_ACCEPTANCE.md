@@ -2,37 +2,48 @@
 
 ## Verdict
 
-The narrow BlackSTAR release line has passed clean-tree full-size `genomeGenerate` recertification and is ready for pipeline shadow testing. The release-blocking correctness defects found in the July 2026 production-readiness audit are fixed and covered by automated regression or adversarial tests.
+BlackSTAR `2.7.11b-blackstar.1` has passed the technical gates for a controlled
+x86-64 Linux canary. The accepted STAR executable was built from commit
+`3053d8effb53f015940794ada24155cfb350881a` and has SHA-256
+`6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117`.
 
-This is not yet a production-promotion approval. One clean CHM13 candidate run is recorded below, but comparative CHM13, GRCh38, and real-order timings remain directional until paired randomized repeats are complete. GitHub Actions also remains unexecuted until GitHub changes are explicitly approved.
+This is a technical qualification, not a record of production deployment.
+Promotion still requires the final GitHub CI run, an explicitly approved
+deployment, and normal operational monitoring. The exact accepted executable,
+not an unrecorded rebuild, is the canary artifact.
 
 ## Supported Boundary
 
 The supported target is x86-64 Linux and includes:
 
-- optimized, deterministic `genomeGenerate` suffix-array, SAindex, and junction-index construction;
-- `genomeInsert Full`, packaged `Overlay`, and cached `Delta` modes with insert-only GTF support;
-- the virtual-SA no-junction Delta alignment path;
+- optimized, deterministic `genomeGenerate` suffix-array, SAindex, and
+  junction-index construction;
+- `genomeInsert Full`, packaged `Overlay`, and cached `Delta` modes with
+  insert-only GTF support;
+- virtual-SA no-junction Delta alignment;
+- strict package identity, validation, and atomic publication;
 - the upstream correctness fixes listed below.
 
-The release excludes `alignReadsMulti`, persistent prefork workers, threaded BAM compression prototypes, and default libdeflate changes. Normal STAR alignment remains the runtime interface.
+The release excludes `alignReadsMulti`, persistent prefork workers, threaded
+BAM-compression prototypes, and default libdeflate changes. Normal STAR
+alignment remains the supported runtime interface.
 
 ## Closed BlackSTAR Findings
 
 | Finding | Resolution | Acceptance evidence |
-| --- | --- | --- |
-| Delta accepted a different same-sized base | Strong aggregate identity binds `Genome`, `SA`, `SAindex`, generation/chromosome metadata, and annotation sidecars; loaded content must match | Alternate valid same-dimension base is rejected before insertion |
-| Mutable external Overlay/Delta inputs | Inserted FASTA/GTF are packaged and independently identified | Original inputs can be mutated and the package relocated without changing results |
-| Partial or mixed output publication | Sibling staging, file and directory sync, completion manifest, and atomic rename | Existing nonempty output is preserved; normal failures clean staging; incomplete output is rejected |
-| Duplicate reference and annotation namespaces | Base/insert contig, gene, and transcript collisions are rejected before publication | Adversarial collision matrix passes |
-| Ambiguous inserted transcript model | A transcript ID cannot cross chromosome, strand, or gene contexts | Conflicting transcript fixture is rejected |
-| Permissive Overlay manifest | Exact v2 key schema, hex paths, required values, and strict unknown/duplicate-key rejection | Unknown-key and path-with-spaces tests pass |
-| Weak Delta format and validation | Fixed little-endian v2 header, dimensions, identities, bounds, exact length, payload digest, and sorted-record validation | Outer and independently re-signed inner corruption tests pass |
-| Unbounded SAindex event memory | Live/configured-RAM budget, bounded batches, deterministic reducer, and allocation fallback | Parallel and low-memory fallback outputs are byte-identical to serial |
-| Overlay `sjdbOverhang` drift | Overlay creation mirrors STAR base-index inheritance and mismatch rules | Default inheritance and explicit mismatch tests pass |
-| Benchmark helper could pass failed or unresolved validation | Required files fail closed; a differing SA is inconclusive and exits 2 without an explicit timing-only override | Known mismatch, insert-only, and unresolved-SA exit tests pass |
+|---|---|---|
+| Delta accepted a different same-sized base | Bind and validate aggregate identity for `Genome`, `SA`, `SAindex`, metadata, and annotation sidecars | Alternate valid same-dimension base rejected |
+| Mutable external Overlay/Delta inputs | Package inserted FASTA/GTF and identify them independently | Source mutation and package relocation do not change results |
+| Partial or mixed publication | Same-filesystem staging, sync, completion manifest, and atomic rename | Failed builds leave no published partial artifact |
+| Duplicate reference or annotation namespaces | Reject base/insert contig, gene, and transcript collisions | Adversarial collision matrix passes |
+| Ambiguous inserted transcript model | Prevent transcript IDs crossing chromosome, strand, or gene contexts | Conflicting transcript fixture rejected |
+| Permissive Overlay manifest | Require exact v2 schema, encoded paths, and duplicate/unknown-key rejection | Malformed and path-with-spaces fixtures pass |
+| Weak Delta format validation | Fixed little-endian v2 header, dimensions, identities, bounds, exact length, digest, and sorted records | Outer and independently re-signed inner corruption rejected |
+| Unbounded SAindex event memory | Live/configured-RAM budget, bounded batches, deterministic reduction, and allocation fallback | Serial, parallel, and low-memory outputs byte-identical |
+| Overlay `sjdbOverhang` drift | Apply base-index inheritance and mismatch rules | Inheritance and explicit mismatch tests pass |
+| Benchmark helper could accept unresolved validation | Fail closed unless an explicit timing-only override is supplied | Known mismatch, insert-only, and unresolved-SA exit tests pass |
 
-## Inherited Fixes Now Covered
+## Inherited Upstream Fixes
 
 These defects predate BlackSTAR but affect paths used by the fork:
 
@@ -42,71 +53,135 @@ These defects predate BlackSTAR but affect paths used by the fork:
 - uninitialized genome-transform quantification-output state;
 - misaligned in-memory splice-junction records.
 
-Focused ASan/UBSan tests cover each relevant component. The genome-transform flag defect was independently reproduced in stock STAR under Valgrind; after the fix, BlackSTAR Delta alignment reports zero invalid or uninitialized-memory errors when leak reporting is excluded.
+Focused ASan/UBSan tests cover the relevant components. The genome-transform
+state defect was independently reproduced in stock STAR under Valgrind; the
+fixed Delta path reports no invalid or uninitialized-memory errors when
+process-lifetime leak reporting is excluded.
 
-## Acceptance Evidence
+## Automated Gates
 
-The local acceptance pass completed successfully with:
+- The release branch passed GitHub Actions job `build-and-test` in
+  [run 29393821858](https://github.com/justinblethrow-cloud/blackSTAR/actions/runs/29393821858).
+- Local gates cover release identity, OpenMP linkage, focused sanitizers,
+  genome-insert equivalence and adversarial rejection, SHA-256 identities,
+  SAindex strategy equivalence, static analysis, Valgrind, and reproducible
+  release packaging.
+- The deployment selector fixture covers candidate success, explicit rollback,
+  automatic fallback, missing executables, checksum failure, canary failure,
+  paths with spaces, concurrent selectors, and preservation of prior state when
+  both binaries fail.
 
-- fork version and OpenMP linkage checks;
-- SHA-256 known vectors, segmented/file identity, and cross-thread determinism;
-- Full and Delta byte reproducibility across thread counts;
-- Full rebuild, Full insertion, Overlay, Delta, and no-junction Delta biological equivalence;
-- SAM body, splice-junction output, and gene-count comparisons;
-- stock STAR 2.7.11b loading and mapping a BlackSTAR Full artifact;
-- stale-base, malformed-GTF, collision, destination, relocation, missing/extra file, and corruption rejection;
-- serial, bounded-parallel, and low-memory SAindex byte identity;
-- focused sanitizer tests and GCC static analysis;
-- Valgrind Delta alignment with zero non-leak memory errors;
-- two independent release builds with identical binaries and tar archives.
+The selector test was added after the linked GitHub run and must pass the final
+CI run before the branch is protected or tagged.
 
-The release builder fixes source date, embedded provenance, build location, locale, timezone, file modes, archive order, ownership, timestamps, and gzip metadata. It records compiler/linkage details and publishes through same-filesystem staging.
+## Full-Genome Performance
 
-### Full-size candidate recertification
+Three randomized/order-balanced pairs built CHM13v2 plus ERCC with the same
+annotation, parameters, host, and 96-thread allocation.
 
-The clean candidate at commit `55873468383b94060ad8d33c92e3990e7e410376` was built twice with byte-identical binaries and release archives. The binary used for the run had SHA-256 `f4545d56ac740fc3bdbf1bdf832c95a7b721cb7232b059c9ec0245f1c69f4c30`.
+| Result | BlackSTAR | Upstream STAR 2.7.11b |
+|---|---:|---:|
+| Mean wall time | 619.30 s | 1225.78 s |
+| Relative result | 49.48% less wall time | control |
+| Speedup | 1.98x | 1.00x |
 
-On July 15, 2026, the candidate built the CHM13v2 plus ERCC index with the production annotation using 96 threads, `genomeSAindexNbases 14`, `genomeChrBinNbits 18`, `limitGenomeGenerateRAM 300000000000`, and `sjdbOverhang 93`.
+Individual BlackSTAR runs were 577.88, 678.90, and 601.11 seconds. Controls
+were 1201.94, 1210.34, and 1265.06 seconds. All 42 comparisons of substantive
+index files were byte-identical. The comparison includes `Genome`, `SA`,
+`SAindex`, chromosome metadata, splice-junction tables, `sjdbInfo.txt`, and all
+gene, transcript, and exon tables.
 
-| Result | Value |
-| --- | --- |
-| Start | `2026-07-15 05:58:05 UTC` |
-| Finish | `2026-07-15 06:08:04 UTC` |
-| Wall time | 600.39 seconds |
-| User/system CPU | 17,208.92 / 1,109.24 seconds |
-| Maximum resident set | 80,877,308 KiB |
-| SA prefix planning / sorting / packing | 53 / 215 / 73 seconds |
-| SAindex construction | 35 seconds |
-| Junction insertion and SAi work | 111 seconds |
-| Final Genome / SA / SAindex writes | 6 / 44 / 5 seconds |
+The benchmark used `genomeSAindexNbases=14`, `genomeChrBinNbits=18`,
+`limitGenomeGenerateRAM=300000000000`, and `sjdbOverhang=93`. Full telemetry is
+retained under `benchmarks/full_chm13_paired_rc_3053d8e_20260715T0620Z/` in the
+audit workspace.
 
-The bounded SAindex path processed 227,756,190 events with a 256,000,000-byte event budget. `Genome`, `SA`, `SAindex`, all chromosome metadata, both splice-junction lists, `sjdbInfo.txt`, and all gene, transcript, and exon tables were byte-identical to the previously accepted CHM13 candidate. `genomeParameters.txt` differed only in executable and output paths.
+## Delta Promotion Gate
 
-The retained input SHA-256 values are:
+BlackSTAR created a GRCh38 plus GFP/GST Delta package with insert-only GTF
+annotations in 50.96 seconds. Peak RSS was 27.98 GiB while loading a 28.05 GiB
+base index; the resulting Delta package was 58,130 bytes.
 
-- CHM13v2 FASTA: `15a4ba1246f6021a89699bf5083da7f2bad3f79c86acd7bc1eb0ca3a13164e85`
-- ERCC FASTA: `ab9720a49d9af5463e535fe0c3f6ea2a8c7f9fbf4a4afe29969fb5c1b9e3a2b4`
-- production GTF: `e06d8b086c61269d5454d8337845f4c6ba817a8a8728bb5fb44cdfe93e116b63`
+Across 24 real paired-end samples, base and Delta runs had exact
+timing-independent mapping metrics, splice-junction output, existing gene
+counts, and special count rows. A 2,000-read GFP/GST spike produced exactly
+1,000 GFP and 1,000 GST counts without changing an existing gene row. An
+independent paired-end GFP fixture produced 100 counted fragments and 200
+proper-pair records; the base index mapped none.
 
-The immediately preceding accepted optimized run took 685.29 seconds with the same reference and principal parameters. The observed 84.90-second, 12.4% difference is promising but remains a cross-date comparison rather than a paired randomized performance claim. Command, logs, stage timings, CPU samples, and I/O telemetry are retained under `benchmarks/full_chm13_hardened_rc_5587346_20260715T0557Z/` in the local project workspace.
+The non-synthetic full SAM record multiset was exact after deterministic record
+sorting. Raw threaded output order can differ; record content did not.
 
-## Segregated Residual Debt
+Delta alignment is not runtime-free. In the 24-sample sweep, mean base-index
+alignment time was 62.26 seconds and mean Delta time was 71.48 seconds, a
+descriptive 9.22-second or 14.81% increase for these short jobs. All base runs
+preceded all Delta runs, so this is not an order-balanced performance estimate.
+It replaces earlier informal language that Delta had no meaningful startup
+penalty.
 
-The following is inherited upstream STAR debt, not a BlackSTAR regression:
+Evidence is retained under
+`benchmarks/grch38_delta_promotion_rc_3053d8e_20260715/` in the audit workspace.
 
-- broad process-lifetime allocations remain reported as leaks at program exit;
+## Downstream Shadow
+
+A stock run, repeated stock run, BlackSTAR base run, and BlackSTAR Delta run
+were compared through coordinate sorting, UMI deduplication, and gene counting.
+The normalized non-synthetic STAR record multiset was identical in all four
+arms.
+
+The shadow exposed an inherited downstream issue rather than a BlackSTAR
+alignment defect: the deployed UMIcollapse `MapQualMerge` path was sensitive to
+coordinate-tie input order. Repeated stock STAR alone changed 11 gene rows by
+2.52 counts total even though its alignment-record multiset was unchanged.
+
+A separate DUMI hardening commit,
+`2ef54b287f83864ee83b3541a7a29236547b72df`, adds stable equal-map-quality and
+equal-frequency UMI tie-breakers. With that patch:
+
+- stock, repeated stock, and BlackSTAR base count files were byte-identical;
+- all four non-synthetic deduplicated SAM hashes were identical;
+- Delta changed only GFP and GST, each by exactly 1,000 counts;
+- no existing gene row changed.
+
+The deterministic tie-breakers added 3.14 seconds on average to the UMI step,
+or about 1.7% of this representative full pipeline. This companion patch is an
+integration requirement when byte-stable downstream results are required; it
+is not part of the STAR source tree.
+
+## Canary And Fallback
+
+`extras/scripts/selectBlackSTAR.sh` validates pinned candidate, fallback, and
+canary checksums plus executable versions, requires candidate OpenMP linkage, runs an isolated
+mapping canary, revalidates the generation-local executable copy, serializes
+transitions, and atomically switches a single generation symlink. It also
+supports an explicit `fallback-only` rollback policy.
+
+The host gate used an upstream-STAR-built index and deterministic mapped and
+unmapped reads. It passed candidate selection, explicit fallback, automatic
+fallback on candidate checksum failure, candidate restoration, and rejection
+of a both-invalid transition without changing the restored state. The live DGE
+installation was not modified. Evidence is retained under
+`benchmarks/blackstar_canary_rc_3053d8e_20260715/`.
+
+## Residual Risk
+
+The following are inherited or explicitly out of scope, not unresolved
+BlackSTAR regressions:
+
+- broad process-lifetime allocations remain reported as leaks at exit;
 - longstanding compiler warnings remain in SAM-header and read-file code;
 - bundled HTSlib is old and is not a suitable base for new compression work;
-- macOS behavior has not been recertified for BlackSTAR-specific code.
+- macOS and non-x86-64 targets have not been recertified;
+- Overlay and Delta require `NoSharedMemory`;
+- full-index performance claims apply to the measured host, reference, and
+  parameters; other systems must be benchmarked independently.
 
-These items should be tracked separately. They do not invalidate the passing semantic and non-leak memory checks for the supported release paths.
+## Remaining Promotion Actions
 
-## Remaining Release Gates
-
-1. Run GitHub Actions after explicit approval and require it on the release branch.
-2. Repeat paired randomized CHM13 or GRCh38 full-index benchmarks on a quiet host, preserving system and I/O telemetry.
-3. Repeat Delta creation and base-versus-Delta alignment on broad real paired-end data plus synthetic added-reference reads.
-4. Compare normalized alignment records, junctions, gene counts, UMI-deduplicated outputs, final matrices, and downstream UI/DGE inputs.
-5. Shadow the candidate in the Plasmidsaurus pipeline, then canary with automatic fallback to stock STAR.
-
-The 600.39-second candidate result is newly measured. No cross-date performance comparison should be promoted as a release claim until the paired benchmark gate is complete.
+1. Commit the selector, tests, and final records.
+2. Push only after explicit approval and require a green `build-and-test` check.
+3. Publish the exact accepted candidate checksum with the release artifact.
+4. Deploy through the selector, shadow first, then use a bounded production
+   canary with the pinned stock fallback.
+5. Promote further only after alignment, junction, count, error, wall-time, and
+   memory telemetry remain within the documented acceptance bounds.

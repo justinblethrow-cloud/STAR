@@ -53,6 +53,9 @@ jobs:
           extras/tests/scripts/testJunctionAlignment.sh
           extras/tests/scripts/testBlackstarSha256.sh
 
+      - name: Run deployment selector tests
+        run: extras/tests/scripts/testBlackstarSelector.sh
+
       - name: Run genome-insert acceptance tests
         env:
           KEEP_TEST_OUTPUT: "1"
