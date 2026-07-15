@@ -3,14 +3,17 @@
 ## Verdict
 
 BlackSTAR `2.7.11b-blackstar.1` has passed the technical gates for a controlled
-x86-64 Linux canary. The accepted STAR executable was built from commit
-`3053d8effb53f015940794ada24155cfb350881a` and has SHA-256
+x86-64 Linux canary. The full performance and equivalence campaign used commit
+`3053d8effb53f015940794ada24155cfb350881a`, binary SHA-256
 `6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117`.
+Subsequent release-record and selector commits do not change `source/`.
 
 This is a technical qualification, not a record of production deployment.
 Promotion still requires the final GitHub CI run, an explicitly approved
-deployment, and normal operational monitoring. The exact accepted executable,
-not an unrecorded rebuild, is the canary artifact.
+deployment, and normal operational monitoring. The deployable artifact must be
+a clean build from the final promotion commit; its checksum is taken from
+`build-info.tsv` and published release metadata. Do not infer that checksum
+from the benchmark artifact above.
 
 ## Supported Boundary
 
@@ -178,10 +181,10 @@ BlackSTAR regressions:
 
 ## Remaining Promotion Actions
 
-1. Commit the selector, tests, and final records.
-2. Push only after explicit approval and require a green `build-and-test` check.
-3. Publish the exact accepted candidate checksum with the release artifact.
-4. Deploy through the selector, shadow first, then use a bounded production
+1. Push only after explicit approval and require a green `build-and-test` check.
+2. Build from the final clean commit and publish its exact `build-info.tsv` and
+   executable/archive checksums with the release artifact.
+3. Deploy through the selector, shadow first, then use a bounded production
    canary with the pinned stock fallback.
-5. Promote further only after alignment, junction, count, error, wall-time, and
+4. Promote further only after alignment, junction, count, error, wall-time, and
    memory telemetry remain within the documented acceptance bounds.

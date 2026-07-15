@@ -3,19 +3,22 @@
 This runbook promotes an already accepted BlackSTAR executable. It does not
 authorize deployment and does not replace environment-specific pipeline tests.
 
-## Accepted Artifact
+## Qualification Anchors
 
 | Field | Value |
 |---|---|
 | Version | `2.7.11b-blackstar.1` |
-| Source commit | `3053d8effb53f015940794ada24155cfb350881a` |
-| Executable SHA-256 | `6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117` |
+| Full-size benchmark commit | `3053d8effb53f015940794ada24155cfb350881a` |
+| Benchmark executable SHA-256 | `6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117` |
 | Platform | x86-64 Linux |
 | Required linkage | `libgomp` or `libomp` |
 
-Use the exact executable above for the first canary. A rebuild has a different
-artifact identity even when source behavior is unchanged and must receive a new
-checksum plus focused release verification.
+The deployable executable is a clean release build from the final promotion
+commit. Verify that `source/` has no changes relative to the benchmark commit,
+then take the deployment checksum from that build's `build-info.tsv`. Embedded
+Git provenance means a documentation-only commit still changes the executable
+checksum. Record the final checksum in release metadata rather than editing it
+back into the source commit.
 
 ## Prerequisites
 
@@ -36,7 +39,7 @@ checksum plus focused release verification.
 ```bash
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
-  --candidate-sha256 6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117 \
+  --candidate-sha256 CANDIDATE_SHA256 \
   --candidate-version 2.7.11b-blackstar.1 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
@@ -65,7 +68,7 @@ Do not bypass the selector with an unpinned binary path.
 ```bash
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
-  --candidate-sha256 6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117 \
+  --candidate-sha256 CANDIDATE_SHA256 \
   --candidate-version 2.7.11b-blackstar.1 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
