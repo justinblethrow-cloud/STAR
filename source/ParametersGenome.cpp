@@ -8,6 +8,13 @@ void ParametersGenome::initialize(Parameters *pPin)
     gInsertOverlay=false;
     gInsertOverlayDeltaFile="-";
     gInsertOverlayGTFhasJunctions=false;
+    gInsertOutDirFinal="-";
+    gInsertStageDir="-";
+    gInsertBaseSha256="-";
+    gInsertBaseSha256Expected="-";
+    gInsertFastaSha256="-";
+    gInsertGtfSha256="-";
+    gInsertArtifactMode="-";
     
     if (gDir.back()!='/') {
         gDir += '/';
@@ -36,7 +43,7 @@ void ParametersGenome::initialize(Parameters *pPin)
         exitWithError(errOut.str(), std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
     };
     
-    transform.outYes = transform.outSAM = transform.outSJ = false;
+    transform.outYes = transform.outSAM = transform.outSJ = transform.outQuant = false;
     if (transform.output.at(0) == "None") {
         //nothing to do
     } else {

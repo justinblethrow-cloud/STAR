@@ -44,7 +44,16 @@ void Genome::writeGenomeIndex(const string dirOut)
         pGe.gFastaFiles.insert(pGe.gFastaFiles.end(), genomeFastaFilesSaved.begin(), genomeFastaFilesSaved.end());
     };
 
+    const string commandLineFullSaved=P.commandLineFull;
+    ostringstream canonicalProvenance;
+    canonicalProvenance << "BlackSTAR genomeInsert Full --genomeDir " << pGe.gDir << " --genomeFastaFiles";
+    for (vector<string>::const_iterator it=pGe.gFastaFiles.begin(); it!=pGe.gFastaFiles.end(); ++it) {
+        canonicalProvenance << " " << *it;
+    };
+    if (pGe.sjdbGTFfile!="-") canonicalProvenance << " --sjdbGTFfile " << pGe.sjdbGTFfile;
+    P.commandLineFull=canonicalProvenance.str();
     genomeParametersWrite(dirOut1+"/genomeParameters.txt", P, ERROR_OUT, *this);
+    P.commandLineFull=commandLineFullSaved;
     pGe.gFastaFiles=genomeFastaFilesSaved;
 
     time_t rawTime;

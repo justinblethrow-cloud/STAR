@@ -12,9 +12,16 @@ public:
     string gLoad;
     string gInsertOutDir;
     string gInsertOutMode;
+    string gInsertOutDirFinal;
+    string gInsertStageDir;
     bool gInsertOverlay;
     string gInsertOverlayDeltaFile;
     bool gInsertOverlayGTFhasJunctions;
+    string gInsertBaseSha256;
+    string gInsertBaseSha256Expected;
+    string gInsertFastaSha256;
+    string gInsertGtfSha256;
+    string gInsertArtifactMode;
     
     uint32 gType;//type code
     string gTypeString;
@@ -28,7 +35,7 @@ public:
         string typeString;
         string vcfFile;
         vector<string> output; //which output to transform
-        bool outYes, outSAM, outSJ, outQuant;
+        bool outYes=false, outSAM=false, outSJ=false, outQuant=false;
     } transform;
     
     uint gSAindexNbases;//length of the SA pre-index strings

@@ -109,17 +109,20 @@ int main(int argInN, char *argIn[])
     }
     else if (P.runMode == "genomeInsert")
     {
+        genomeInsertOutputPrepare(P);
         if (P.pGe.gInsertOutMode=="Overlay") {
             genomeInsertOverlayWrite(P);
+            genomeInsertOutputFinalize(P);
             sysRemoveDir(P.outFileTmp);
             P.inOut->logMain << "DONE: Genome sequence insertion overlay, EXITING\n"
                              << flush;
             exit(0);
         };
         if (P.pGe.gInsertOutMode=="Delta") {
-            genomeInsertOverlayWrite(P);
             Genome genomeMain(P, P.pGe);
             genomeMain.genomeLoad();
+            genomeInsertOverlayWrite(P);
+            genomeInsertOutputFinalize(P);
             sysRemoveDir(P.outFileTmp);
             P.inOut->logMain << "DONE: Genome sequence insertion delta, EXITING\n"
                              << flush;
@@ -137,6 +140,7 @@ int main(int argInN, char *argIn[])
         };
 
         genomeMain.writeGenomeIndex(P.pGe.gInsertOutDir);
+        genomeInsertOutputFinalize(P);
         sysRemoveDir(P.outFileTmp);
         P.inOut->logMain << "DONE: Genome sequence insertion, EXITING\n"
                          << flush;

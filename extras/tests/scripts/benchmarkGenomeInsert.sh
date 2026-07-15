@@ -31,6 +31,8 @@ base_fasta_files_input="${BASE_FASTA_FILES:-}"
 run_full_rebuild="${RUN_FULL_REBUILD:-auto}"
 sjdb_gtf_file="${SJDB_GTF_FILE:-}"
 insert_gtf_file="${INSERT_GTF_FILE:-}"
+require_insert_gtf="${REQUIRE_INSERT_GTF:-1}"
+allow_unvalidated_sa_difference="${ALLOW_UNVALIDATED_SA_DIFFERENCE:-0}"
 sjdb_overhang="${SJDB_OVERHANG:-}"
 genome_saindex_nbases="${GENOME_SAINDEX_NBASES:-14}"
 genome_chrbin_nbits="${GENOME_CHRBIN_NBITS:-18}"
@@ -81,6 +83,16 @@ if [[ -n "${insert_gtf_file}" && ! -r "${insert_gtf_file}" ]]; then
     exit 1
 fi
 
+if [[ "${require_insert_gtf}" == "1" && -z "${insert_gtf_file}" ]]; then
+    echo "ERROR: INSERT_GTF_FILE is required by default; set REQUIRE_INSERT_GTF=0 for an explicitly unannotated benchmark" >&2
+    exit 1
+fi
+
+if [[ "${allow_unvalidated_sa_difference}" != "0" && "${allow_unvalidated_sa_difference}" != "1" ]]; then
+    echo "ERROR: ALLOW_UNVALIDATED_SA_DIFFERENCE must be 0 or 1" >&2
+    exit 1
+fi
+
 if [[ "${run_full_rebuild}" == "auto" ]]; then
     if [[ "${#base_fasta_files[@]}" -gt 0 && -n "${base_fasta_files[0]:-}" ]]; then
         run_full_rebuild=1
@@ -89,8 +101,15 @@ if [[ "${run_full_rebuild}" == "auto" ]]; then
     fi
 fi
 
+if [[ "${run_full_rebuild}" == "1" && -n "${insert_gtf_file}" && -z "${sjdb_gtf_file}" ]]; then
+    echo "ERROR: SJDB_GTF_FILE must contain the combined base and inserted annotations for a full-rebuild comparison" >&2
+    exit 1
+fi
+
 mkdir -p "${out_root}"
 out_root="$(cd "${out_root}" && pwd)"
+validation_failed=0
+validation_inconclusive=0
 
 summary="${out_root}/summary.tsv"
 validation="${out_root}/validation.tsv"
@@ -137,6 +156,8 @@ parse_time() {
     printf 'BASE_FASTA_FILES\t%s\n' "${base_fasta_files_input:-NA}"
     printf 'INSERT_FASTA_FILES\t%s\n' "${insert_fasta_files_input}"
     printf 'INSERT_GTF_FILE\t%s\n' "${insert_gtf_file:-NA}"
+    printf 'REQUIRE_INSERT_GTF\t%s\n' "${require_insert_gtf}"
+    printf 'ALLOW_UNVALIDATED_SA_DIFFERENCE\t%s\n' "${allow_unvalidated_sa_difference}"
     printf 'RUN_FULL_REBUILD\t%s\n' "${run_full_rebuild}"
     printf 'SJDB_GTF_FILE\t%s\n' "${sjdb_gtf_file:-NA}"
     printf 'SJDB_OVERHANG\t%s\n' "${sjdb_overhang:-NA}"
@@ -206,20 +227,53 @@ if [[ "${run_full_rebuild}" == "1" ]]; then
         "${full_rebuild_index}" "${out_root}/full_rebuild.time" "${out_root}/full_rebuild.command.txt" >> "${summary}"
 
     printf 'file\tstatus\n' > "${validation}"
-    for file in Genome SAindex chrName.txt chrStart.txt chrLength.txt chrNameLength.txt sjdbInfo.txt sjdbList.out.tab sjdbList.fromGTF.out.tab exonInfo.tab exonGeTrInfo.tab geneInfo.tab transcriptInfo.tab; do
+    required_files=(Genome SAindex chrName.txt chrStart.txt chrLength.txt chrNameLength.txt)
+    optional_files=(sjdbInfo.txt sjdbList.out.tab sjdbList.fromGTF.out.tab exonInfo.tab exonGeTrInfo.tab geneInfo.tab transcriptInfo.tab)
+    for file in "${required_files[@]}"; do
+        if [[ ! -e "${incremental_index}/${file}" || ! -e "${full_rebuild_index}/${file}" ]]; then
+            printf '%s\tmissing\n' "${file}" >> "${validation}"
+            validation_failed=1
+        elif cmp -s "${incremental_index}/${file}" "${full_rebuild_index}/${file}"; then
+            printf '%s\tpass\n' "${file}" >> "${validation}"
+        else
+            printf '%s\tfail\n' "${file}" >> "${validation}"
+            validation_failed=1
+        fi
+    done
+    for file in "${optional_files[@]}"; do
         if [[ -e "${incremental_index}/${file}" || -e "${full_rebuild_index}/${file}" ]]; then
-            if cmp -s "${incremental_index}/${file}" "${full_rebuild_index}/${file}"; then
+            if [[ -e "${incremental_index}/${file}" && -e "${full_rebuild_index}/${file}" ]] \
+                    && cmp -s "${incremental_index}/${file}" "${full_rebuild_index}/${file}"; then
                 printf '%s\tpass\n' "${file}" >> "${validation}"
             else
                 printf '%s\tfail\n' "${file}" >> "${validation}"
+                validation_failed=1
             fi
         fi
     done
     if cmp -s "${incremental_index}/SA" "${full_rebuild_index}/SA"; then
         printf 'SA\tbyte-identical\n' >> "${validation}"
     else
-        printf 'SA\tdifferent-equivalent-ordering\n' >> "${validation}"
+        printf 'SA\tdifferent-requires-alignment-validation\n' >> "${validation}"
+        validation_inconclusive=1
+    fi
+    if [[ "${validation_failed}" -ne 0 ]]; then
+        printf 'overall\tfail\n' >> "${validation}"
+    elif [[ "${validation_inconclusive}" -ne 0 ]]; then
+        printf 'overall\tinconclusive-SA-requires-alignment-validation\n' >> "${validation}"
+    else
+        printf 'overall\tpass\n' >> "${validation}"
     fi
 fi
 
 cat "${summary}"
+if [[ "${run_full_rebuild}" == "1" && "${validation_failed}" -ne 0 ]]; then
+    echo "ERROR: incremental and full-rebuild index validation failed; see ${validation}" >&2
+    exit 1
+fi
+if [[ "${run_full_rebuild}" == "1" && "${validation_inconclusive}" -ne 0 \
+        && "${allow_unvalidated_sa_difference}" != "1" ]]; then
+    echo "ERROR: SA differs and requires mapping-level validation; see ${validation}" >&2
+    echo "Set ALLOW_UNVALIDATED_SA_DIFFERENCE=1 only to collect timing from an intentionally inconclusive run" >&2
+    exit 2
+fi

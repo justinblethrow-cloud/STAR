@@ -12,21 +12,75 @@
 #include "binarySearch2.h"
 #include "funCompareUintAndSuffixes.h"
 #include "funCompareUintAndSuffixesMemcmp.h"
+#include "BlackstarSha256.h"
+#include <array>
 #include <cmath>
+#include <limits>
 #include <map>
 #include "sortSuffixesBucket.h"
 
 namespace {
-const string deltaMagic = "STARgenomeInsertDeltaV1";
+const unsigned char deltaMagic[16] = {'B','S','T','A','R','D','E','L','T','A','2',0,0,0,0,0};
+const uint32_t deltaVersion=2;
+const uint32_t deltaHeaderSize=232;
+const uint32_t deltaByteOrder=0x01020304U;
+const uint32_t deltaFlagGtf=1U;
 
-uint64 genomeInsertDeltaHash(const char *seq, uint64 length)
+void putUint32LE(vector<unsigned char> &buffer, uint64 offset, uint32_t value)
 {
-    uint64 hash=14695981039346656037ULL;
-    for (uint64 ii=0; ii<length; ii++) {
-        hash ^= (uint64) (unsigned char) seq[ii];
-        hash *= 1099511628211ULL;
-    };
-    return hash;
+    for (uint ii=0; ii<4; ++ii) buffer.at(offset+ii)=static_cast<unsigned char>((value >> (8U*ii)) & 0xffU);
+}
+
+void putUint64LE(vector<unsigned char> &buffer, uint64 offset, uint64 value)
+{
+    for (uint ii=0; ii<8; ++ii) buffer.at(offset+ii)=static_cast<unsigned char>((value >> (8U*ii)) & 0xffU);
+}
+
+uint32_t getUint32LE(const vector<unsigned char> &buffer, uint64 offset)
+{
+    uint32_t value=0;
+    for (uint ii=0; ii<4; ++ii) value|=static_cast<uint32_t>(buffer.at(offset+ii)) << (8U*ii);
+    return value;
+}
+
+uint64 getUint64LE(const vector<unsigned char> &buffer, uint64 offset)
+{
+    uint64 value=0;
+    for (uint ii=0; ii<8; ++ii) value|=static_cast<uint64>(buffer.at(offset+ii)) << (8U*ii);
+    return value;
+}
+
+void putDigest(vector<unsigned char> &buffer, uint64 offset, const string &digest, const string &label, Parameters &P)
+{
+    string bytes;
+    if (!blackstarHexDecode(digest, bytes) || bytes.size()!=32) {
+        ostringstream error;
+        error << "EXITING because of fatal internal ERROR: invalid " << label << " identity while writing genome insert delta\n";
+        exitWithError(error.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INCONSISTENT_DATA, P);
+    }
+    copy(bytes.begin(), bytes.end(), buffer.begin()+offset);
+}
+
+string getDigest(const vector<unsigned char> &buffer, uint64 offset)
+{
+    array<unsigned char,32> digest;
+    copy(buffer.begin()+offset, buffer.begin()+offset+digest.size(), digest.begin());
+    return BlackstarSha256::hex(digest);
+}
+
+string sequenceIdentity(const char *sequence, uint64 length, uint threadN)
+{
+    vector<BlackstarMemorySegment> segments;
+    segments.push_back(BlackstarMemorySegment(sequence, length));
+    return blackstarMerkleSha256(segments, threadN);
+}
+
+void deltaInputError(const string &message, const string &fileName, Parameters &P)
+{
+    ostringstream error;
+    error << "EXITING because of fatal INPUT FILE error: " << message << "\n";
+    error << "Delta file: " << fileName << "\n";
+    exitWithError(error.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
 }
 
 uint64 genomeInsertCountBefore(uint64 *indArray, uint64 nInd, uint64 oldSAindex)
@@ -115,20 +169,50 @@ void insertSeqSAwriteChunk(PackedArray &SA1, vector<uint> &oldSAvalues, uint64 o
     };
 }
 
-uint64 genomeInsertDeltaHeaderValue(const map<string,uint64> &header, const string &key, const string &fileName, Parameters &P)
-{
-    map<string,uint64>::const_iterator value=header.find(key);
-    if (value==header.end()) {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file is missing header value " << key << "\n";
-        errOut << "Delta file: " << fileName << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
-    return value->second;
-}
-
 void writeGenomeInsertDelta(const string &fileName, uint64 *indArray, uint64 nInd, uint64 nG, uint64 nG1, uint64 nG2, const char *G1, PackedArray &SA, Parameters &P, Genome &mapGen)
 {
+    if (nInd>numeric_limits<uint64>::max()/16) {
+        exitWithError("EXITING because of fatal internal ERROR: genome insert Delta payload is too large\n",
+                      std::cerr, P.inOut->logMain, EXIT_CODE_INCONSISTENT_DATA, P);
+    }
+    const uint64 payloadBytes=16*nInd;
+    if (payloadBytes>numeric_limits<size_t>::max()) {
+        exitWithError("EXITING because of fatal internal ERROR: genome insert Delta payload exceeds addressable memory\n",
+                      std::cerr, P.inOut->logMain, EXIT_CODE_MEMORY_ALLOCATION, P);
+    }
+    vector<unsigned char> payload(static_cast<size_t>(payloadBytes));
+    for (uint64 ii=0; ii<nInd; ++ii) {
+        putUint64LE(payload, 16*ii, indArray[2*ii]);
+        putUint64LE(payload, 16*ii+8, indArray[2*ii+1]);
+    }
+    vector<BlackstarMemorySegment> payloadSegments;
+    payloadSegments.push_back(BlackstarMemorySegment(payload.data(), payload.size()));
+    const string payloadDigest=blackstarMerkleSha256(payloadSegments, P.runThreadN);
+    const string insertDigest=sequenceIdentity(G1, nG1, P.runThreadN);
+    const bool hasGtf=P.pGe.gInsertGtfSha256!="-";
+
+    vector<unsigned char> header(deltaHeaderSize, 0);
+    copy(deltaMagic, deltaMagic+sizeof(deltaMagic), header.begin());
+    putUint32LE(header, 16, deltaVersion);
+    putUint32LE(header, 20, deltaHeaderSize);
+    putUint32LE(header, 24, deltaByteOrder);
+    putUint32LE(header, 28, hasGtf ? deltaFlagGtf : 0);
+    putUint32LE(header, 32, 64);
+    putUint32LE(header, 36, SA.wordLength);
+    putUint32LE(header, 40, mapGen.pGe.gSAindexNbases);
+    putUint32LE(header, 44, 0);
+    putUint64LE(header, 48, mapGen.pGe.gSuffixLengthMax);
+    putUint64LE(header, 56, nG);
+    putUint64LE(header, 64, nG1);
+    putUint64LE(header, 72, nG2);
+    putUint64LE(header, 80, SA.length);
+    putUint64LE(header, 88, nInd);
+    putUint64LE(header, 96, payloadBytes);
+    putDigest(header, 104, mapGen.genomeInsertBaseSha256, "base index", P);
+    putDigest(header, 136, insertDigest, "inserted sequence", P);
+    if (hasGtf) putDigest(header, 168, P.pGe.gInsertGtfSha256, "inserted GTF", P);
+    putDigest(header, 200, payloadDigest, "Delta payload", P);
+
     ofstream deltaOut(fileName.c_str(), ios::out | ios::binary);
     if (deltaOut.fail()) {
         ostringstream errOut;
@@ -136,18 +220,8 @@ void writeGenomeInsertDelta(const string &fileName, uint64 *indArray, uint64 nIn
         exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_FILE_OPEN, P);
     };
 
-    deltaOut << deltaMagic << "\n";
-    deltaOut << "nG\t" << nG << "\n";
-    deltaOut << "nG1\t" << nG1 << "\n";
-    deltaOut << "nG2\t" << nG2 << "\n";
-    deltaOut << "nSA\t" << SA.length << "\n";
-    deltaOut << "SAwordLength\t" << SA.wordLength << "\n";
-    deltaOut << "gSAindexNbases\t" << mapGen.pGe.gSAindexNbases << "\n";
-    deltaOut << "gSuffixLengthMax\t" << mapGen.pGe.gSuffixLengthMax << "\n";
-    deltaOut << "insertSeqHash\t" << genomeInsertDeltaHash(G1, nG1) << "\n";
-    deltaOut << "nInd\t" << nInd << "\n";
-    deltaOut << "END\n";
-    deltaOut.write((char*) indArray, (streamsize) (2*nInd*sizeof(uint64)));
+    deltaOut.write(reinterpret_cast<const char*>(header.data()), static_cast<streamsize>(header.size()));
+    if (!payload.empty()) deltaOut.write(reinterpret_cast<const char*>(payload.data()), static_cast<streamsize>(payload.size()));
     if (deltaOut.fail()) {
         ostringstream errOut;
         errOut << "EXITING because of fatal OUTPUT FILE error while writing genome insert delta file " << fileName << "\n";
@@ -165,63 +239,76 @@ uint64 readGenomeInsertDelta(const string &fileName, uint64 *indArray, uint64 in
         exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
     };
 
-    string line;
-    getline(deltaIn, line);
-    if (line!=deltaMagic) {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error: unsupported genome insert delta file " << fileName << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
+    vector<unsigned char> header(deltaHeaderSize);
+    deltaIn.read(reinterpret_cast<char*>(header.data()), static_cast<streamsize>(header.size()));
+    if (deltaIn.gcount()!=static_cast<streamsize>(header.size())
+            || !equal(deltaMagic, deltaMagic+sizeof(deltaMagic), header.begin())
+            || getUint32LE(header, 16)!=deltaVersion
+            || getUint32LE(header, 20)!=deltaHeaderSize
+            || getUint32LE(header, 24)!=deltaByteOrder
+            || getUint32LE(header, 32)!=64
+            || getUint32LE(header, 44)!=0) {
+        deltaInputError("unsupported or malformed BlackSTAR Delta v2 header", fileName, P);
+    }
+    const uint32_t flags=getUint32LE(header, 28);
+    if ((flags & ~deltaFlagGtf)!=0) deltaInputError("unknown flags in BlackSTAR Delta v2 header", fileName, P);
 
-    map<string,uint64> header;
-    while (getline(deltaIn, line)) {
-        if (line=="END") {
-            break;
-        };
-        istringstream lineStream(line);
-        string key;
-        uint64 value=0;
-        if (!(lineStream >> key >> value)) {
-            ostringstream errOut;
-            errOut << "EXITING because of fatal INPUT FILE error: malformed genome insert delta header in " << fileName << "\n";
-            exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-        };
-        header[key]=value;
-    };
-    if (line!="END") {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error: malformed genome insert delta file " << fileName << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
+    const uint64 nInd=getUint64LE(header, 88);
+    const uint64 payloadBytes=getUint64LE(header, 96);
+    if (nInd>indArrayCapacity || nInd>2*nG1 || nInd>numeric_limits<uint64>::max()/16
+            || payloadBytes!=16*nInd || payloadBytes>numeric_limits<size_t>::max()) {
+        deltaInputError("invalid suffix count or payload length", fileName, P);
+    }
+    if (getUint32LE(header, 36)!=SA.wordLength
+            || getUint32LE(header, 40)!=mapGen.pGe.gSAindexNbases
+            || getUint64LE(header, 48)!=mapGen.pGe.gSuffixLengthMax
+            || getUint64LE(header, 56)!=nG
+            || getUint64LE(header, 64)!=nG1
+            || getUint64LE(header, 72)!=nG2
+            || getUint64LE(header, 80)!=SA.length
+            || getDigest(header, 104)!=mapGen.genomeInsertBaseSha256
+            || getDigest(header, 136)!=sequenceIdentity(G1, nG1, P.runThreadN)) {
+        deltaInputError("Delta does not match the loaded base index or inserted sequence", fileName, P);
+    }
+    const bool hasGtf=(flags & deltaFlagGtf)!=0;
+    if (hasGtf!=(P.pGe.gInsertGtfSha256!="-")
+            || (hasGtf && getDigest(header, 168)!=P.pGe.gInsertGtfSha256)) {
+        deltaInputError("Delta does not match the inserted GTF", fileName, P);
+    }
+    if (!hasGtf) {
+        for (uint ii=168; ii<200; ++ii) {
+            if (header[ii]!=0) deltaInputError("nonzero absent-GTF identity", fileName, P);
+        }
+    }
 
-    if (genomeInsertDeltaHeaderValue(header, "nG", fileName, P)!=nG
-            || genomeInsertDeltaHeaderValue(header, "nG1", fileName, P)!=nG1
-            || genomeInsertDeltaHeaderValue(header, "nG2", fileName, P)!=nG2
-            || genomeInsertDeltaHeaderValue(header, "nSA", fileName, P)!=SA.length
-            || genomeInsertDeltaHeaderValue(header, "SAwordLength", fileName, P)!=SA.wordLength
-            || genomeInsertDeltaHeaderValue(header, "gSAindexNbases", fileName, P)!=mapGen.pGe.gSAindexNbases
-            || genomeInsertDeltaHeaderValue(header, "gSuffixLengthMax", fileName, P)!=mapGen.pGe.gSuffixLengthMax
-            || genomeInsertDeltaHeaderValue(header, "insertSeqHash", fileName, P)!=genomeInsertDeltaHash(G1, nG1)) {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file does not match the loaded base genome/index or inserted FASTA files\n";
-        errOut << "Delta file: " << fileName << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
+    vector<unsigned char> payload(static_cast<size_t>(payloadBytes));
+    if (!payload.empty()) deltaIn.read(reinterpret_cast<char*>(payload.data()), static_cast<streamsize>(payload.size()));
+    if ((!payload.empty() && deltaIn.gcount()!=static_cast<streamsize>(payload.size())) || deltaIn.bad()) {
+        deltaInputError("truncated Delta payload", fileName, P);
+    }
+    char trailing=0;
+    if (deltaIn.read(&trailing, 1)) deltaInputError("trailing data after Delta payload", fileName, P);
+    vector<BlackstarMemorySegment> payloadSegments;
+    payloadSegments.push_back(BlackstarMemorySegment(payload.data(), payload.size()));
+    if (blackstarMerkleSha256(payloadSegments, P.runThreadN)!=getDigest(header, 200)) {
+        deltaInputError("Delta payload checksum mismatch", fileName, P);
+    }
 
-    uint64 nInd=genomeInsertDeltaHeaderValue(header, "nInd", fileName, P);
-    if (nInd>indArrayCapacity) {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error: genome insert delta file contains too many suffix indices: " << nInd << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
-
-    deltaIn.read((char*) indArray, (streamsize) (2*nInd*sizeof(uint64)));
-    if (deltaIn.fail()) {
-        ostringstream errOut;
-        errOut << "EXITING because of fatal INPUT FILE error while reading genome insert delta file " << fileName << "\n";
-        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
-    };
-
+    for (uint64 ii=0; ii<nInd; ++ii) {
+        indArray[2*ii]=getUint64LE(payload, 16*ii);
+        indArray[2*ii+1]=getUint64LE(payload, 16*ii+8);
+        if (indArray[2*ii]>SA.length || indArray[2*ii+1]>=2*nG1) {
+            deltaInputError("out-of-range suffix record in Delta payload", fileName, P);
+        }
+    }
+    g_funCompareUintAndSuffixesMemcmp_G=const_cast<char*>(G1);
+    g_funCompareUintAndSuffixesMemcmp_N=2*nG1;
+    g_funCompareUintAndSuffixesMemcmp_L=mapGen.pGe.gSuffixLengthMax;
+    for (uint64 ii=1; ii<nInd; ++ii) {
+        if (funCompareUintAndSuffixesMemcmp(indArray+2*(ii-1), indArray+2*ii)>0) {
+            deltaInputError("unsorted suffix records in Delta payload", fileName, P);
+        }
+    }
     return nInd;
 };
 
@@ -348,7 +435,7 @@ uint insertSeqSA(PackedArray & SA, PackedArray & SA1, PackedArray & SAi, char * 
 
     time_t rawtime;
     if (P.pGe.gInsertOverlayDeltaFile!="-") {
-        nInd=readGenomeInsertDelta(P.pGe.gInsertOverlayDeltaFile, indArray, 2*nG1, nG, nG1, nG2, G1, SA, P, mapGen);
+        nInd=readGenomeInsertDelta(P.pGe.gInsertOverlayDeltaFile, indArray, 2*nG1, nG, nG1, nG2, seq1[0], SA, P, mapGen);
         time ( &rawtime );
         P.inOut->logMain  << timeMonthDayTime(rawtime) << "   Loaded genome insert delta, number of new SA indices = "<<nInd<<endl;
     } else {

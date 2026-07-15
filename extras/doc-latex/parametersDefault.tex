@@ -67,8 +67,8 @@
   \optLine{string: output mode for --runMode genomeInsert.}
 \begin{optOptTable}
   \optOpt{Full}   \optOptLine{write a complete updated genome index to --genomeInsertOutDir}
-  \optOpt{Overlay}   \optOptLine{write a small overlay directory that refers to the base --genomeDir and inserted FASTA/GTF files. The overlay can be used as --genomeDir with --runMode alignReads}
-  \optOpt{Delta}   \optOptLine{write an overlay directory plus a cached suffix insertion plan. The delta can be used as --genomeDir with --runMode alignReads to avoid repeating suffix search and sorting for the inserted FASTA}
+  \optOpt{Overlay}   \optOptLine{write a small integrity-checked package containing the inserted FASTA/GTF and a reference to the content-identified base --genomeDir. The package can be used as --genomeDir with --runMode alignReads}
+  \optOpt{Delta}   \optOptLine{write an Overlay package plus a validated cached suffix insertion plan. The package can be used as --genomeDir with --runMode alignReads to avoid repeating suffix search and sorting for the inserted FASTA}
 \end{optOptTable}
 \optName{genomeChainFiles}
   \optValue{-}

@@ -5,6 +5,7 @@
 #include "streamFuns.h"
 #include "SharedMemory.h"
 #include "genomeScanFastaFiles.h"
+#include "GenomeInsertIdentity.h"
 
 //addresses with respect to shmStart of several genome values
 #define SHM_sizeG 0
@@ -348,6 +349,21 @@ void Genome::genomeLoad(){//allocate and load Genome
     };
 
     SAiIn.close();
+
+    const bool identifyGenomeInsertBase = pGe.gLoad=="NoSharedMemory"
+            && ((P.runMode=="genomeInsert" && pGe.gInsertOutMode=="Delta") || pGe.gInsertOverlay);
+    if (identifyGenomeInsertBase) {
+        genomeInsertBaseSha256=genomeInsertBaseIdentityFromLoaded(*this);
+        pGe.gInsertBaseSha256=genomeInsertBaseSha256;
+        if (pGe.gInsertBaseSha256Expected!="-" && pGe.gInsertBaseSha256Expected!=genomeInsertBaseSha256) {
+            ostringstream errOut;
+            errOut << "EXITING because of fatal INPUT FILE error: genome insert artifact does not match the loaded base genome index\n";
+            errOut << "Expected base index SHA-256 tree identity: " << pGe.gInsertBaseSha256Expected << "\n";
+            errOut << "Loaded base index SHA-256 tree identity:   " << genomeInsertBaseSha256 << "\n";
+            exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+        };
+        P.inOut->logMain << "BlackSTAR base index SHA-256 tree identity: " << genomeInsertBaseSha256 << "\n";
+    };
 
     if ((pGe.gLoad=="LoadAndKeep" ||
          pGe.gLoad=="LoadAndRemove" ||

@@ -30,14 +30,19 @@ BUILD_PLACE ?= $(HOSTNAME):$(shell pwd)
 COMPTIMEPLACE := -D'COMPILATION_TIME_PLACE="$(BUILD_DATE) $(BUILD_PLACE)"'
 
 
-GIT_CHECK := $(shell git status 1> /dev/null 2> /dev/null && echo 0)
-ifeq ($(GIT_CHECK),0)
-	GIT_DIFF := $(shell git diff --name-only | tr '\n' ' ')
-    GIT_BRANCH_COMMIT_DIFF := $(shell git status | head -n 1) ; \
-                                                    $(shell git log | head -n 1) ; \
-                                                    diff files: $(GIT_DIFF)
+GIT_PROVENANCE ?=
+ifeq ($(strip $(GIT_PROVENANCE)),)
+    GIT_CHECK := $(shell git status 1> /dev/null 2> /dev/null && echo 0)
+    ifeq ($(GIT_CHECK),0)
+        GIT_DIFF := $(shell git diff --name-only | tr '\n' ' ')
+        GIT_PROVENANCE_TEXT := $(shell git status | head -n 1) ; \
+                                                       $(shell git log | head -n 1) ; \
+                                                       diff files: $(GIT_DIFF)
+    endif
+else
+    GIT_PROVENANCE_TEXT := $(GIT_PROVENANCE)
 endif
-GIT_BRANCH_COMMIT_DIFF := -D'GIT_BRANCH_COMMIT_DIFF="$(GIT_BRANCH_COMMIT_DIFF)"'
+GIT_BRANCH_COMMIT_DIFF := -D'GIT_BRANCH_COMMIT_DIFF="$(GIT_PROVENANCE_TEXT)"'
 
 # Defaults, can be overridden by make arguments or environment
 CXXFLAGS ?= -pipe -Wall -Wextra
@@ -62,13 +67,13 @@ OBJECTS = systemFunctions.o funPrimaryAlignMark.o \
 	SoloReadFeature.o SoloReadFeature_record.o SoloReadFeature_inputRecords.o \
 	Solo.o SoloFeature.o SoloFeature_outputResults.o SoloFeature_processRecords.o SoloFeature_addBAMtags.o \
 	ReadAlign_transformGenome.o Genome_transformGenome.o Transcript_convertGenomeCigar.o \
-	twoPassRunPass1.o samHeaders.o GenomeInsertOverlay.o GenomeInsertAnnotations.o Genome_genomeLoad.o Genome_genomeOutLoad.o Transcript_transformGenome.o ReadAlign_outputSpliceGraphSAM.o \
+	twoPassRunPass1.o samHeaders.o GenomeInsertOverlay.o GenomeInsertAnnotations.o GenomeInsertIdentity.o Genome_genomeLoad.o Genome_genomeOutLoad.o Transcript_transformGenome.o ReadAlign_outputSpliceGraphSAM.o \
 	ReadAlign_mapOneReadSpliceGraph.o SpliceGraph.o SpliceGraph_swScoreSpliced.o SpliceGraph_swTraceBack.o \
 	SpliceGraph_findSuperTr.o sjAlignSplit.o \
 	GTF.o GTF_transcriptGeneSJ.o GTF_superTranscript.o SuperTranscriptome.o \
 	ReadAlign_outputAlignments.o  \
 	ReadAlign.o STAR.o \
-	SharedMemory.o PackedArray.o SuffixArrayFuns.o Parameters.o Parameters_samAttributes.o InOutStreams.o SequenceFuns.o Genome.o ParametersGenome.o Stats.o \
+	SharedMemory.o PackedArray.o SuffixArrayFuns.o BlackstarSha256.o Parameters.o Parameters_samAttributes.o InOutStreams.o SequenceFuns.o Genome.o ParametersGenome.o Stats.o \
 	Transcript.o Transcript_alignScore.o Transcript_generateCigarP.o Chain.o \
 	Transcript_variationAdjust.o Variation.o ReadAlign_waspMap.o \
 	ReadAlign_storeAligns.o ReadAlign_stitchPieces.o ReadAlign_multMapSelect.o ReadAlign_mapOneRead.o readLoad.o \

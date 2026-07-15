@@ -58,6 +58,7 @@ public:
    //sequence insert parameters
     uint genomeInsertL; //total length of the extra sequence inserted into the loaded genome
     uint genomeInsertChrIndFirst; //index of the first inserted chromosome
+    string genomeInsertBaseSha256; //content identity of the loaded base index
     vector<string> genomeFastaFilesLoaded; //FASTA paths recorded in the loaded index
     struct {
         bool yes;
