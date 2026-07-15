@@ -3,10 +3,26 @@
 #include "SuffixArrayFuns.h"
 #include "ErrorWarning.h"
 
+#include <fstream>
+
 struct SAindexEvent {
     uint isa;
     uint indFull;
     int iL4;
+};
+
+static uint64 SAindexSystemAvailableMemoryBytes()
+{
+#ifdef __linux__
+    ifstream memInfo("/proc/meminfo");
+    string field;
+    string unit;
+    uint64 value=0;
+    while (memInfo >> field >> value >> unit) {
+        if (field=="MemAvailable:") return value*1024LLU;
+    };
+#endif
+    return 0;
 };
 
 static bool SAindexEventEqual(uint indFull1, int iL41, uint indFull2, int iL42)
@@ -44,31 +60,32 @@ static void SAindexProcessEvent(PackedArray &SAi, Genome &mapGen, uint isa, uint
     };
 };
 
-static void SAindexScanEventsParallel(char *G, PackedArray &SA, Parameters &P, Genome &mapGen, uint iSA1, uint iSA2, vector<SAindexEvent> &events)
+static void SAindexScanEventBatchParallel(char *G, PackedArray &SA, Parameters &P, Genome &mapGen,
+                                          uint globalStart, uint batchStart, uint batchEnd,
+                                          vector<vector<SAindexEvent> > &eventsByChunk)
 {
-    const uint nSA=iSA2-iSA1+1;
-    const uint chunkN=min<uint>(nSA, max<uint>(1, P.runThreadN*4));
+    const uint nSA=batchEnd-batchStart;
+    const uint chunkN=eventsByChunk.size();
     const int threadN=(int) min<uint>(P.runThreadN, chunkN);
-    vector<vector<SAindexEvent> > eventsByChunk(chunkN);
 
     #pragma omp parallel for num_threads(threadN) schedule(static)
     for (uint iChunk=0; iChunk<chunkN; iChunk++) {
-        const uint iStart=iSA1 + nSA*iChunk/chunkN;
-        const uint iEnd=iSA1 + nSA*(iChunk+1)/chunkN;
+        const uint iStart=batchStart + nSA*iChunk/chunkN;
+        const uint iEnd=batchStart + nSA*(iChunk+1)/chunkN;
 
         vector<SAindexEvent> &chunkEvents=eventsByChunk[iChunk];
-        chunkEvents.reserve((iEnd-iStart)/32+1);
+        chunkEvents.clear();
 
         int iL4prev=-1;
         uint indFullPrev=0;
-        if (iStart>iSA1) {
+        if (iStart>globalStart) {
             indFullPrev=funCalcSAiFromSA(G,SA,mapGen,iStart-1,mapGen.pGe.gSAindexNbases,iL4prev);
         };
 
         for (uint isa=iStart; isa<iEnd; isa++) {
             int iL4=0;
             uint indFull=funCalcSAiFromSA(G,SA,mapGen,isa,mapGen.pGe.gSAindexNbases,iL4);
-            if (isa==iSA1 || !SAindexEventEqual(indFull, iL4, indFullPrev, iL4prev)) {
+            if (isa==globalStart || !SAindexEventEqual(indFull, iL4, indFullPrev, iL4prev)) {
                 SAindexEvent event;
                 event.isa=isa;
                 event.indFull=indFull;
@@ -78,15 +95,6 @@ static void SAindexScanEventsParallel(char *G, PackedArray &SA, Parameters &P, G
             indFullPrev=indFull;
             iL4prev=iL4;
         };
-    };
-
-    uint eventN=0;
-    for (uint iChunk=0; iChunk<chunkN; iChunk++) {
-        eventN += eventsByChunk[iChunk].size();
-    };
-    events.reserve(eventN);
-    for (uint iChunk=0; iChunk<chunkN; iChunk++) {
-        events.insert(events.end(), eventsByChunk[iChunk].begin(), eventsByChunk[iChunk].end());
     };
 };
 
@@ -203,9 +211,24 @@ void genomeSAindex(char * G, PackedArray & SA, Parameters & P, PackedArray & SAi
 
 void genomeSAindexChunk(char * G, PackedArray & SA, Parameters & P, PackedArray & SAi, uint iSA1, uint iSA2, Genome &mapGen)
 {
-    const bool parallelEvents=P.runThreadN>=16 && iSA1==0 && iSA2+1==mapGen.nSA;
+    const uint64 residentArrayBytes=mapGen.nG1alloc+mapGen.SApass1.lengthByte+SAi.lengthByte;
+    const uint64 ramHeadroomBytes=max<uint64>(residentArrayBytes/20, 256000000LLU);
+    const uint64 eventAvailableBytes=P.limitGenomeGenerateRAM>residentArrayBytes+ramHeadroomBytes
+            ? P.limitGenomeGenerateRAM-residentArrayBytes-ramHeadroomBytes : 0;
+    const uint64 systemAvailableBytes=SAindexSystemAvailableMemoryBytes();
+    const uint64 systemEventAvailableBytes=systemAvailableBytes>ramHeadroomBytes
+            ? systemAvailableBytes-ramHeadroomBytes : 0;
+    const uint64 eventBudgetBytes=min<uint64>(
+            min<uint64>(eventAvailableBytes, systemEventAvailableBytes), 256000000LLU);
+    bool parallelEvents=P.runThreadN>=16 && iSA1==0 && iSA2+1==mapGen.nSA
+            && eventBudgetBytes>=64000000LLU;
+    const uint eventBatchSuffixN=parallelEvents
+            ? min<uint>(iSA2-iSA1+1, max<uint>(1, eventBudgetBytes/sizeof(SAindexEvent))) : 0;
 
-    P.inOut->logMain << "SAindex traversal strategy: " << (parallelEvents ? "parallel-events" : "skip-search") << "\n" << flush;
+    P.inOut->logMain << "SAindex resident-array estimate: " << residentArrayBytes
+                     << "; RAM headroom: " << ramHeadroomBytes
+                     << "; system available: " << systemAvailableBytes
+                     << "; event budget: " << eventBudgetBytes << "\n" << flush;
 
     uint* ind0=new uint[mapGen.pGe.gSAindexNbases];
 
@@ -213,14 +236,38 @@ void genomeSAindexChunk(char * G, PackedArray & SA, Parameters & P, PackedArray 
         ind0[ii]=-1;//this is needed in case "AAA...AAA",i.e. indPref=0 is not present in the genome for some lengths
     };
 
+    uint64 eventN=0;
+    vector<vector<SAindexEvent> > eventsByChunk;
     if (parallelEvents) {
-        vector<SAindexEvent> events;
-        SAindexScanEventsParallel(G, SA, P, mapGen, iSA1, iSA2, events);
-
-        P.inOut->logMain << "SAindex event count: " << events.size() << "\n" << flush;
-        for (uint iEvent=0; iEvent<events.size(); iEvent++) {
-            SAindexProcessEvent(SAi, mapGen, events[iEvent].isa, events[iEvent].indFull, events[iEvent].iL4, ind0);
+        const uint chunkN=max<uint>(1, min<uint>(P.runThreadN*4, eventBatchSuffixN));
+        try {
+            eventsByChunk.resize(chunkN);
+            for (uint iChunk=0; iChunk<chunkN; ++iChunk) {
+                const uint capacity=eventBatchSuffixN*(iChunk+1)/chunkN-eventBatchSuffixN*iChunk/chunkN+1;
+                eventsByChunk[iChunk].reserve(capacity);
+            };
+        } catch (const bad_alloc &) {
+            eventsByChunk.clear();
+            parallelEvents=false;
+            P.inOut->logMain << "SAindex event-buffer allocation failed; falling back to skip-search\n" << flush;
         };
+    };
+
+    P.inOut->logMain << "SAindex traversal strategy: " << (parallelEvents ? "bounded-parallel-events" : "skip-search") << "\n" << flush;
+    if (parallelEvents) {
+        for (uint batchStart=iSA1; batchStart<=iSA2; ) {
+            const uint batchEnd=min<uint>(iSA2+1, batchStart+eventBatchSuffixN);
+            SAindexScanEventBatchParallel(G, SA, P, mapGen, iSA1, batchStart, batchEnd, eventsByChunk);
+            for (uint iChunk=0; iChunk<eventsByChunk.size(); ++iChunk) {
+                const vector<SAindexEvent> &events=eventsByChunk[iChunk];
+                eventN+=events.size();
+                for (uint iEvent=0; iEvent<events.size(); ++iEvent) {
+                    SAindexProcessEvent(SAi, mapGen, events[iEvent].isa, events[iEvent].indFull, events[iEvent].iL4, ind0);
+                };
+            };
+            batchStart=batchEnd;
+        };
+        P.inOut->logMain << "SAindex event count: " << eventN << "\n" << flush;
     } else {
         uint isaStep=mapGen.nSA/(1llu<<(2*mapGen.pGe.gSAindexNbases))+1;
 //     isaStep=8;
