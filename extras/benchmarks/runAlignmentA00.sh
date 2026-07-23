@@ -7,6 +7,7 @@ usage: runAlignmentA00.sh MODE STAR_BIN GENOME_DIR READ1 READ2 OUT_DIR
 
 MODE is mapping-only, unsorted-bam, or sorted-bam.
 Environment: THREADS=16 QUANT_MODE=GeneCounts PERF_MODE=none|stat|record|gprofng.
+GENOME_LOAD_MODE defaults to NoSharedMemory; LoadAndKeep and LoadAndRemove are allowed.
 GPROFNG_CLOCK_PROFILE defaults to hi; GPROFNG_ARCHIVE defaults to usedldobjects.
 READ_FILES_COMMAND defaults to auto: zcat for two .gz inputs, otherwise none.
 OpenMP processor binding is rejected unless ALLOW_OMP_THREAD_BINDING=1.
@@ -27,6 +28,7 @@ perf_mode="${PERF_MODE:-none}"
 gprofng_clock_profile="${GPROFNG_CLOCK_PROFILE:-hi}"
 gprofng_archive="${GPROFNG_ARCHIVE:-usedldobjects}"
 read_files_command="${READ_FILES_COMMAND:-auto}"
+genome_load_mode="${GENOME_LOAD_MODE:-NoSharedMemory}"
 allow_omp_thread_binding="${ALLOW_OMP_THREAD_BINDING:-0}"
 omp_dynamic_inherited="${OMP_DYNAMIC:-unset}"
 omp_places_inherited="${OMP_PLACES:-unset}"
@@ -46,6 +48,16 @@ if [[ "${allow_omp_thread_binding}" != "1" ]] &&
         'Unset OMP_PROC_BIND and OMP_PLACES, or set ALLOW_OMP_THREAD_BINDING=1 only for a deliberate affinity test.' >&2
     exit 2
 fi
+
+case "${genome_load_mode}" in
+    NoSharedMemory|LoadAndKeep|LoadAndRemove) ;;
+    *)
+        printf 'unsupported GENOME_LOAD_MODE for alignment benchmark: %s\n' \
+            "${genome_load_mode}" >&2
+        exit 2
+        ;;
+esac
+
 export OMP_DYNAMIC=FALSE
 
 case "${perf_mode}" in
@@ -108,7 +120,7 @@ command=(
     --runMode alignReads
     --runThreadN "${threads}"
     --genomeDir "${genome_dir}"
-    --genomeLoad NoSharedMemory
+    --genomeLoad "${genome_load_mode}"
     --readFilesIn "${read1}" "${read2}"
     --outSAMtype "${out_sam_type[@]}"
     --outFileNamePrefix "${out_dir}/star."
@@ -153,6 +165,7 @@ fi
         printf 'gprofng_version\t%s\n' "$(gprofng --version | head -1)"
     fi
     printf 'read_files_command\t%s\n' "${read_command[*]:-None}"
+    printf 'genome_load_mode\t%s\n' "${genome_load_mode}"
     printf 'omp_dynamic_inherited\t%s\n' "${omp_dynamic_inherited}"
     printf 'omp_dynamic_effective\t%s\n' "${OMP_DYNAMIC}"
     printf 'omp_proc_bind\t%s\n' "${omp_proc_bind_inherited}"

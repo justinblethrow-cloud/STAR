@@ -138,6 +138,19 @@ fi
 rg -q 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-single.log"
 [[ ! -e "${tmp_dir}/unsafe-single" ]]
 
+if GENOME_LOAD_MODE=LoadAndExit \
+    "${repo_root}/extras/benchmarks/runAlignmentA00.sh" \
+    mapping-only "${tmp_dir}/STAR-baseline" "${tmp_dir}/pair-genome" \
+    "${repo_root}/extras/tests/fixtures/alignment/read1.fastq" \
+    "${repo_root}/extras/tests/fixtures/alignment/read2.fastq" \
+    "${tmp_dir}/invalid-genome-load" \
+    > "${tmp_dir}/invalid-genome-load.log" 2>&1; then
+    printf 'single-run harness accepted a non-alignment genome-load mode\n' >&2
+    exit 1
+fi
+rg -q 'unsupported GENOME_LOAD_MODE' "${tmp_dir}/invalid-genome-load.log"
+[[ ! -e "${tmp_dir}/invalid-genome-load" ]]
+
 mkdir -p "${tmp_dir}/mock-bin"
 cat > "${tmp_dir}/mock-bin/gprofng" <<'EOF_GPROFNG'
 #!/usr/bin/env bash
@@ -169,6 +182,7 @@ chmod 0755 "${tmp_dir}/mock-bin/gprofng"
 env -u OMP_PROC_BIND -u OMP_PLACES \
     PATH="${tmp_dir}/mock-bin:${PATH}" \
     THREADS=1 QUANT_MODE=None PERF_MODE=gprofng \
+    GENOME_LOAD_MODE=LoadAndKeep \
     GPROFNG_CLOCK_PROFILE=lo GPROFNG_ARCHIVE=usedldobjects \
     "${repo_root}/extras/benchmarks/runAlignmentA00.sh" \
     mapping-only /bin/true "${tmp_dir}/pair-genome" \
@@ -179,6 +193,8 @@ env -u OMP_PROC_BIND -u OMP_PLACES \
 rg -q $'perf_mode\tgprofng' "${tmp_dir}/gprofng-run/provenance.tsv"
 rg -q $'gprofng_clock_profile\tlo' "${tmp_dir}/gprofng-run/provenance.tsv"
 rg -q $'gprofng_version\tGNU gprofng mock 1.0' "${tmp_dir}/gprofng-run/provenance.tsv"
+rg -q $'genome_load_mode\tLoadAndKeep' "${tmp_dir}/gprofng-run/provenance.tsv"
+rg -q -- '--genomeLoad LoadAndKeep' "${tmp_dir}/gprofng-run/command.sh"
 
 if OMP_PROC_BIND=close OMP_PLACES=cores \
     python3 "${repo_root}/extras/benchmarks/runAlignmentPairs.py" \

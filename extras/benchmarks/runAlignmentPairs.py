@@ -235,6 +235,7 @@ def write_contract(
             for name in (
                 "ALLOW_OMP_THREAD_BINDING",
                 "BAM_SORT_RAM",
+                "GENOME_LOAD_MODE",
                 "OMP_DYNAMIC",
                 "OMP_PLACES",
                 "OMP_PROC_BIND",
