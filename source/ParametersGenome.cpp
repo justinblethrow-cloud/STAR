@@ -74,5 +74,22 @@ void ParametersGenome::initialize(Parameters *pPin)
         errOut << "EXITING because of FATAL INPUT ERROR: --genomeLoad=" << gLoad << "\n" <<flush;
         errOut << "SOLUTION: use one of the allowed values for --genomeLoad : NoSharedMemory,LoadAndKeep,LoadAndRemove,LoadAndExit,Remove.\n" <<flush;
         exitWithError(errOut.str(),std::cerr, pP->inOut->logMain, EXIT_CODE_PARAMETER, *pP);
-    };    
+    };
+
+    if (gLoadNumaPolicy!="Auto" &&
+        gLoadNumaPolicy!="Default" &&
+        gLoadNumaPolicy!="Interleave") {
+        ostringstream errOut;
+        errOut << "EXITING because of FATAL INPUT ERROR: --genomeLoadNumaPolicy="
+               << gLoadNumaPolicy << "\n";
+        errOut << "SOLUTION: use one of the allowed values for "
+               << "--genomeLoadNumaPolicy: Auto, Default or Interleave.\n";
+        exitWithError(
+            errOut.str(),
+            std::cerr,
+            pP->inOut->logMain,
+            EXIT_CODE_PARAMETER,
+            *pP
+        );
+    };
 };

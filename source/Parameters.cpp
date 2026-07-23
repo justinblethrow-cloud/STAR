@@ -60,6 +60,7 @@ Parameters::Parameters() {//initalize parameters info
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeType", &pGe.gTypeString));    
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeDir", &pGe.gDir));
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeLoad", &pGe.gLoad));
+    parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeLoadNumaPolicy", &pGe.gLoadNumaPolicy));
     parArray.push_back(new ParameterInfoVector <string> (-1, -1, "genomeFastaFiles", &pGe.gFastaFiles));
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeInsertOutDir", &pGe.gInsertOutDir));
     parArray.push_back(new ParameterInfoScalar <string> (-1, -1, "genomeInsertOutMode", &pGe.gInsertOutMode));

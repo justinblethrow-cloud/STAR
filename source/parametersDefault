@@ -45,6 +45,13 @@ genomeLoad                NoSharedMemory
                           Remove          ... do not map anything, just remove loaded genome from memory
                           NoSharedMemory  ... do not use shared memory, each job will have its own private copy of the genome
 
+genomeLoadNumaPolicy      Auto
+    string: NUMA placement policy for private genome loading with --runMode alignReads.
+                          Auto       ... interleave memory across the process-allowed NUMA nodes when --runThreadN is at least 64 and more than one memory node is available.
+                          Default    ... retain the operating system's inherited memory policy.
+                          Interleave ... require interleaving across all process-allowed memory nodes.
+                          Auto falls back to Default on unsupported systems and with shared genome loading.
+
 genomeFastaFiles            -
     string(s): path(s) to the fasta files with the genome sequences, separated by spaces. These files should be plain text FASTA files, they *cannot* be zipped.
                             Required for the genome generation (--runMode genomeGenerate). Can also be used in the mapping (--runMode alignReads) to add extra (new) sequences to the genome (e.g. spike-ins), or with --runMode genomeInsert to persistently add named sequences to an existing genome index.

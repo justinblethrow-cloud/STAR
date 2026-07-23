@@ -28,6 +28,7 @@
 #include "samHeaders.h"
 #include "systemFunctions.h"
 #include "GenomeInsertOverlay.h"
+#include "NumaMemoryPolicy.h"
 
 #include "twoPassRunPass1.h"
 
@@ -74,6 +75,40 @@ int main(int argInN, char *argIn[])
     ///////////////////////////////////////////// Parameters
     Parameters P; // all parameters
     P.inputParameters(argInN, argIn);
+
+    if (P.runMode == "alignReads")
+    {
+        const BlackstarNumaPolicyResult numaPolicy =
+            blackstarApplyNumaMemoryPolicy(
+                P.pGe.gLoadNumaPolicy,
+                P.runMode,
+                P.pGe.gLoad,
+                P.runThreadN
+            );
+        P.inOut->logMain << "BLACKSTAR_NUMA_POLICY"
+                         << "\trequested\t" << numaPolicy.requested
+                         << "\teffective\t" << numaPolicy.effective
+                         << "\tallowed_nodes\t" << numaPolicy.allowedNodeCount
+                         << "\tstatus\t" << numaPolicy.status
+                         << "\treason\t" << numaPolicy.reason
+                         << '\n' << flush;
+        if (P.pGe.gLoadNumaPolicy == "Interleave" && !numaPolicy.active)
+        {
+            ostringstream errOut;
+            errOut << "EXITING because --genomeLoadNumaPolicy Interleave "
+                   << "could not be activated, status=" << numaPolicy.status
+                   << ", reason=" << numaPolicy.reason << "\n";
+            errOut << "SOLUTION: use --genomeLoad NoSharedMemory on a supported "
+                   << "Linux NUMA system, or select --genomeLoadNumaPolicy Default.\n";
+            exitWithError(
+                errOut.str(),
+                std::cerr,
+                P.inOut->logMain,
+                EXIT_CODE_RUNTIME,
+                P
+            );
+        };
+    };
 
     *(P.inOut->logStdOut) << "\t" << P.commandLine << '\n';
     *(P.inOut->logStdOut) << "\tSTAR version: " << STAR_VERSION << "   compiled: " << COMPILATION_TIME_PLACE << '\n';

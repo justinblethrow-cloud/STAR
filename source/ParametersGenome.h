@@ -10,6 +10,7 @@ class ParametersGenome {//"constant" genome parameters - user input
 public:
     string gDir;
     string gLoad;
+    string gLoadNumaPolicy;
     string gInsertOutDir;
     string gInsertOutMode;
     string gInsertOutDirFinal;
