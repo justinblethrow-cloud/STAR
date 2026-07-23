@@ -11,11 +11,13 @@
 #include "bamRemoveDuplicates.h"
 #include "streamFuns.h"
 #include "GenomeInsertOverlay.h"
+#include "ReadChunkConfig.h"
 
 //for mkfifo
 #include <sys/stat.h>
 #include <cstdlib>
 #include <limits.h>
+#include <stdexcept>
 
 #define PAR_NAME_PRINT_WIDTH 30
 
@@ -99,6 +101,7 @@ Parameters::Parameters() {//initalize parameters info
     //limits
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitGenomeGenerateRAM", &limitGenomeGenerateRAM));
     parArray.push_back(new ParameterInfoVector <uint64>   (-1, -1, "limitIObufferSize", &limitIObufferSize));
+    parArray.push_back(new ParameterInfoScalar <uint64> (-1, -1, "readChunkSizeBytes", &readChunkSizeBytes));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitOutSAMoneReadBytes", &limitOutSAMoneReadBytes));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitOutSJcollapsed", &limitOutSJcollapsed));
     parArray.push_back(new ParameterInfoScalar <uint>   (-1, -1, "limitOutSJoneRead", &limitOutSJoneRead));
@@ -1216,9 +1219,36 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                       "SOLUTION: specify 2 numbers in --limitIObufferSize : size of input and output buffers in bytes.\n"
                         , std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     
-    chunkInSizeBytesArray = limitIObufferSize[0]/readNends; //array size
-    chunkInSizeBytes = chunkInSizeBytesArray-2*(DEF_readSeqLengthMax+1)-2*DEF_readNameLengthMax; //to prevent overflow - array is bigger to allow loading one read
+    const uint64 chunkInReservePerEnd =
+        2ULL*(DEF_readSeqLengthMax+1) + 2ULL*DEF_readNameLengthMax;
+    ReadChunkConfig readChunkConfig;
+    try {
+        readChunkConfig = calculateReadChunkConfig(
+            limitIObufferSize[0],
+            readChunkSizeBytes,
+            readNends,
+            runThreadN,
+            chunkInReservePerEnd
+        );
+    } catch (const std::invalid_argument &error) {
+        exitWithError(
+            "EXITING because of FATAL input ERROR: " + string(error.what()) + "\n"
+            "SOLUTION: increase --limitIObufferSize input bytes, or set "
+            "--readChunkSizeBytes to zero or a valid explicit target.\n",
+            std::cerr,
+            inOut->logMain,
+            EXIT_CODE_PARAMETER,
+            *this
+        );
+    }
+    chunkInSizeBytesArray = static_cast<uint>(readChunkConfig.perEndArrayBytes);
+    chunkInSizeBytes = static_cast<uint>(readChunkConfig.perEndPayloadBytes);
     chunkOutBAMsizeBytes = limitIObufferSize[1];
+    inOut->logMain << "Read input chunk buffer: "
+                   << readChunkConfig.effectiveTotalBytes << " bytes total, "
+                   << chunkInSizeBytesArray << " bytes per end, mode="
+                   << (readChunkConfig.adaptive ? "adaptive" : "configured")
+                   << '\n';
     
     
     ///////////////////////////////////////////////////////// outSJ

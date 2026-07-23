@@ -143,6 +143,7 @@ class Parameters {
 
         //chunk parameters
         uint chunkInSizeBytes,chunkInSizeBytesArray,chunkOutBAMsizeBytes;
+        uint64 readChunkSizeBytes;
 
         //output
         string outFileNamePrefix, outStd;
