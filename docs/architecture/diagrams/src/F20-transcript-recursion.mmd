@@ -1,0 +1,61 @@
+flowchart TB
+    subgraph PROFILE["Cumulative A05 profile"]
+        direction LR
+        HOT["Transcript copy constructor<br/>351.96 CPU s<br/>10.90% exclusive CPU"]
+        SELECT["Select conservative ownership change<br/>before compact rollback redesign"]
+        HOT --> SELECT
+    end
+
+    subgraph BEFORE["A05 recursive stitching"]
+        direction LR
+        VALUE["Transcript passed by value"]
+        INC1["Include edge<br/>copy then mutate"]
+        EXC1["Exclude edge<br/>copy then only forward"]
+        TERM1["Terminal path<br/>mutate and finalize copy"]
+        VALUE --> INC1
+        VALUE --> EXC1
+        VALUE --> TERM1
+    end
+
+    subgraph A06["A06 accepted Labs candidate - not released"]
+        direction LR
+        REF["Recursive input is const reference"]
+        BRANCH{"Branch type"}
+        INC2["Include<br/>make private copy<br/>then mutate"]
+        EXC2["Exclude<br/>forward same state<br/>without a copy"]
+        TERM2["Terminal<br/>make private copy<br/>then finalize"]
+        REF --> BRANCH
+        BRANCH -->|include| INC2
+        BRANCH -->|exclude| EXC2
+        BRANCH -->|terminal| TERM2
+    end
+
+    SELECT --> REF
+    BEFORE -.->|same search tree and branch order| A06
+
+    subgraph RESULTS["Exact public evidence at 96 threads"]
+        direction LR
+        CPU["Copy CPU<br/>351.96 s to 225.35 s<br/>35.97% reduction"]
+        PRIMARY["Five-pair uncompressed median<br/>57.39 s to 56.11 s<br/>2.29% gain"]
+        INTERVAL["Bootstrap interval<br/>1.52% to 3.79%<br/>5 of 5 outputs passed"]
+        SUPPORT["Gzip median gain 4.59%<br/>canonical BAM passed<br/>ASan and UBSan passed<br/>peak RSS unchanged"]
+        CPU ~~~ PRIMARY
+        PRIMARY ~~~ INTERVAL
+        INTERVAL ~~~ SUPPORT
+    end
+
+    INC2 --> CPU
+    EXC2 --> CPU
+    TERM2 --> CPU
+
+    classDef parent fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef success fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class HOT parent;
+    class SELECT note;
+    class VALUE,INC1,EXC1,TERM1 parent;
+    class REF,INC2,EXC2,TERM2 candidate;
+    class BRANCH decision;
+    class CPU,PRIMARY,INTERVAL,SUPPORT success;

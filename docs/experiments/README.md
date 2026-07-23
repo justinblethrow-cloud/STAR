@@ -11,7 +11,8 @@ resource gates, raw evidence locations, diagrams, and an explicit decision.
 3. Freeze a public baseline and record toolchain, host topology, storage, input
    identities, command line, and thread policy.
 4. Add focused unit and differential tests before performance claims.
-5. Run randomized A/B or B/A pairs only after the quiet-system gate passes.
+5. Run randomized A/B or B/A pairs only after the quiet-system gate passes,
+   or record a gate waiver for an administratively dedicated benchmark host.
 6. Compare the experiment with both its immediate parent and the qualified
    release.
 7. Accept only if correctness passes and the practical performance gate passes.
@@ -48,12 +49,15 @@ claim an ordinary-path speedup.
   wait and a 0.36-second completion tail.
 - [A05](A05-numa-placement.md): accepted NUMA-aware private genome placement
   candidate; not included in `blackstar.1`.
+- [A06](A06-transcript-recursion.md): accepted transcript-recursion copy
+  elision candidate; not included in `blackstar.1`.
 - [H01](H01-alignment-affinity-recovery.md): accepted Labs hardening candidate
   for inherited OpenMP binding; not included in `blackstar.1`.
 
 ## Quiet-System Gate
 
-The benchmark host must remain suitable for five continuous minutes:
+On a shared benchmark host, the host must remain suitable for five continuous
+minutes:
 
 - CPU idle at least 90 percent.
 - I/O wait no greater than 2 percent.
@@ -61,7 +65,10 @@ The benchmark host must remain suitable for five continuous minutes:
 - No competing benchmark or bulk-transfer process.
 
 The gate is evidence, not a lock. If contention starts during a run, invalidate
-the pair and retain the telemetry.
+the pair and retain the telemetry. An administratively dedicated host may use
+`--skip-quiet-gate`; the pair contract records the waiver explicitly. This
+exception does not waive order balancing, warmups, replicate counts, or any
+correctness and resource gate.
 
 ## Evidence Location
 

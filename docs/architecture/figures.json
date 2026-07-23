@@ -154,11 +154,11 @@
       "title": "Accepted, rejected, and superseded work",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
+      "code_commit": "6032393155317b17fef1750672f1da6770ae6042",
       "source": "docs/architecture/diagrams/src/F13-history.mmd",
       "evidence": ["docs/architecture/STATUS_HISTORY.md"],
-      "caption": "The history ledger separates qualified release work, accepted but unreleased H01, A02, and A05 candidates, rejected experiments including A02b, and invalidated or superseded evidence.",
-      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity, A02 adaptive-chunk, and A05 NUMA-placement candidates, rejected prefork, libdeflate, A01, and A02b queue paths, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
+      "caption": "The history ledger separates qualified release work, accepted but unreleased H01, A02, A05, and A06 candidates, rejected experiments including A02b, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity, A02 adaptive-chunk, A05 NUMA-placement, and A06 transcript-recursion candidates, rejected prefork, libdeflate, A01, and A02b queue paths, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
       "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
     },
     {
@@ -166,11 +166,11 @@
       "title": "Experimental roadmap",
       "maturity": "roadmap",
       "visibility": "public",
-      "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
+      "code_commit": "6032393155317b17fef1750672f1da6770ae6042",
       "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
       "evidence": ["docs/experiments/ROADMAP.md"],
-      "caption": "The corrected alignment sequence now includes accepted Labs candidates H01, A02, and A05, with the A02b queue rejected by profiling before later CPU-kernel and index experiments.",
-      "alt_text": "Gated roadmap from the qualified release through corrected A00, accepted but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, accepted but unreleased A05 NUMA-aware private loading, then proposed alignment kernels, output, multi-sample, toolchain, and index stages.",
+      "caption": "The corrected alignment sequence now includes accepted Labs candidates H01, A02, A05, and A06, with profiling decisions recorded before toolchain qualification and later kernel and index experiments.",
+      "alt_text": "Gated roadmap from the qualified release through corrected A00, accepted but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, accepted A05 NUMA-aware private loading, cumulative profiling, accepted A06 transcript-recursion copy elision, then proposed toolchain qualification, alignment kernels, output, multi-sample, and index stages.",
       "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
     },
     {
@@ -232,6 +232,18 @@
       "caption": "A05 applies NUMA interleave to eligible high-thread private genome loads while preserving caller policies, reducing the exact 96-thread full-corpus median by 22.51 percent over A02 with unchanged measured outputs.",
       "alt_text": "Attribution and before-after diagram showing the rejected A02b producer-consumer queue, A02 private genome pages undergoing automatic NUMA migration, A05 selecting interleave only for eligible default-policy private loads while preserving inherited bind and interleave subsets, and exact public evidence of a 74.01 to 57.35 second uncompressed median with all output comparisons passing; gzip timing is labeled supportive because control variability exceeded its gate.",
       "outputs": ["docs/architecture/diagrams/svg/F19-numa-placement.svg", "docs/architecture/diagrams/pdf/F19-numa-placement.pdf"]
+    },
+    {
+      "id": "F20",
+      "title": "A06 transcript recursion copy elision",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "6032393155317b17fef1750672f1da6770ae6042",
+      "source": "docs/architecture/diagrams/src/F20-transcript-recursion.mmd",
+      "evidence": ["docs/experiments/A06-transcript-recursion.md", "docs/architecture/evidence/alignment-A06-transcript-recursion-20260723.tsv", "source/stitchWindowAligns.cpp", "source/stitchWindowAligns.h"],
+      "caption": "A06 forwards unchanged recursive transcript state by const reference and copies only mutating or terminal branches, reducing copy-constructor CPU by 35.97 percent and the five-pair full-corpus median by 2.29 percent with exact measured outputs.",
+      "alt_text": "Before-and-after recursive stitching diagram showing A05 copying transcript state on include, exclude, and terminal paths; A06 receiving a const reference, making a private copy only for include mutation or terminal finalization, and forwarding exclude state without copying; evidence shows copy CPU falling from 351.96 to 225.35 seconds, a five-pair median falling from 57.39 to 56.11 seconds, a positive paired interval, exact outputs, compressed-input support, a canonical BAM pass, and a clean end-to-end sanitizer run.",
+      "outputs": ["docs/architecture/diagrams/svg/F20-transcript-recursion.svg", "docs/architecture/diagrams/pdf/F20-transcript-recursion.pdf"]
     }
   ]
 }
