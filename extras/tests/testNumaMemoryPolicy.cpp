@@ -11,8 +11,10 @@ bool expect(
     int runThreads,
     int allowedNodes,
     bool supported,
+    BlackstarNumaInheritedPolicy inheritedPolicy,
     bool valid,
     bool interleave,
+    bool applyInterleave,
     const std::string &reason
 )
 {
@@ -23,14 +25,17 @@ bool expect(
             genomeLoad,
             runThreads,
             allowedNodes,
-            supported
+            supported,
+            inheritedPolicy
         );
     if (choice.valid != valid ||
         choice.interleave != interleave ||
+        choice.applyInterleave != applyInterleave ||
         choice.reason != reason) {
         std::cerr << "unexpected NUMA policy choice for " << requested
                   << ": valid=" << choice.valid
                   << " interleave=" << choice.interleave
+                  << " applyInterleave=" << choice.applyInterleave
                   << " reason=" << choice.reason << '\n';
         return false;
     };
@@ -43,39 +48,63 @@ int main()
     bool passed = true;
     passed &= expect(
         "Auto", "alignReads", "NoSharedMemory", 96, 8, true,
-        true, true, "automatic-interleave"
+        BlackstarNumaInheritedDefault,
+        true, true, true, "automatic-interleave"
     );
     passed &= expect(
         "Auto", "alignReads", "NoSharedMemory", 63, 8, true,
-        true, false, "below-thread-threshold"
+        BlackstarNumaInheritedDefault,
+        true, false, false, "below-thread-threshold"
     );
     passed &= expect(
         "Auto", "alignReads", "NoSharedMemory", 96, 1, true,
-        true, false, "single-memory-node"
+        BlackstarNumaInheritedDefault,
+        true, false, false, "single-memory-node"
     );
     passed &= expect(
         "Auto", "alignReads", "LoadAndKeep", 96, 8, true,
-        true, false, "shared-genome"
+        BlackstarNumaInheritedDefault,
+        true, false, false, "shared-genome"
     );
     passed &= expect(
         "Auto", "genomeGenerate", "NoSharedMemory", 96, 8, true,
-        true, false, "not-align-reads"
+        BlackstarNumaInheritedDefault,
+        true, false, false, "not-align-reads"
     );
     passed &= expect(
         "Auto", "alignReads", "NoSharedMemory", 96, 8, false,
-        true, false, "platform-unsupported"
+        BlackstarNumaInheritedUnknown,
+        true, false, false, "platform-unsupported"
+    );
+    passed &= expect(
+        "Auto", "alignReads", "NoSharedMemory", 96, 8, true,
+        BlackstarNumaInheritedInterleave,
+        true, true, false, "inherited-interleave"
+    );
+    passed &= expect(
+        "Auto", "alignReads", "NoSharedMemory", 96, 8, true,
+        BlackstarNumaInheritedOther,
+        true, false, false, "inherited-policy-preserved"
+    );
+    passed &= expect(
+        "Auto", "alignReads", "NoSharedMemory", 96, 8, true,
+        BlackstarNumaInheritedUnknown,
+        true, false, false, "inherited-policy-unavailable"
     );
     passed &= expect(
         "Default", "alignReads", "NoSharedMemory", 96, 8, true,
-        true, false, "explicit-default"
+        BlackstarNumaInheritedOther,
+        true, false, false, "explicit-default"
     );
     passed &= expect(
         "Interleave", "alignReads", "NoSharedMemory", 1, 1, true,
-        true, true, "explicit-interleave"
+        BlackstarNumaInheritedOther,
+        true, true, true, "explicit-interleave"
     );
     passed &= expect(
         "invalid", "alignReads", "NoSharedMemory", 96, 8, true,
-        false, false, "invalid-request"
+        BlackstarNumaInheritedDefault,
+        false, false, false, "invalid-request"
     );
 
     const BlackstarNumaPolicyResult unchanged =

@@ -50,7 +50,7 @@ genomeLoadNumaPolicy      Auto
                           Auto       ... interleave memory across the process-allowed NUMA nodes when --runThreadN is at least 64 and more than one memory node is available.
                           Default    ... retain the operating system's inherited memory policy.
                           Interleave ... require interleaving across all process-allowed memory nodes.
-                          Auto falls back to Default on unsupported systems and with shared genome loading.
+                          Auto preserves an inherited bind, preferred, local, or interleave policy. It falls back to Default on unsupported systems and with shared genome loading.
 
 genomeFastaFiles            -
     string(s): path(s) to the fasta files with the genome sequences, separated by spaces. These files should be plain text FASTA files, they *cannot* be zipped.

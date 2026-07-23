@@ -89,6 +89,8 @@ int main(int argInN, char *argIn[])
                          << "\trequested\t" << numaPolicy.requested
                          << "\teffective\t" << numaPolicy.effective
                          << "\tallowed_nodes\t" << numaPolicy.allowedNodeCount
+                         << "\tinherited\t" << numaPolicy.inherited
+                         << "\tinherited_nodes\t" << numaPolicy.inheritedNodeCount
                          << "\tstatus\t" << numaPolicy.status
                          << "\treason\t" << numaPolicy.reason
                          << '\n' << flush;

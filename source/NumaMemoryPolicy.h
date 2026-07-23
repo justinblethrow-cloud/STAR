@@ -3,18 +3,28 @@
 
 #include <string>
 
+enum BlackstarNumaInheritedPolicy {
+    BlackstarNumaInheritedUnknown,
+    BlackstarNumaInheritedDefault,
+    BlackstarNumaInheritedInterleave,
+    BlackstarNumaInheritedOther
+};
+
 struct BlackstarNumaPolicyChoice {
     bool valid;
     bool interleave;
+    bool applyInterleave;
     std::string reason;
 };
 
 struct BlackstarNumaPolicyResult {
     bool active;
     int allowedNodeCount;
+    int inheritedNodeCount;
     int status;
     std::string requested;
     std::string effective;
+    std::string inherited;
     std::string reason;
 };
 
@@ -24,7 +34,8 @@ BlackstarNumaPolicyChoice blackstarSelectNumaMemoryPolicy(
     const std::string &genomeLoad,
     int runThreads,
     int allowedNodeCount,
-    bool platformSupported
+    bool platformSupported,
+    BlackstarNumaInheritedPolicy inheritedPolicy
 );
 
 BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
