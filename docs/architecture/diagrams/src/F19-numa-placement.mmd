@@ -1,0 +1,64 @@
+flowchart TB
+    subgraph ATTRIBUTION["Post-A02 attribution"]
+        direction LR
+        PARSER["Serialized parser remains"]
+        UTIL["94.16 equivalent mapping CPUs<br/>0.75 worker-equivalents lock wait"]
+        QUEUE["A02b queue rejected<br/>insufficient scheduling headroom"]
+        SCREEN["External interleave screen<br/>mapping interval 34.63 s to 23.30 s"]
+        PARSER --> UTIL --> QUEUE
+        UTIL --> SCREEN
+    end
+
+    subgraph BEFORE["A02 under inherited default memory policy"]
+        direction LR
+        LOAD1["Private genome allocation"]
+        CONCENTRATE["Pages initially concentrated<br/>near loading activity"]
+        MIGRATE["Automatic NUMA balancing<br/>migration and fault work"]
+        WORK1["96 mapping workers"]
+        LOAD1 --> CONCENTRATE --> MIGRATE --> WORK1
+    end
+
+    subgraph A05["A05 accepted Labs candidate - not released"]
+        direction LR
+        REQUEST{"Auto policy eligible?<br/>alignReads + private genome<br/>at least 64 threads + multiple nodes"}
+        INHERITED{"Caller supplied NUMA policy?"}
+        PRESERVE["Preserve bind, preferred,<br/>local, or interleave subset"]
+        FALLBACK["Retain inherited default<br/>lower threads, shared mode,<br/>or unsupported platform"]
+        APPLY["Interleave across<br/>process-allowed memory nodes"]
+        LOAD2["Load same genome<br/>run same mapping kernels"]
+        REQUEST -->|No| FALLBACK
+        REQUEST -->|Yes| INHERITED
+        INHERITED -->|Yes| PRESERVE
+        INHERITED -->|Default| APPLY --> LOAD2
+    end
+
+    SCREEN --> REQUEST
+    WORK1 -.->|Runtime parent| REQUEST
+
+    subgraph RESULTS["Exact 91de892 public evidence at 96 threads"]
+        direction LR
+        PRIMARY["Uncompressed full corpus<br/>74.01 s to 57.35 s<br/>22.51% median gain"]
+        RESOURCE["Peak RSS change -0.13%<br/>3 of 3 paired outputs passed<br/>64-thread boundary gain 14.27%"]
+        GZIP["Gzip support<br/>78.31 s to 62.25 s<br/>5 of 5 paired outputs passed"]
+        CAVEAT["Gzip performance not formally accepted<br/>A02 control CV 4.28% exceeded gate"]
+        PRIMARY ~~~ RESOURCE
+        RESOURCE ~~~ GZIP
+        GZIP --> CAVEAT
+    end
+
+    LOAD2 --> PRIMARY
+
+    classDef rejected fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef parent fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef success fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef control fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class PARSER,UTIL parent;
+    class QUEUE rejected;
+    class SCREEN note;
+    class LOAD1,CONCENTRATE,MIGRATE,WORK1 parent;
+    class REQUEST,INHERITED control;
+    class PRESERVE,FALLBACK,APPLY,LOAD2 candidate;
+    class PRIMARY,RESOURCE,GZIP success;
+    class CAVEAT note;

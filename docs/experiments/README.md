@@ -43,6 +43,11 @@ claim an ordinary-path speedup.
   size invalidated by inherited CPU affinity.
 - [A02](A02-input-dispatch-diagnostics.md): accepted adaptive input-chunk Labs
   candidate; not included in `blackstar.1`.
+- [A02b](A02b-post-A02-profile.md): rejected producer/consumer redesign; the
+  corrected post-A02 profile showed less than one worker-equivalent of lock
+  wait and a 0.36-second completion tail.
+- [A05](A05-numa-placement.md): accepted NUMA-aware private genome placement
+  candidate; not included in `blackstar.1`.
 - [H01](H01-alignment-affinity-recovery.md): accepted Labs hardening candidate
   for inherited OpenMP binding; not included in `blackstar.1`.
 

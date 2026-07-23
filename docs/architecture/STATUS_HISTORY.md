@@ -19,6 +19,8 @@ not be described as shipped behavior.
 | H01 alignment-affinity recovery | Accepted Labs candidate | None | Recovers a reproduced one-core pthread inheritance failure by restoring 48 places and 96 CPUs; ordinary unbound path passed five-pair noninferiority. |
 | A01 touched-window-bin reset | Excluded | None | Correctness passed, but its performance series inherited the one-core affinity failure; the reported effect sizes are invalidated and the source is not stacked. |
 | A02 adaptive input chunks | Accepted Labs candidate | None | At 96 threads, three paired full-corpus runs improved median wall time by 13.41% uncompressed and 8.74% through zcat, lowered peak RSS, and preserved all measured outputs; not in blackstar.1. |
+| A02b input producer/consumer queue | Rejected after profiling | None | Post-A02 mapping reached 94.16 equivalent CPUs, input-lock wait consumed only 0.75 worker-equivalents, and the active-worker finish spread was 0.36 seconds; no queue source was stacked. |
+| A05 NUMA-aware private genome placement | Accepted Labs candidate | None | Exact commit 91de892 improved the 96-thread uncompressed full-corpus median by 22.51% over A02 with stable replicates, unchanged RSS, exact outputs, inherited-policy preservation, and shared-mode fallback; not in blackstar.1. |
 | Early 41 percent full-index claim | Superseded | None | Replaced by three-pair 49.48 percent release evidence. |
 | Early Delta build and runtime figures | Superseded | None | Replaced by hardened package and promotion-gate evidence. |
 

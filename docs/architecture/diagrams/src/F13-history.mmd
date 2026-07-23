@@ -9,12 +9,14 @@ flowchart LR
     subgraph LABS["ACCEPTED IN LABS - NOT RELEASED"]
         L1["H01 affinity recovery<br/>bound failure fixed; ordinary path noninferior"]
         L2["A02 adaptive input chunks<br/>paired speedup; exact outputs preserved"]
+        L3["A05 NUMA-aware private loading<br/>22.51% primary gain; exact outputs preserved"]
     end
 
     subgraph REJECTED["REJECTED"]
         R1["Persistent prefork workers<br/>measured slower"]
         R2["libdeflate replacement<br/>measured slower"]
         R3["A01 touched-bin reset<br/>excluded; effect size invalidated"]
+        R4["A02b producer / consumer queue<br/>post-A02 wait below one worker-equivalent"]
     end
 
     subgraph ARCHIVED["ARCHIVED EXPERIMENTS"]
@@ -37,7 +39,7 @@ flowchart LR
     classDef archived fill:#fef3c7,stroke:#a16207,color:#111827;
     classDef superseded fill:#f3f4f6,stroke:#4b5563,color:#111827,stroke-dasharray: 5 5;
     class A1,A2,A3,A4 accepted;
-    class L1,L2 labs;
-    class R1,R2,R3 rejected;
+    class L1,L2,L3 labs;
+    class R1,R2,R3,R4 rejected;
     class X1,X2 archived;
     class S1,S2,S3 superseded;

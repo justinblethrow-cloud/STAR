@@ -21,6 +21,7 @@ extras/doc-latex/*.toc
 source/STAR
 source/parametersDefault.xxd
 /dist/
+/benchmarks/labs/
 .DS_Store
 *.xcworkspacedata
 *.pbxproj

@@ -154,11 +154,11 @@
       "title": "Accepted, rejected, and superseded work",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
+      "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
       "source": "docs/architecture/diagrams/src/F13-history.mmd",
       "evidence": ["docs/architecture/STATUS_HISTORY.md"],
-      "caption": "The history ledger separates qualified release work, accepted but unreleased H01 and A02 candidates, excluded experiments, and invalidated or superseded evidence.",
-      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity and A02 adaptive-chunk candidates, rejected prefork and libdeflate paths, excluded A01 source with invalidated performance effects, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
+      "caption": "The history ledger separates qualified release work, accepted but unreleased H01, A02, and A05 candidates, rejected experiments including A02b, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity, A02 adaptive-chunk, and A05 NUMA-placement candidates, rejected prefork, libdeflate, A01, and A02b queue paths, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
       "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
     },
     {
@@ -166,11 +166,11 @@
       "title": "Experimental roadmap",
       "maturity": "roadmap",
       "visibility": "public",
-      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
+      "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
       "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
       "evidence": ["docs/experiments/ROADMAP.md"],
-      "caption": "The corrected A00 baseline led to accepted Labs candidates for H01 affinity recovery and A02 adaptive input chunks; later alignment and index experiments remain gated proposals.",
-      "alt_text": "Gated roadmap from the qualified release through the corrected A00 baseline, accepted but unreleased H01 affinity recovery, excluded A01 touched-bin experiment, completed A02 diagnostics and accepted adaptive-chunk candidate, then proposed alignment, output, multi-sample, toolchain, and index stages.",
+      "caption": "The corrected alignment sequence now includes accepted Labs candidates H01, A02, and A05, with the A02b queue rejected by profiling before later CPU-kernel and index experiments.",
+      "alt_text": "Gated roadmap from the qualified release through corrected A00, accepted but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, accepted but unreleased A05 NUMA-aware private loading, then proposed alignment kernels, output, multi-sample, toolchain, and index stages.",
       "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
     },
     {
@@ -220,6 +220,18 @@
       "caption": "A02 uses 1 MB record-safe input chunks at 64 or more threads, reducing median full-corpus wall time by 13.41 percent uncompressed and 8.74 percent through zcat while lowering peak RSS.",
       "alt_text": "Before-and-after alignment dispatch diagram showing H01 workers receiving 30 MB chunks with a long completion tail, A02 selecting 1 MB chunks at 64 or more threads while retaining legacy behavior below that boundary, and qualified results of 13.41 percent uncompressed and 8.74 percent gzip median gains, 6.77 percent lower peak RSS, six paired correctness passes, and a canonical BAM pass.",
       "outputs": ["docs/architecture/diagrams/svg/F18-adaptive-input-chunks.svg", "docs/architecture/diagrams/pdf/F18-adaptive-input-chunks.pdf"]
+    },
+    {
+      "id": "F19",
+      "title": "A05 NUMA-aware private genome placement",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
+      "source": "docs/architecture/diagrams/src/F19-numa-placement.mmd",
+      "evidence": ["docs/experiments/A02b-post-A02-profile.md", "docs/experiments/A05-numa-placement.md", "docs/architecture/evidence/alignment-A02b-A05-numa-20260723.tsv", "source/NumaMemoryPolicy.cpp", "source/STAR.cpp"],
+      "caption": "A05 applies NUMA interleave to eligible high-thread private genome loads while preserving caller policies, reducing the exact 96-thread full-corpus median by 22.51 percent over A02 with unchanged measured outputs.",
+      "alt_text": "Attribution and before-after diagram showing the rejected A02b producer-consumer queue, A02 private genome pages undergoing automatic NUMA migration, A05 selecting interleave only for eligible default-policy private loads while preserving inherited bind and interleave subsets, and exact public evidence of a 74.01 to 57.35 second uncompressed median with all output comparisons passing; gzip timing is labeled supportive because control variability exceeded its gate.",
+      "outputs": ["docs/architecture/diagrams/svg/F19-numa-placement.svg", "docs/architecture/diagrams/pdf/F19-numa-placement.pdf"]
     }
   ]
 }
