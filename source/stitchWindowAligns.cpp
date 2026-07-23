@@ -5,7 +5,7 @@
 #include <cmath>
 #include <ctime>
 
-void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, Transcript trA, \
+void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, uint tG2, const Transcript &trAin, \
                         uint Lread, uiWA* WA, char* R, Genome &mapGen, \
                         Parameters& P, Transcript** wTr, uint* nWinTr, ReadAlign *RA) {
     //recursively stitch aligns for one gene
@@ -14,6 +14,8 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
     if (iA>=nA && tR2==0) return; //no aligns in the transcript
 
     if (iA>=nA) {//no more aligns to add, finalize the transcript
+
+        Transcript trA=trAin; //finalization extends and annotates this path
 
         //extend first
         Transcript trAstep1;
@@ -309,8 +311,8 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
 
     ///////////////////////////////////////////////////////////////////////////////////
     int dScore=0;
-    Transcript trAi=trA; //trA copy with this align included, to be used in the 1st recursive call of StitchAlign
-    if (trA.nExons>0) {//stitch, a transcript has already been originated
+    Transcript trAi=trAin; //copy only the branch that will be mutated
+    if (trAin.nExons>0) {//stitch, a transcript has already been originated
 
         dScore=stitchAlignToTranscript(tR2, tG2, WA[iA][WA_rStart], WA[iA][WA_gStart], WA[iA][WA_Length], WA[iA][WA_iFrag],  WA[iA][WA_sjA], P, R, mapGen, &trAi, RA->outFilterMismatchNmaxTotal);
         //TODO check if the new stitching creates too many MM, quit this transcript if so
@@ -345,11 +347,10 @@ void stitchWindowAligns(uint iA, uint nA, int Score, bool WAincl[], uint tR2, ui
     };
 
     //also run a transcript w/o including this align
-    if (WA[iA][WA_Anchor]!=2 || trA.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
+    if (WA[iA][WA_Anchor]!=2 || trAin.nAnchor>0) {//only allow exclusion if this is not the last anchor, or other anchors have been used
         WAincl[iA]=false;
-        stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trA, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
+        stitchWindowAligns(iA+1, nA, Score, WAincl, tR2, tG2, trAin, Lread, WA, R, mapGen, P, wTr, nWinTr, RA);
     };
     return;
 };
-
 
