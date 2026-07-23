@@ -1,0 +1,38 @@
+flowchart TB
+    SOURCE["Cumulative H01 + A02 + A05 + A06 source<br/>same code and runtime command"] --> LTO
+    SOURCE --> PGOGEN
+
+    subgraph LTOFLOW["LTO evaluation"]
+        direction TB
+        LTO["GCC 13.3 LTO build<br/>cross-file optimization<br/>binary: 3.57 MB to 2.95 MB<br/>17.47% smaller"]
+        LTORESULT["Five-pair median<br/>55.75 s to 55.32 s<br/>1.21% gain<br/>5 of 5 outputs passed"]
+        LTODEC["REJECTED<br/>below 2% practical gate"]
+        LTO --> LTORESULT --> LTODEC
+    end
+
+    subgraph PGOFLOW["PGO evaluation"]
+        direction TB
+        PGOGEN["Instrumented build<br/>full public-corpus training<br/>1:20:21 wall time<br/>163 profile files"]
+        PGOUSE["Profile-use build<br/>mismatch is an error<br/>binary: 3.57 MB to 2.78 MB<br/>22.15% smaller"]
+        PGORESULT["Five-pair median<br/>55.89 s to 55.20 s<br/>1.20% gain<br/>5 of 5 outputs passed"]
+        PGODEC["REJECTED<br/>below 2% practical gate"]
+        PGOGEN --> PGOUSE --> PGORESULT --> PGODEC
+    end
+
+    LTODEC --> FINAL["No toolchain variant stacked<br/>cumulative source remains H01 + A02 + A05 + A06"]
+    PGODEC --> FINAL
+
+    PORTABLE["PGO is reproducible by other builders<br/>regenerate for exact source and compiler<br/>use a representative pinned training recipe"] -.-> PGOGEN
+
+    classDef source fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef process fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef result fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef rejected fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef final fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class SOURCE source;
+    class LTO,PGOGEN,PGOUSE process;
+    class LTORESULT,PGORESULT result;
+    class LTODEC,PGODEC rejected;
+    class FINAL final;
+    class PORTABLE note;

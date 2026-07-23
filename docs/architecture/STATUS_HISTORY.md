@@ -22,6 +22,7 @@ not be described as shipped behavior.
 | A02b input producer/consumer queue | Rejected after profiling | None | Post-A02 mapping reached 94.16 equivalent CPUs, input-lock wait consumed only 0.75 worker-equivalents, and the active-worker finish spread was 0.36 seconds; no queue source was stacked. |
 | A05 NUMA-aware private genome placement | Accepted Labs candidate | None | Exact commit 91de892 improved the 96-thread uncompressed full-corpus median by 22.51% over A02 with stable replicates, unchanged RSS, exact outputs, inherited-policy preservation, and shared-mode fallback; not in blackstar.1. |
 | A06 transcript recursion copy elision | Accepted Labs candidate | None | Exact commit 6032393 improved the five-pair uncompressed full-corpus median by 2.29% over A05 with a positive paired interval, unchanged RSS, exact outputs, compressed-input support, and a canonical BAM pass; not in blackstar.1. |
+| A09 LTO and PGO toolchain variants | Rejected | None | Independent five-pair tests improved the cumulative A06 median by 1.21% with LTO and 1.20% with PGO. Both preserved exact measured outputs and had positive paired intervals, but neither met the 2% practical gate. |
 | Early 41 percent full-index claim | Superseded | None | Replaced by three-pair 49.48 percent release evidence. |
 | Early Delta build and runtime figures | Superseded | None | Replaced by hardened package and promotion-gate evidence. |
 

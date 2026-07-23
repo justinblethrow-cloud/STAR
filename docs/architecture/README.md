@@ -27,6 +27,7 @@ customer-derived evidence belong in an untracked internal derivative.
 18. [A02 adaptive input chunks](diagrams/svg/F18-adaptive-input-chunks.svg)
 19. [A05 NUMA-aware private genome placement](diagrams/svg/F19-numa-placement.svg)
 20. [A06 transcript recursion copy elision](diagrams/svg/F20-transcript-recursion.svg)
+21. [A09 LTO and PGO evaluation](diagrams/svg/F21-toolchain.svg)
 
 The editable sources are under `diagrams/src/`. The generated SVG and PDF
 exports are presentation-ready but are never the source of truth.

@@ -12,8 +12,9 @@ flowchart TD
     A03 --> A04["A04 Runtime-dispatched AVX2 comparison"]
     A00 --> A07["A07 Modern HTSlib ordered output"]
     A07 --> A08["A08 Resource-token multi-sample scheduler"]
-    A06 --> A09["A09 LTO / PGO cumulative build"]
-    A09 --> QUAL["Cumulative alignment qualification"]
+    A06 --> A09["A09 LTO / PGO cumulative build<br/>REJECTED - ABOUT 1.2% EACH"]
+    A06 --> QUAL["Cumulative alignment qualification"]
+    A09 -.->|evidence only; not stacked| QUAL
     QUAL --> I01["I01 Parallel genome preparation"]
     I01 --> I02["I02 Parallel disjoint-byte SA pack"]
     I02 --> I03["I03 Partitioned junction merge"]
@@ -36,7 +37,7 @@ flowchart TD
     classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
     class RELEASE,A00 accepted;
     class H01,A02D,A02,A05,PROFILE,A06 active;
-    class A01,A02B rejected;
-    class A03,A04,A07,A08,A09,QUAL,I01,I02,I03,I04,I05,INDEXQUAL proposed;
+    class A01,A02B,A09 rejected;
+    class A03,A04,A07,A08,QUAL,I01,I02,I03,I04,I05,INDEXQUAL proposed;
     class DECIDE decision;
     class GATE note;

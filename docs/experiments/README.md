@@ -51,6 +51,8 @@ claim an ordinary-path speedup.
   candidate; not included in `blackstar.1`.
 - [A06](A06-transcript-recursion.md): accepted transcript-recursion copy
   elision candidate; not included in `blackstar.1`.
+- [A09](A09-toolchain.md): rejected LTO and PGO variants; each preserved exact
+  measured outputs but improved the five-pair median by only about 1.2 percent.
 - [H01](H01-alignment-affinity-recovery.md): accepted Labs hardening candidate
   for inherited OpenMP binding; not included in `blackstar.1`.
 

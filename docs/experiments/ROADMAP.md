@@ -17,8 +17,8 @@ release until it passes cumulative qualification and is deliberately promoted.
 | A06 | Transcript search state | Const-reference recursion copies transcript state only for mutating and terminal branches. | Accepted Labs candidate; not released | Cumulative A05 profile |
 | A07 | Modern BAM output | Pinned modern HTSlib with an ordered bounded queue removes global compression serialization. | Proposed | A00 |
 | A08 | Multi-sample scheduler | Shared immutable index memory plus explicit resource tokens improves node throughput with complete isolation. | Proposed | A07 |
-| A09 | Toolchain | LTO and profile-guided optimization improve the accepted cumulative alignment stack without semantic changes. | Proposed | A06 |
-| I01 | Genome preparation | Parallel reverse-complement and bounded private prefix histograms reduce serial setup. | Proposed | A09 |
+| A09 | Toolchain | LTO and profile-guided optimization improve the accepted cumulative alignment stack without semantic changes. | Rejected; LTO and PGO each gained about 1.2%, below the 2% practical gate | A06 |
+| I01 | Genome preparation | Parallel reverse-complement and bounded private prefix histograms reduce serial setup. | Proposed | Cumulative alignment qualification |
 | I02 | SA packing | Record-block partitioning permits deterministic disjoint-byte parallel packing. | Proposed | I01 |
 | I03 | Junction merge | Partitioned merge and rank calculation reduce the remaining serial junction stage. | Proposed | I02 |
 | I04 | Suffix sorting | Comparator correction plus inlined multikey radix sorting reduces dominant bin-sort work. | Proposed | I03 |
@@ -42,5 +42,8 @@ release until it passes cumulative qualification and is deliberately promoted.
 - Do not promote A06 until the cumulative H01+A02+A05+A06 stack passes release
   qualification. Its five-pair 2.29 percent result is the primary small-effect
   confirmation; the three-pair gzip result remains supportive.
+- Do not stack A09. LTO and PGO preserved exact measured outputs and had
+  positive paired intervals, but their five-pair median gains of 1.21 and 1.20
+  percent did not meet the 2 percent practical gate.
 - I05 begins only after a documented I04 decision and retains the default v1
   index format.

@@ -18,6 +18,7 @@ flowchart LR
         R2["libdeflate replacement<br/>measured slower"]
         R3["A01 touched-bin reset<br/>excluded; effect size invalidated"]
         R4["A02b producer / consumer queue<br/>post-A02 wait below one worker-equivalent"]
+        R5["A09 LTO and PGO<br/>exact outputs; about 1.2% gain each<br/>below practical gate"]
     end
 
     subgraph ARCHIVED["ARCHIVED EXPERIMENTS"]
@@ -41,6 +42,6 @@ flowchart LR
     classDef superseded fill:#f3f4f6,stroke:#4b5563,color:#111827,stroke-dasharray: 5 5;
     class A1,A2,A3,A4 accepted;
     class L1,L2,L3,L4 labs;
-    class R1,R2,R3,R4 rejected;
+    class R1,R2,R3,R4,R5 rejected;
     class X1,X2 archived;
     class S1,S2,S3 superseded;
