@@ -41,8 +41,8 @@ claim an ordinary-path speedup.
 - [A00](A00-public-alignment-baseline.md): corrected public alignment baseline.
 - [A01](A01-touched-window-bins.md): excluded experiment; historical effect
   size invalidated by inherited CPU affinity.
-- [A02](A02-input-dispatch-diagnostics.md): completed dispatch attribution;
-  bounded implementation is next.
+- [A02](A02-input-dispatch-diagnostics.md): accepted adaptive input-chunk Labs
+  candidate; not included in `blackstar.1`.
 - [H01](H01-alignment-affinity-recovery.md): accepted Labs hardening candidate
   for inherited OpenMP binding; not included in `blackstar.1`.
 

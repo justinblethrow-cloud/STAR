@@ -18,7 +18,7 @@ not be described as shipped behavior.
 | Corrected A00 public alignment baseline | Labs evidence | None | OpenMP binding was removed; release medians are 71.35 seconds uncompressed and 72.15 seconds compressed over three deterministic runs each. |
 | H01 alignment-affinity recovery | Accepted Labs candidate | None | Recovers a reproduced one-core pthread inheritance failure by restoring 48 places and 96 CPUs; ordinary unbound path passed five-pair noninferiority. |
 | A01 touched-window-bin reset | Excluded | None | Correctness passed, but its performance series inherited the one-core affinity failure; the reported effect sizes are invalidated and the source is not stacked. |
-| A02 input-dispatch diagnostics | Experimental | None | Corrected full-corpus measurement found 49.52% input-lock occupancy, 71.28 aggregate mapping concurrency, and a 12.93-second finish spread; implementation remains unaccepted. |
+| A02 adaptive input chunks | Accepted Labs candidate | None | At 96 threads, three paired full-corpus runs improved median wall time by 13.41% uncompressed and 8.74% through zcat, lowered peak RSS, and preserved all measured outputs; not in blackstar.1. |
 | Early 41 percent full-index claim | Superseded | None | Replaced by three-pair 49.48 percent release evidence. |
 | Early Delta build and runtime figures | Superseded | None | Replaced by hardened package and promotion-gate evidence. |
 

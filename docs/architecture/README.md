@@ -24,6 +24,7 @@ customer-derived evidence belong in an untracked internal derivative.
 15. [Rejected A01 touched-window-bin reset](diagrams/svg/F15-touched-window-bins.svg)
 16. [A02 input-dispatch attribution](diagrams/svg/F16-input-dispatch-diagnostics.svg)
 17. [H01 alignment-affinity recovery](diagrams/svg/F17-alignment-affinity-recovery.svg)
+18. [A02 adaptive input chunks](diagrams/svg/F18-adaptive-input-chunks.svg)
 
 The editable sources are under `diagrams/src/`. The generated SVG and PDF
 exports are presentation-ready but are never the source of truth.

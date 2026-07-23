@@ -1,0 +1,50 @@
+flowchart TB
+    subgraph BEFORE["H01 runtime parent"]
+        direction LR
+        INPUT1[("Paired FASTQ streams")]
+        LOCK1["Shared input mutex"]
+        LARGE["30 MB total chunk<br/>per worker"]
+        FEW["About 180 chunks<br/>1-2 per active worker"]
+        TAIL["12.93 s active-worker<br/>finish spread"]
+        INPUT1 --> LOCK1 --> LARGE --> FEW --> TAIL
+    end
+
+    subgraph AFTER["A02 accepted Labs candidate - not released"]
+        direction LR
+        INPUT2[("Same FASTQ streams")]
+        DECIDE{"Mapping threads<br/>at least 64?"}
+        SMALL["1 MB total chunk<br/>bounded by read reserve"]
+        LEGACY["Retain configured<br/>legacy granularity"]
+        MAP["Same locked parser<br/>same record boundaries<br/>same mapping kernels"]
+        INPUT2 --> DECIDE
+        DECIDE -->|Yes| SMALL --> MAP
+        DECIDE -->|No| LEGACY --> MAP
+    end
+
+    TAIL -->|Measured opportunity| DECIDE
+
+    subgraph RESULTS["Qualified public evidence at 96 threads"]
+        direction LR
+        RAW["Uncompressed full corpus<br/>70.88 s to 61.47 s<br/>13.41% median gain"]
+        GZIP["Gzip full corpus<br/>71.68 s to 65.37 s<br/>8.74% median gain"]
+        RESOURCE["Median peak RSS<br/>down 6.77%"]
+        EXACT["6 of 6 paired output checks<br/>plus canonical BAM pass"]
+        RAW ~~~ GZIP
+        GZIP ~~~ RESOURCE
+        RESOURCE ~~~ EXACT
+    end
+
+    MAP --> RAW
+
+    LIMIT["A02 changes scheduling granularity;<br/>serialized parsing still remains"] -.-> MAP
+
+    classDef parent fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef control fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef success fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class INPUT1,LOCK1,LARGE,FEW,TAIL parent;
+    class DECIDE,LEGACY control;
+    class INPUT2,SMALL,MAP candidate;
+    class RAW,GZIP,RESOURCE,EXACT success;
+    class LIMIT note;

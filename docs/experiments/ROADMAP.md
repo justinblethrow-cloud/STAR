@@ -9,7 +9,7 @@ release until it passes cumulative qualification and is deliberately promoted.
 | A00 | Alignment baseline | A public corpus can reproduce and localize the release hot paths. | Corrected baseline complete | Release tag |
 | H01 | Alignment affinity | Restore the complete requested CPU place set before pthread worker creation when an OpenMP runtime binds the initial thread. | Accepted Labs candidate; not released | Corrected A00 |
 | A01 | Window-bin clearing | Clearing only bins touched by the previous read removes repeated full-array memset work. | Excluded; historical effect size invalidated | A00 |
-| A02 | Input dispatch | Per-thread timing can determine whether serialized parsing, coarse chunks, or tail imbalance suppress CPU occupancy. | Diagnostics complete; implementation next | H01 |
+| A02 | Input dispatch | Adaptive high-thread chunk granularity reduces tail imbalance without changing record boundaries or mapping semantics. | Accepted Labs candidate; not released | H01 |
 | A03 | SA accessor specialization | One per-read Base or Delta dispatch and sparse rank checkpoints reduce virtual-SA lookup overhead. | Proposed | A02 decision |
 | A04 | SIMD seed comparison | Runtime-dispatched AVX2 comparison accelerates bounded nucleotide matching without changing sentinel semantics. | Proposed | A03 |
 | A05 | NUMA placement | Parallel first-touch, huge-page advice, and measured placement reduce remote-memory stalls. | Proposed | A02 decision |
@@ -29,8 +29,8 @@ release until it passes cumulative qualification and is deliberately promoted.
 - Reject a change below the practical performance gate.
 - Stop local kernel work when profiling shows no remaining material local hot
   path; reassess architecture rather than accumulating complexity.
-- Do not accept an input-dispatch redesign until it improves corrected paired
-  measurements and preserves exact output; A02 has completed the prerequisite
-  timing decomposition.
+- Do not promote A02 until its adaptive default passes cumulative release
+  qualification; its Labs decision is supported by paired uncompressed and
+  compressed measurements plus a canonical BAM differential check.
 - I05 begins only after a documented I04 decision and retains the default v1
   index format.

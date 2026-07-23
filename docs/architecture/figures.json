@@ -154,11 +154,11 @@
       "title": "Accepted, rejected, and superseded work",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "496ee8a5687c21520b91603b6e04141fd16a4fa0",
+      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
       "source": "docs/architecture/diagrams/src/F13-history.mmd",
       "evidence": ["docs/architecture/STATUS_HISTORY.md"],
-      "caption": "The history ledger separates qualified release work, an accepted but unreleased H01 candidate, excluded experiments, and invalidated or superseded evidence.",
-      "alt_text": "Status lanes listing blackstar.1 index and insertion work, the accepted Labs H01 affinity candidate, rejected prefork and libdeflate paths, excluded A01 source with invalidated performance effects, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
+      "caption": "The history ledger separates qualified release work, accepted but unreleased H01 and A02 candidates, excluded experiments, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity and A02 adaptive-chunk candidates, rejected prefork and libdeflate paths, excluded A01 source with invalidated performance effects, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
       "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
     },
     {
@@ -166,11 +166,11 @@
       "title": "Experimental roadmap",
       "maturity": "roadmap",
       "visibility": "public",
-      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
       "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
       "evidence": ["docs/experiments/ROADMAP.md"],
-      "caption": "The corrected A00 baseline led to accepted Labs hardening in H01 and completed A02 dispatch attribution; a bounded dispatch candidate is the next implementation gate.",
-      "alt_text": "Gated roadmap from the qualified release through the corrected A00 baseline, accepted but unreleased H01 affinity recovery, excluded A01 touched-bin experiment, completed A02 input-dispatch diagnostics, and proposed alignment, output, multi-sample, toolchain, and index stages.",
+      "caption": "The corrected A00 baseline led to accepted Labs candidates for H01 affinity recovery and A02 adaptive input chunks; later alignment and index experiments remain gated proposals.",
+      "alt_text": "Gated roadmap from the qualified release through the corrected A00 baseline, accepted but unreleased H01 affinity recovery, excluded A01 touched-bin experiment, completed A02 diagnostics and accepted adaptive-chunk candidate, then proposed alignment, output, multi-sample, toolchain, and index stages.",
       "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
     },
     {
@@ -190,11 +190,11 @@
       "title": "A02 input-dispatch attribution",
       "maturity": "experimental",
       "visibility": "public",
-      "code_commit": "544237f25af23623346d8c305aebd96d0d798786",
+      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
       "source": "docs/architecture/diagrams/src/F16-input-dispatch-diagnostics.mmd",
       "evidence": ["docs/experiments/A02-input-dispatch-diagnostics.md", "docs/architecture/evidence/alignment-A00-A02-H01-20260723.tsv", "source/ReadAlignChunk_processChunks.cpp"],
-      "caption": "Corrected full-corpus A02 diagnostics measured 49.52 percent input-lock occupancy, 71.28 aggregate mapping concurrency, and a 12.93-second finish spread; implementation must still prove a wall-time gain.",
-      "alt_text": "Diagnostic flow from shared FASTQ streams through one input mutex, whole-chunk parsing, and private mapping, with 96 active workers, 49.52 percent input-lock occupancy, 71.28 equivalent mapping CPUs, and a 12.93-second finish spread leading to bounded parser, chunking, or producer-consumer candidates and a rollback path.",
+      "caption": "Corrected full-corpus A02 diagnostics measured 49.52 percent input-lock occupancy, 71.28 aggregate mapping concurrency, and a 12.93-second finish spread, selecting finer scheduling units for implementation.",
+      "alt_text": "Diagnostic flow from shared FASTQ streams through one input mutex, whole-chunk parsing, and private mapping, with 96 active workers, 49.52 percent input-lock occupancy, 71.28 equivalent mapping CPUs, and a 12.93-second finish spread leading to the selected finer-chunk path alongside parser, producer-consumer, and rollback alternatives.",
       "outputs": ["docs/architecture/diagrams/svg/F16-input-dispatch-diagnostics.svg", "docs/architecture/diagrams/pdf/F16-input-dispatch-diagnostics.pdf"]
     },
     {
@@ -208,6 +208,18 @@
       "caption": "H01 restores the full CPU-place union before pthread creation when OpenMP binding is requested, recovering a 5.20-fold failure mode while passing ordinary-path noninferiority.",
       "alt_text": "Three-lane diagram showing the qualified release inheriting one two-CPU OpenMP place across 96 pthread workers and taking 223.54 seconds, H01 restoring 48 places and 96 CPUs before worker creation and taking 43.00 seconds, and the ordinary unbound fast path producing 43.49 versus 43.48 second medians across five pairs.",
       "outputs": ["docs/architecture/diagrams/svg/F17-alignment-affinity-recovery.svg", "docs/architecture/diagrams/pdf/F17-alignment-affinity-recovery.pdf"]
+    },
+    {
+      "id": "F18",
+      "title": "A02 adaptive input chunks",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
+      "source": "docs/architecture/diagrams/src/F18-adaptive-input-chunks.mmd",
+      "evidence": ["docs/experiments/A02-input-dispatch-diagnostics.md", "docs/architecture/evidence/alignment-A02-adaptive-chunks-20260723.tsv", "source/ReadChunkConfig.cpp", "source/Parameters.cpp"],
+      "caption": "A02 uses 1 MB record-safe input chunks at 64 or more threads, reducing median full-corpus wall time by 13.41 percent uncompressed and 8.74 percent through zcat while lowering peak RSS.",
+      "alt_text": "Before-and-after alignment dispatch diagram showing H01 workers receiving 30 MB chunks with a long completion tail, A02 selecting 1 MB chunks at 64 or more threads while retaining legacy behavior below that boundary, and qualified results of 13.41 percent uncompressed and 8.74 percent gzip median gains, 6.77 percent lower peak RSS, six paired correctness passes, and a canonical BAM pass.",
+      "outputs": ["docs/architecture/diagrams/svg/F18-adaptive-input-chunks.svg", "docs/architecture/diagrams/pdf/F18-adaptive-input-chunks.pdf"]
     }
   ]
 }
