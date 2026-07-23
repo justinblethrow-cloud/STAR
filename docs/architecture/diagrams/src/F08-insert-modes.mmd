@@ -1,0 +1,22 @@
+flowchart TD
+    INPUT["Validated base index + named FASTA<br/>+ optional insert-only GTF"] --> MODE{"Choose publication mode"}
+    MODE -->|Full| FULL["Rebuild and write a complete<br/>conventional STAR index"]
+    MODE -->|Overlay| OVER["Reuse validated base files<br/>and publish replacement extended arrays"]
+    MODE -->|Delta| DELTA["Reuse the validated base index<br/>and publish only sparse additions"]
+
+    FULL --> FC["Stock-compatible complete files<br/>largest one-time work and artifact"]
+    OVER --> OC["BlackSTAR-specific package<br/>large replacement structures"]
+    DELTA --> DC["BlackSTAR-specific package<br/>small artifact and fast one-time build"]
+
+    FC --> LOAD["Alignment loads one complete logical index"]
+    OC --> LOAD
+    DC --> LOAD
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef full fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    class INPUT input;
+    class MODE decision;
+    class FULL,FC full;
+    class OVER,OC,DELTA,DC,LOAD accepted;

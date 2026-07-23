@@ -1,0 +1,22 @@
+flowchart LR
+    QUERY["Suffix-array rank k"] --> RANK["Find inserted-record checkpoint<br/>near rank k"]
+    BASE[("Base packed SA<br/>unchanged")]
+    INSERT[("Sorted inserted suffix records<br/>with logical ranks")]
+    RANK --> ISINSERT{"Does k name an<br/>inserted record?"}
+    INSERT --> RANK
+    ISINSERT -->|Yes| DVAL["Return inserted suffix coordinate"]
+    ISINSERT -->|No| ADJUST["Subtract inserted records<br/>before k"]
+    ADJUST --> BVAL["Read adjusted rank from base SA"]
+    BASE --> BVAL
+    DVAL --> VALUE["One logical SA value"]
+    BVAL --> VALUE
+    VALUE --> SEARCH["Existing STAR seed-search logic"]
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef data fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    class QUERY input;
+    class BASE,INSERT data;
+    class ISINSERT decision;
+    class RANK,DVAL,ADJUST,BVAL,VALUE,SEARCH accepted;

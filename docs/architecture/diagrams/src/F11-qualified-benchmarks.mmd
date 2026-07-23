@@ -1,0 +1,22 @@
+flowchart TD
+    EVIDENCE["blackstar.1 evidence"]
+    EVIDENCE --> PAIRED["QUALIFIED PERFORMANCE<br/>3 order-balanced CHM13 pairs<br/>49.48% mean reduction; 1.98x"]
+    EVIDENCE --> BUILD["ONE-TIME MEASUREMENT<br/>Delta build 50.96 s<br/>58,130-byte package"]
+    EVIDENCE --> RUNTIME["DESCRIPTIVE ONLY<br/>24-sample mean difference +9.22 s<br/>all base runs preceded Delta"]
+    EVIDENCE --> CORRECT["EXACT CONTROLS<br/>42/42 full-index files identical<br/>existing count differences: 0"]
+    CORRECT --> SYNTH["Synthetic added-reference controls<br/>2,000/2,000 single-end reads<br/>100/100 paired fragments counted"]
+
+    PAIRED --> CLAIM["May support release speed claim"]
+    BUILD --> CLAIM
+    RUNTIME --> LIMIT["Must retain fixed-order caveat"]
+    CORRECT --> CLAIM
+    SYNTH --> CLAIM
+
+    classDef root fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef qualified fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef measured fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef caveat fill:#fef3c7,stroke:#a16207,color:#111827;
+    class EVIDENCE root;
+    class PAIRED,CORRECT,SYNTH,CLAIM qualified;
+    class BUILD measured;
+    class RUNTIME,LIMIT caveat;

@@ -1,0 +1,31 @@
+flowchart TD
+    FASTQ["Shared FASTQ stream"] --> INPUTLOCK["Acquire shared input lock<br/>parse and copy one chunk"]
+    INPUTLOCK --> READ["Worker encodes one read and reverse complement"]
+    READ --> START["Choose seed start"]
+    START --> MMP["Search suffix array for maximal mappable prefix"]
+    MMP --> MORE{"Useful unsearched read segment?"}
+    MORE -->|Yes| START
+    MORE -->|No| SEEDS["Collect seed loci and orientations"]
+    SEEDS --> WINDOWS["Cluster nearby seeds into genomic windows"]
+    WINDOWS --> STITCH["Stitch compatible seeds across matches, indels, and introns"]
+    STITCH --> TRANSCRIPTS["Construct candidate transcript alignments"]
+    TRANSCRIPTS --> SCORE["Score, filter, and rank candidates"]
+    SCORE --> MULTI["Select primary and multimapping alignments"]
+    MULTI --> OUTPUT["Emit alignment, junction, and optional count records"]
+
+    NOTE["Original redraw based on Dobin et al. 2013<br/>doi:10.1093/bioinformatics/bts635"] -.-> MMP
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef control fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef search fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef assemble fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef output fill:#fff7ed,stroke:#c2410c,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class FASTQ,READ input;
+    class INPUTLOCK control;
+    class START,MMP,SEEDS search;
+    class WINDOWS,STITCH,TRANSCRIPTS,SCORE,MULTI assemble;
+    class MORE decision;
+    class OUTPUT output;
+    class NOTE note;

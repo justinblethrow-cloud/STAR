@@ -1,0 +1,43 @@
+flowchart TB
+    subgraph FAILURE["Reproduced release failure mode"]
+        direction LR
+        ENV["OMP_PROC_BIND=close<br/>OMP_PLACES=cores"]
+        RUNTIME["OpenMP runtime binds initial thread<br/>to one core and two SMT CPUs"]
+        SPAWN["STAR spawns 96 pthread workers"]
+        INHERIT["All workers inherit the same place"]
+        SLOW["223.54 s wall<br/>185% CPU"]
+        ENV --> RUNTIME --> SPAWN --> INHERIT --> SLOW
+    end
+
+    subgraph RECOVERY["H01 accepted Labs candidate - not released"]
+        direction LR
+        DETECT["Detect explicit binding request"]
+        QUERY["Query all 48 OpenMP places"]
+        RESTORE["Restore spawning thread<br/>to union of 96 CPUs"]
+        WORKERS["pthread workers inherit<br/>the complete allocation"]
+        FAST["43.00 s wall<br/>731% CPU<br/>5.20x recovery"]
+        DETECT --> QUERY --> RESTORE --> WORKERS --> FAST
+    end
+
+    subgraph ORDINARY["Ordinary unbound path"]
+        direction LR
+        UNSET["Binding absent or false"]
+        BYPASS["Bypass OpenMP initialization"]
+        PAIRS["Five randomized pairs<br/>43.49 s vs 43.48 s<br/>95% interval -0.37% to +0.83%"]
+        UNSET --> BYPASS --> PAIRS
+    end
+
+    ENV -.-> DETECT
+    CORRECT["7 of 7 correctness comparisons passed"] -.-> FAST
+    CORRECT -.-> PAIRS
+
+    classDef failure fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef recovery fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef success fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef ordinary fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class ENV,RUNTIME,SPAWN,INHERIT,SLOW failure;
+    class DETECT,QUERY,RESTORE,WORKERS recovery;
+    class FAST,PAIRS success;
+    class UNSET,BYPASS ordinary;
+    class CORRECT note;

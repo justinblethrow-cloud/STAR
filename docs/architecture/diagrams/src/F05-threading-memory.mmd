@@ -1,0 +1,58 @@
+flowchart TD
+    COORD["Coordinator<br/>parameters, layout, deterministic reduction"]
+
+    subgraph BUILD["genomeGenerate workers"]
+        B1["Prefix count and scatter"]
+        B2["Independent suffix-bin sort"]
+        B3["SAindex event scan"]
+        B4["Junction search and insertion"]
+    end
+
+    subgraph ALIGN["alignReads workers"]
+        R1["Read chunk 1"]
+        R2["Read chunk 2"]
+        RN["Read chunk N"]
+    end
+
+    INPUT[("Shared input streams")]
+    INPUTLOCK["mutexInRead<br/>one worker parses and copies<br/>a whole chunk while locked"]
+
+    subgraph MEMORY["Shared read-mostly memory"]
+        G[("Genome")]
+        SA[("Packed SA")]
+        SAI[("SAindex")]
+    end
+
+    TEMP[("Bounded per-thread temporary memory")]
+    REDUCE["Ordered deterministic merge / reduction"]
+
+    COORD --> B1
+    B1 --> B2
+    B2 --> B3
+    B3 --> B4
+    B4 --> REDUCE
+    B1 --- TEMP
+    B2 --- TEMP
+    B3 --- TEMP
+    B4 --- TEMP
+    INPUT --> INPUTLOCK
+    INPUTLOCK --> R1
+    INPUTLOCK --> R2
+    INPUTLOCK --> RN
+    G --- R1
+    G --- R2
+    G --- RN
+    SA --- R1
+    SA --- R2
+    SA --- RN
+    SAI --- R1
+    SAI --- R2
+    SAI --- RN
+
+    classDef control fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef worker fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef memory fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    class COORD,REDUCE,INPUTLOCK control;
+    class B1,B2,B3,B4,R1,R2,RN worker;
+    class G,SA,SAI,TEMP,INPUT memory;

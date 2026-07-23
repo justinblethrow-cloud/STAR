@@ -1,0 +1,17 @@
+flowchart LR
+    FIXTURE["CHM13v2 + ERCC + production GTF<br/>96 threads; 3 order-balanced pairs"]
+    FIXTURE --> STOCK["Stock STAR 2.7.11b<br/>mean 1225.78 s"]
+    FIXTURE --> BLACK["BlackSTAR blackstar.1<br/>mean 619.30 s"]
+    STOCK --> RESULT["49.48% less wall time<br/>1.98x speedup"]
+    BLACK --> RESULT
+    RESULT --> EXACT["42 / 42 substantive index-file<br/>comparisons byte-identical"]
+    EXACT --> VERDICT["QUALIFIED ACCEPTED RESULT"]
+
+    classDef context fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef baseline fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef result fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    class FIXTURE context;
+    class STOCK baseline;
+    class BLACK,EXACT,VERDICT accepted;
+    class RESULT result;

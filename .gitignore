@@ -1,5 +1,7 @@
 *.o
 Depend.list
+__pycache__/
+*.pyc
 
 .project
 .kdev4/

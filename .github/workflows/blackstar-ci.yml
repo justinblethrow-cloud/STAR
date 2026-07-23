@@ -28,6 +28,27 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y g++ make zlib1g-dev
 
+      - name: Install architecture renderer
+        run: npm ci --prefix extras/docs
+
+      - name: Validate architecture atlas
+        run: |
+          python3 extras/docs/render_architecture.py --check --svg-only
+          python3 extras/docs/validate_architecture.py
+
+      - name: Validate benchmark harness syntax
+        run: |
+          bash -n extras/benchmarks/preparePublicAlignmentFixture.sh
+          bash -n extras/benchmarks/runAlignmentA00.sh
+          python3 -m py_compile \
+            extras/benchmarks/makePairedFastqSubset.py \
+            extras/benchmarks/quietSystemGate.py \
+            extras/benchmarks/summarizeAlignmentA00.py \
+            extras/benchmarks/compareAlignmentRuns.py \
+            extras/benchmarks/evaluateAlignmentNoninferiority.py \
+            extras/benchmarks/runAlignmentPairs.py
+          extras/tests/scripts/testBenchmarkHarness.sh
+
       - name: Build BlackSTAR
         env:
           JOBS: "2"

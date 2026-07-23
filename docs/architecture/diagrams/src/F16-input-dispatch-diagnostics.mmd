@@ -1,0 +1,52 @@
+flowchart TD
+    STREAM[("One logical FASTQ stream per mate")]
+    MUTEX["Shared mutexInRead"]
+    PARSE["One worker parses and copies<br/>a complete input chunk while locked"]
+    RELEASE["Release input lock"]
+    MAP["That worker maps its private chunk"]
+    NEXT["Another worker may acquire input lock"]
+
+    STREAM --> MUTEX --> PARSE --> RELEASE
+    RELEASE --> MAP
+    RELEASE --> NEXT --> MUTEX
+
+    subgraph FACTS["Measured and source-confirmed facts"]
+        THREADS["96 of 96 workers active"]
+        LOCK["Input lock occupied 19.72 s<br/>49.52% of 39.82 s mapping interval"]
+        CONCURRENCY["Aggregate mapping concurrency<br/>71.28 equivalent CPUs"]
+        TAIL["Active-worker finish spread<br/>12.93 s"]
+        SOURCE["Parsing occurs inside the shared<br/>critical section in release source"]
+    end
+
+    subgraph ATTRIBUTION["A02 bounded implementation gate"]
+        METRICS["Corrected full-corpus timing<br/>diagnostic complete"]
+        QUESTION{"Which candidate reduces corrected wall time?"}
+        FAST["Faster record-safe input preparation"]
+        COARSE["Finer scheduling units"]
+        OVERLAP["Bounded producer / consumer queue"]
+        OTHER["No qualifying gain<br/>rollback and archive"]
+    end
+
+    THREADS --> METRICS
+    LOCK --> METRICS
+    CONCURRENCY --> METRICS
+    TAIL --> METRICS
+    SOURCE --> METRICS
+    METRICS --> QUESTION
+    QUESTION --> FAST
+    QUESTION --> COARSE
+    QUESTION --> OVERLAP
+    QUESTION --> OTHER
+
+    CAVEAT["Measured opportunity, not achieved speed:<br/>stages overlap and bottlenecks can move"] -.-> QUESTION
+
+    classDef source fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef control fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef measured fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef experiment fill:#fff7ed,stroke:#c2410c,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class STREAM,SOURCE source;
+    class MUTEX,PARSE,RELEASE,NEXT control;
+    class MAP,THREADS,LOCK,CONCURRENCY,TAIL measured;
+    class METRICS,QUESTION,FAST,COARSE,OVERLAP,OTHER experiment;
+    class CAVEAT note;

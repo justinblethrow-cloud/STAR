@@ -1,0 +1,15 @@
+claim_id	metric	value	unit	scope	qualification	source_record
+REL-INDEX-001	stock_genome_generate_mean	1225.78	seconds	CHM13v2 plus ERCC and production GTF, 96 threads, 3 order-balanced pairs	qualified paired measurement	full_chm13_paired_rc_3053d8e_20260715T0620Z/RESULTS.md
+REL-INDEX-002	blackstar_genome_generate_mean	619.30	seconds	CHM13v2 plus ERCC and production GTF, 96 threads, 3 order-balanced pairs	qualified paired measurement	full_chm13_paired_rc_3053d8e_20260715T0620Z/RESULTS.md
+REL-INDEX-003	wall_time_reduction	49.48	percent	same paired full-index benchmark	qualified paired measurement	full_chm13_paired_rc_3053d8e_20260715T0620Z/RESULTS.md
+REL-INDEX-004	speedup	1.98	fold	same paired full-index benchmark	qualified paired measurement	full_chm13_paired_rc_3053d8e_20260715T0620Z/RESULTS.md
+REL-INDEX-005	substantive_file_identity	42/42	comparisons	same paired full-index benchmark	byte-identical	full_chm13_paired_rc_3053d8e_20260715T0620Z/RESULTS.md
+REL-DELTA-001	delta_build_wall_time	50.96	seconds	GRCh38 plus two public transgene records and insert-only GTF	one measured build	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-002	delta_package_size	58130	bytes	same Delta build	exact artifact size	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-003	delta_build_peak_rss	27.98	GiB	same Delta build; base filesystem input 28.05 GiB	one measured build	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-004	base_alignment_mean	62.26	seconds	24 public-report anonymous samples	descriptive; all base runs preceded Delta	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-005	delta_alignment_mean	71.48	seconds	same 24 samples	descriptive; all base runs preceded Delta	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-006	alignment_mean_difference	9.22	seconds	same 24 samples	descriptive; not an unbiased performance estimate	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-007	existing_count_differences	0	rows	same 24 samples plus synthetic controls	exact comparison	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-008	single_end_transgene_reads_mapped	2000/2000	reads	synthetic GFP and GST control	exact control	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md
+REL-DELTA-009	paired_end_transgene_fragments_counted	100/100	fragments	independent synthetic GFP control	exact control	grch38_delta_promotion_rc_3053d8e_20260715/RESULTS.md

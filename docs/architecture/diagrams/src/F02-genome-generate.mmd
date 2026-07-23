@@ -1,0 +1,27 @@
+flowchart TD
+    IN["Reference FASTA"] --> SCAN["Scan contigs and choose padded layout"]
+    SCAN --> FWD["Encode forward genome"]
+    FWD --> REV["Append reverse complement"]
+    REV --> PREFIX["Count suffix prefixes and plan bins"]
+    PREFIX --> SORT["Sort suffixes within prefix bins"]
+    SORT --> PACK["Pack suffix-array coordinates"]
+    PACK --> SAI["Build SAindex prefix ranges"]
+    GTF["Optional GTF / splice junctions"] --> SJPREP["Prepare junction sequences"]
+    SAI --> HASJ{"Junctions supplied?"}
+    SJPREP --> HASJ
+    HASJ -->|No| WRITE["Write complete index"]
+    HASJ -->|Yes| SJSEARCH["Search junction suffix insertion positions"]
+    SJSEARCH --> SJSORT["Sort and merge inserted suffixes"]
+    SJSORT --> SJPACK["Pack augmented suffix array"]
+    SJPACK --> SJSAI["Rebuild SAindex"]
+    SJSAI --> WRITE
+    WRITE --> OUT[("Genome, SA, SAindex,<br/>chromosome and annotation tables")]
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef serial fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef parallel fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef output fill:#dcfce7,stroke:#15803d,color:#111827;
+    class IN,GTF input;
+    class SCAN,FWD,REV,SJPREP,HASJ,WRITE serial;
+    class PREFIX,SORT,PACK,SAI,SJSEARCH,SJSORT,SJPACK,SJSAI parallel;
+    class OUT output;

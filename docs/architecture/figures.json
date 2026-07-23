@@ -1,0 +1,213 @@
+{
+  "schema_version": 1,
+  "canonical_visibility": "public",
+  "renderers": {
+    "mermaid_cli": "11.16.0"
+  },
+  "figures": [
+    {
+      "id": "F01",
+      "title": "Upstream STAR two-stage workflow",
+      "maturity": "upstream",
+      "visibility": "public",
+      "code_commit": "2.7.11b",
+      "source": "docs/architecture/diagrams/src/F01-upstream-workflow.mmd",
+      "evidence": ["extras/doc-latex/STARmanual.tex"],
+      "caption": "STAR first builds a reusable genome index, then maps reads and emits alignment and quantification products.",
+      "alt_text": "Flow diagram from FASTA and optional GTF through genomeGenerate to an index, then from FASTQ and the index through alignReads to SAM or BAM, junctions, logs, and counts.",
+      "outputs": ["docs/architecture/diagrams/svg/F01-upstream-workflow.svg", "docs/architecture/diagrams/pdf/F01-upstream-workflow.pdf"]
+    },
+    {
+      "id": "F02",
+      "title": "Upstream genomeGenerate algorithm",
+      "maturity": "upstream",
+      "visibility": "public",
+      "code_commit": "2.7.11b",
+      "source": "docs/architecture/diagrams/src/F02-genome-generate.mmd",
+      "evidence": ["source/Genome_genomeGenerate.cpp", "source/genomeSAindex.cpp", "source/sjdbBuildIndex.cpp"],
+      "caption": "Genome generation packs the reference, constructs and packs the suffix array, builds SAindex, and optionally inserts annotated splice junctions.",
+      "alt_text": "Detailed genome generation flow with reference scan, forward and reverse genome, suffix prefix partitioning, sorting, packing, SAindex construction, optional junction insertion, and index publication.",
+      "outputs": ["docs/architecture/diagrams/svg/F02-genome-generate.svg", "docs/architecture/diagrams/pdf/F02-genome-generate.pdf"]
+    },
+    {
+      "id": "F03",
+      "title": "Upstream STAR read alignment algorithm",
+      "maturity": "upstream",
+      "visibility": "public",
+      "code_commit": "2.7.11b",
+      "source": "docs/architecture/diagrams/src/F03-align-reads.mmd",
+      "evidence": ["source/ReadAlignChunk_processChunks.cpp", "source/ReadAlign_mapOneRead.cpp", "source/ReadAlign_maxMappableLength2strands.cpp", "source/ReadAlign_stitchPieces.cpp"],
+      "caption": "STAR serializes input-chunk parsing before workers search maximal mappable seed prefixes, cluster and stitch seeds, score transcripts, and emit alignments.",
+      "alt_text": "Read-alignment flow from a shared FASTQ stream through locked chunk parsing, then per-worker read encoding, maximal mappable prefix searches on both strands, seed collection, genomic windows, seed stitching, transcript scoring, multimapping selection, and output.",
+      "outputs": ["docs/architecture/diagrams/svg/F03-align-reads.svg", "docs/architecture/diagrams/pdf/F03-align-reads.pdf"]
+    },
+    {
+      "id": "F04",
+      "title": "Index and runtime data model",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F04-data-model.mmd",
+      "evidence": ["source/Genome.h", "source/PackedArray.h", "source/GenomeInsertOverlay.h"],
+      "caption": "The base genome and packed suffix structures remain conventional STAR files; Overlay and Delta add validated BlackSTAR metadata and sparse inserted-reference structures.",
+      "alt_text": "Data model showing Genome, packed SA, SAindex, chromosome metadata, and gene tables in a base index, with optional Overlay full arrays or a Delta package containing added sequence, inserted suffixes, rank metadata, annotations, and identity manifest.",
+      "outputs": ["docs/architecture/diagrams/svg/F04-data-model.svg", "docs/architecture/diagrams/pdf/F04-data-model.pdf"]
+    },
+    {
+      "id": "F05",
+      "title": "Threading and memory map",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F05-threading-memory.mmd",
+      "evidence": ["source/Genome_genomeGenerate.cpp", "source/genomeSAindex.cpp", "source/sjdbBuildIndex.cpp", "source/mapThreadsSpawn.cpp", "source/ReadAlignChunk_processChunks.cpp"],
+      "caption": "BlackSTAR parallelizes dominant index construction stages while normal alignment retains STAR's shared locked input dispatch and read-level worker threads.",
+      "alt_text": "Threading and memory diagram separating coordinator, genome-generation workers, SAindex workers, junction workers, and read-alignment workers; the alignment workers share packed index arrays and receive chunks through one input mutex that is held during parsing and copying.",
+      "outputs": ["docs/architecture/diagrams/svg/F05-threading-memory.svg", "docs/architecture/diagrams/pdf/F05-threading-memory.pdf"]
+    },
+    {
+      "id": "F06",
+      "title": "Accepted BlackSTAR change map",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F06-change-map.mmd",
+      "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md"],
+      "caption": "Accepted changes are concentrated in deterministic index construction, persistent sequence insertion, integrity validation, and deployment safeguards; normal alignment semantics remain upstream.",
+      "alt_text": "Side-by-side upstream and BlackSTAR modules with accepted additions highlighted for parallel index generation, Full Overlay Delta sequence insertion, package validation, atomic publication, and release selection.",
+      "outputs": ["docs/architecture/diagrams/svg/F06-change-map.svg", "docs/architecture/diagrams/pdf/F06-change-map.pdf"]
+    },
+    {
+      "id": "F07",
+      "title": "Full-index benchmark",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F07-full-index-benchmark.mmd",
+      "evidence": ["docs/architecture/evidence/release-2.7.11b-blackstar.1.tsv"],
+      "caption": "Across three order-balanced CHM13 pairs, BlackSTAR reduced mean genomeGenerate wall time by 49.48 percent while all 42 substantive index-file comparisons were byte-identical.",
+      "alt_text": "Benchmark diagram comparing stock STAR mean 1225.78 seconds with BlackSTAR mean 619.30 seconds across three paired runs, a 49.48 percent reduction and 1.98 times speedup, with 42 of 42 file comparisons byte-identical.",
+      "outputs": ["docs/architecture/diagrams/svg/F07-full-index-benchmark.svg", "docs/architecture/diagrams/pdf/F07-full-index-benchmark.pdf"]
+    },
+    {
+      "id": "F08",
+      "title": "Full, Overlay, and Delta insertion modes",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F08-insert-modes.mmd",
+      "evidence": ["docs/STARgenomeInsert.md", "source/Genome_insertSequences.cpp"],
+      "caption": "Full writes a conventional complete index, Overlay reuses base files plus replacement structures, and Delta stores only the validated sparse addition.",
+      "alt_text": "Decision diagram from a base index plus named FASTA and optional GTF to Full, Overlay, or Delta output, comparing compatibility, artifact size, build work, and load behavior.",
+      "outputs": ["docs/architecture/diagrams/svg/F08-insert-modes.svg", "docs/architecture/diagrams/pdf/F08-insert-modes.pdf"]
+    },
+    {
+      "id": "F09",
+      "title": "Delta virtual suffix array",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F09-delta-virtual-sa.mmd",
+      "evidence": ["source/Genome.cpp", "source/GenomeInsertOverlay.cpp", "source/insertSeqSA.cpp"],
+      "caption": "Delta preserves the base packed suffix array and merges sparse inserted suffix records logically at lookup time.",
+      "alt_text": "Virtual suffix-array diagram with a base packed SA, a small sorted set of inserted suffix records and rank positions, and a lookup function selecting either a base entry adjusted by inserted rank or an inserted entry.",
+      "outputs": ["docs/architecture/diagrams/svg/F09-delta-virtual-sa.svg", "docs/architecture/diagrams/pdf/F09-delta-virtual-sa.pdf"]
+    },
+    {
+      "id": "F10",
+      "title": "Atomic publication and integrity",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F10-publication.mmd",
+      "evidence": ["source/Genome_writeGenomeIndex.cpp", "source/GenomeInsertIdentity.cpp", "extras/scripts/selectBlackSTAR.sh"],
+      "caption": "BlackSTAR builds into a private staging directory, validates identity and completeness, then atomically publishes a complete artifact.",
+      "alt_text": "Publication state machine from inputs through private staging, checksums and manifest validation, fsync and atomic rename, then immutable complete artifact and checksum-pinned deployment selection, with failures quarantined.",
+      "outputs": ["docs/architecture/diagrams/svg/F10-publication.svg", "docs/architecture/diagrams/pdf/F10-publication.pdf"]
+    },
+    {
+      "id": "F11",
+      "title": "Qualified benchmark summary",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F11-qualified-benchmarks.mmd",
+      "evidence": ["docs/architecture/evidence/release-2.7.11b-blackstar.1.tsv"],
+      "caption": "Qualified evidence separates strong paired full-build timing, one-time Delta construction, descriptive Delta runtime cost, and correctness controls.",
+      "alt_text": "Evidence hierarchy showing paired full-build speedup as a qualified performance claim, Delta build time and package size as one-time measurements, runtime difference as descriptive due to fixed run order, and exact mapping controls.",
+      "outputs": ["docs/architecture/diagrams/svg/F11-qualified-benchmarks.svg", "docs/architecture/diagrams/pdf/F11-qualified-benchmarks.pdf"]
+    },
+    {
+      "id": "F12",
+      "title": "Correctness and release boundary",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F12-release-boundary.mmd",
+      "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md"],
+      "caption": "Release acceptance combines byte identity where formats are unchanged, mapping equivalence for BlackSTAR-specific formats, adversarial package rejection, and explicit exclusions.",
+      "alt_text": "Concentric release-gate diagram covering build identity, sanitizers, byte identity, mapping and count equivalence, corruption rejection, paired performance, deployment rollback, and exclusions for experimental multi-sample and BAM compression features.",
+      "outputs": ["docs/architecture/diagrams/svg/F12-release-boundary.svg", "docs/architecture/diagrams/pdf/F12-release-boundary.pdf"]
+    },
+    {
+      "id": "F13",
+      "title": "Accepted, rejected, and superseded work",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "496ee8a5687c21520b91603b6e04141fd16a4fa0",
+      "source": "docs/architecture/diagrams/src/F13-history.mmd",
+      "evidence": ["docs/architecture/STATUS_HISTORY.md"],
+      "caption": "The history ledger separates qualified release work, an accepted but unreleased H01 candidate, excluded experiments, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing blackstar.1 index and insertion work, the accepted Labs H01 affinity candidate, rejected prefork and libdeflate paths, excluded A01 source with invalidated performance effects, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
+      "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
+    },
+    {
+      "id": "F14",
+      "title": "Experimental roadmap",
+      "maturity": "roadmap",
+      "visibility": "public",
+      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
+      "evidence": ["docs/experiments/ROADMAP.md"],
+      "caption": "The corrected A00 baseline led to accepted Labs hardening in H01 and completed A02 dispatch attribution; a bounded dispatch candidate is the next implementation gate.",
+      "alt_text": "Gated roadmap from the qualified release through the corrected A00 baseline, accepted but unreleased H01 affinity recovery, excluded A01 touched-bin experiment, completed A02 input-dispatch diagnostics, and proposed alignment, output, multi-sample, toolchain, and index stages.",
+      "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
+    },
+    {
+      "id": "F15",
+      "title": "A01 touched-window-bin reset",
+      "maturity": "rejected",
+      "visibility": "public",
+      "code_commit": "67052a1a5ea98969c775c13c859d72f174812860",
+      "source": "docs/architecture/diagrams/src/F15-touched-window-bins.mmd",
+      "evidence": ["docs/experiments/A01-touched-window-bins.md", "docs/architecture/evidence/alignment-A00-A01-20260723.tsv"],
+      "caption": "A01 correctly replaced full window-bin clears with sparse restoration, but its paired performance series inherited a one-core affinity failure; the effect size is invalidated and the source remains excluded.",
+      "alt_text": "Side-by-side flow diagram comparing the qualified release, which clears every slot in both window-bin arrays for each read, with excluded A01, which records each used bin and strand once and restores only those slots; correctness passed, but the performance effect is invalidated by inherited CPU affinity.",
+      "outputs": ["docs/architecture/diagrams/svg/F15-touched-window-bins.svg", "docs/architecture/diagrams/pdf/F15-touched-window-bins.pdf"]
+    },
+    {
+      "id": "F16",
+      "title": "A02 input-dispatch attribution",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "544237f25af23623346d8c305aebd96d0d798786",
+      "source": "docs/architecture/diagrams/src/F16-input-dispatch-diagnostics.mmd",
+      "evidence": ["docs/experiments/A02-input-dispatch-diagnostics.md", "docs/architecture/evidence/alignment-A00-A02-H01-20260723.tsv", "source/ReadAlignChunk_processChunks.cpp"],
+      "caption": "Corrected full-corpus A02 diagnostics measured 49.52 percent input-lock occupancy, 71.28 aggregate mapping concurrency, and a 12.93-second finish spread; implementation must still prove a wall-time gain.",
+      "alt_text": "Diagnostic flow from shared FASTQ streams through one input mutex, whole-chunk parsing, and private mapping, with 96 active workers, 49.52 percent input-lock occupancy, 71.28 equivalent mapping CPUs, and a 12.93-second finish spread leading to bounded parser, chunking, or producer-consumer candidates and a rollback path.",
+      "outputs": ["docs/architecture/diagrams/svg/F16-input-dispatch-diagnostics.svg", "docs/architecture/diagrams/pdf/F16-input-dispatch-diagnostics.pdf"]
+    },
+    {
+      "id": "F17",
+      "title": "H01 alignment-affinity recovery",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "496ee8a5687c21520b91603b6e04141fd16a4fa0",
+      "source": "docs/architecture/diagrams/src/F17-alignment-affinity-recovery.mmd",
+      "evidence": ["docs/experiments/H01-alignment-affinity-recovery.md", "docs/architecture/evidence/alignment-A00-A02-H01-20260723.tsv"],
+      "caption": "H01 restores the full CPU-place union before pthread creation when OpenMP binding is requested, recovering a 5.20-fold failure mode while passing ordinary-path noninferiority.",
+      "alt_text": "Three-lane diagram showing the qualified release inheriting one two-CPU OpenMP place across 96 pthread workers and taking 223.54 seconds, H01 restoring 48 places and 96 CPUs before worker creation and taking 43.00 seconds, and the ordinary unbound fast path producing 43.49 versus 43.48 second medians across five pairs.",
+      "outputs": ["docs/architecture/diagrams/svg/F17-alignment-affinity-recovery.svg", "docs/architecture/diagrams/pdf/F17-alignment-affinity-recovery.pdf"]
+    }
+  ]
+}

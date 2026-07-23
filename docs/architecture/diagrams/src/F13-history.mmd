@@ -1,0 +1,42 @@
+flowchart LR
+    subgraph ACCEPTED["ACCEPTED IN blackstar.1"]
+        A1["Parallel memory-adaptive SA"]
+        A2["Parallel bounded SAindex and junctions"]
+        A3["Full / Overlay / Delta insertion"]
+        A4["Integrity, atomic publication, deployment gates"]
+    end
+
+    subgraph LABS["ACCEPTED IN LABS - NOT RELEASED"]
+        L1["H01 affinity recovery<br/>bound failure fixed; ordinary path noninferior"]
+    end
+
+    subgraph REJECTED["REJECTED"]
+        R1["Persistent prefork workers<br/>measured slower"]
+        R2["libdeflate replacement<br/>measured slower"]
+        R3["A01 touched-bin reset<br/>excluded; effect size invalidated"]
+    end
+
+    subgraph ARCHIVED["ARCHIVED EXPERIMENTS"]
+        X1["Threaded BAM compression<br/>not release-ready"]
+        X2["alignReadsMulti<br/>resource semantics incomplete"]
+    end
+
+    subgraph SUPERSEDED["SUPERSEDED EVIDENCE"]
+        S1["Early 41% full-index figure"]
+        S2["Early Delta timing figures"]
+        S3["Affinity-pinned A00/A01 timing<br/>invalid operational effect sizes"]
+    end
+
+    S1 -->|replaced by| A1
+    S2 -->|replaced by hardened gate| A3
+
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef labs fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef rejected fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef archived fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef superseded fill:#f3f4f6,stroke:#4b5563,color:#111827,stroke-dasharray: 5 5;
+    class A1,A2,A3,A4 accepted;
+    class L1 labs;
+    class R1,R2,R3 rejected;
+    class X1,X2 archived;
+    class S1,S2,S3 superseded;

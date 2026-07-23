@@ -1,0 +1,36 @@
+flowchart LR
+    subgraph BASE["Conventional STAR base index"]
+        GENOME[("Genome<br/>2-bit-like nucleotide encoding")]
+        SA[("SA<br/>packed suffix coordinates")]
+        SAI[("SAindex<br/>prefix ranges")]
+        CHR["Chromosome metadata"]
+        ANN["Gene, transcript, exon, and junction tables"]
+    end
+
+    subgraph OVERLAY["BlackSTAR Overlay package"]
+        OMAN["Strict manifest + base identity"]
+        OGENOME[("Extended Genome")]
+        OSA[("Replacement SA and SAindex")]
+        OANN["Merged metadata and annotations"]
+    end
+
+    subgraph DELTA["BlackSTAR Delta package"]
+        DMAN["Strict manifest + base identity"]
+        DSEQ[("Added named sequence")]
+        DSA[("Inserted suffix records + ranks")]
+        DANN["Insert-only annotations"]
+    end
+
+    BASE -->|validated identity| OVERLAY
+    BASE -->|reused unchanged| DELTA
+    OMAN --> OGENOME
+    OGENOME --> OSA
+    OSA --> OANN
+    DMAN --> DSEQ
+    DSEQ --> DSA
+    DSA --> DANN
+
+    classDef base fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    class GENOME,SA,SAI,CHR,ANN base;
+    class OMAN,OGENOME,OSA,OANN,DMAN,DSEQ,DSA,DANN accepted;

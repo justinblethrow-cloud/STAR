@@ -1,0 +1,22 @@
+flowchart TD
+    CAND["BlackSTAR release candidate"] --> BUILD["Build identity<br/>fork version + OpenMP + checksum"]
+    BUILD --> SAN["Focused ASan / UBSan tests"]
+    SAN --> FORMAT{"Format path"}
+    FORMAT -->|v1 unchanged| BYTE["Byte identity against oracle"]
+    FORMAT -->|Overlay / Delta| MAP["Mapping, junction, and count equivalence"]
+    BYTE --> ADV["Adversarial malformed-package rejection"]
+    MAP --> ADV
+    ADV --> PERF["Randomized paired full-size benchmark"]
+    PERF --> DEPLOY["Canary, fallback, and rollback"]
+    DEPLOY --> RELEASE["QUALIFIED RELEASE BOUNDARY"]
+
+    EXCLUDED["EXCLUDED EXPERIMENTS<br/>alignReadsMulti<br/>persistent prefork workers<br/>threaded BAM compression"] -. "not release capability" .-> RELEASE
+
+    classDef gate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef excluded fill:#fee2e2,stroke:#b91c1c,color:#111827,stroke-dasharray: 5 5;
+    class CAND,BUILD,SAN,BYTE,MAP,ADV,PERF,DEPLOY gate;
+    class FORMAT decision;
+    class RELEASE accepted;
+    class EXCLUDED excluded;

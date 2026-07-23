@@ -1,0 +1,27 @@
+flowchart TD
+    START["Inputs accepted"] --> STAGE["Create private unique staging directory"]
+    STAGE --> WRITE["Write payload, manifest, and checksums"]
+    WRITE --> VALIDATE{"Identity and completeness valid?"}
+    VALIDATE -->|No| QUAR["Quarantine failed staging artifact"]
+    VALIDATE -->|Yes| PUBLISH["fsync and atomic rename"]
+    PUBLISH --> COMPLETE["Immutable complete artifact"]
+    COMPLETE --> SELECT["Checksum-pinned deployment selection"]
+    SELECT --> CANARY{"Executable mapping canary passes?"}
+    CANARY -->|Yes| ACTIVE["Activate candidate"]
+    CANARY -->|No| FALLBACK["Select validated fallback"]
+    FALLBACK --> ACTIVE
+
+    CHECKS["Validation includes:<br/>base identity<br/>namespace collisions<br/>payload bounds<br/>annotation consistency<br/>complete file set"] -.-> VALIDATE
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef process fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef rejected fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class START input;
+    class STAGE,WRITE,PUBLISH,SELECT,FALLBACK process;
+    class VALIDATE,CANARY decision;
+    class COMPLETE,ACTIVE accepted;
+    class QUAR rejected;
+    class CHECKS note;

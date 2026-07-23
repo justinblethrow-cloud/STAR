@@ -1,0 +1,19 @@
+flowchart LR
+    FASTA["Reference FASTA"] --> GEN["STAR genomeGenerate"]
+    GTF["Optional GTF / SJ table"] --> GEN
+    GEN --> IDX[("Reusable STAR index<br/>Genome + SA + SAindex + metadata")]
+    IDX --> ALIGN["STAR alignReads"]
+    FASTQ["FASTQ reads"] --> ALIGN
+    ALIGN --> ALN["SAM / BAM alignments"]
+    ALIGN --> SJ["Splice junctions"]
+    ALIGN --> LOG["Run metrics and logs"]
+    ALIGN --> COUNT["Optional gene / transcript counts"]
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef process fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef data fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef output fill:#fff7ed,stroke:#c2410c,color:#111827;
+    class FASTA,GTF,FASTQ input;
+    class GEN,ALIGN process;
+    class IDX data;
+    class ALN,SJ,LOG,COUNT output;

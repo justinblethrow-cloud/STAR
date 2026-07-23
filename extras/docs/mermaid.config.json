@@ -1,0 +1,26 @@
+{
+  "deterministicIds": true,
+  "deterministicIDSeed": "blackstar-architecture-v1",
+  "fontFamily": "Arial, Helvetica, sans-serif",
+  "flowchart": {
+    "curve": "linear",
+    "htmlLabels": true,
+    "nodeSpacing": 36,
+    "rankSpacing": 48,
+    "useMaxWidth": false
+  },
+  "state": {
+    "useMaxWidth": false
+  },
+  "theme": "base",
+  "themeVariables": {
+    "background": "#ffffff",
+    "primaryColor": "#dbeafe",
+    "primaryBorderColor": "#1d4ed8",
+    "primaryTextColor": "#111827",
+    "lineColor": "#4b5563",
+    "secondaryColor": "#dcfce7",
+    "tertiaryColor": "#f3f4f6",
+    "fontSize": "16px"
+  }
+}
