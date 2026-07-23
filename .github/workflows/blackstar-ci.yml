@@ -46,6 +46,7 @@ jobs:
 
       - name: Run focused sanitizer tests
         run: |
+          extras/tests/scripts/testAlignmentThreadAffinity.sh
           extras/tests/scripts/testPackedArray.sh
           extras/tests/scripts/testSuffixComparator.sh
           extras/tests/scripts/testTranscriptInitialization.sh
