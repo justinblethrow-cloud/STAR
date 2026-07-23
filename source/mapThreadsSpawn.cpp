@@ -5,7 +5,7 @@
 #include "AlignmentThreadAffinity.h"
 
 void mapThreadsSpawn (Parameters &P, ReadAlignChunk** RAchunk) {
-    if (P.runThreadN > 1) {
+    if (P.runThreadN > 1 && alignmentThreadAffinityBindingRequested()) {
         const AlignmentThreadAffinityResult affinity =
             alignmentThreadAffinityRestoreOpenMpPlaces();
         if (affinity.bindingActive) {

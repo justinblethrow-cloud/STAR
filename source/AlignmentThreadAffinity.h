@@ -7,8 +7,10 @@ struct AlignmentThreadAffinityResult {
     int cpuCount;
     int status;
 
-    AlignmentThreadAffinityResult();
+AlignmentThreadAffinityResult();
 };
+
+bool alignmentThreadAffinityBindingRequested();
 
 // OpenMP may bind STAR's initial thread before main(), causing subsequently
 // created alignment pthreads to inherit a single OpenMP place.

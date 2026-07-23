@@ -1,6 +1,9 @@
 #include "AlignmentThreadAffinity.h"
 #include "IncludeDefine.h"
 
+#include <cctype>
+#include <cstdlib>
+
 #if defined(__linux__)
 #include <pthread.h>
 #include <sched.h>
@@ -8,6 +11,27 @@
 
 AlignmentThreadAffinityResult::AlignmentThreadAffinityResult()
     : bindingActive(false), placeCount(0), cpuCount(0), status(0) {
+}
+
+bool alignmentThreadAffinityBindingRequested() {
+    const char *procBind = getenv("OMP_PROC_BIND");
+    if (procBind != NULL && procBind[0] != '\0') {
+        string normalized;
+        for (const char *value = procBind; *value != '\0'; value++) {
+            const unsigned char character = static_cast<unsigned char>(*value);
+            if (!isspace(character)) {
+                normalized.push_back(static_cast<char>(tolower(character)));
+            };
+        };
+        if (!normalized.empty() && normalized != "false") {
+            return true;
+        };
+    };
+
+    const char *gompAffinity = getenv("GOMP_CPU_AFFINITY");
+    const char *kmpAffinity = getenv("KMP_AFFINITY");
+    return (gompAffinity != NULL && gompAffinity[0] != '\0') ||
+           (kmpAffinity != NULL && kmpAffinity[0] != '\0');
 }
 
 AlignmentThreadAffinityResult alignmentThreadAffinityRestoreOpenMpPlaces() {

@@ -31,6 +31,7 @@ void *captureChildAffinity(void *value) {
 }
 
 int main() {
+    const bool bindingRequested = alignmentThreadAffinityBindingRequested();
     const int before = affinityCpuCount();
     const AlignmentThreadAffinityResult result =
         alignmentThreadAffinityRestoreOpenMpPlaces();
@@ -43,7 +44,8 @@ int main() {
         return 2;
     }
 
-    std::cout << "binding_active\t" << result.bindingActive << '\n'
+    std::cout << "binding_requested\t" << bindingRequested << '\n'
+              << "binding_active\t" << result.bindingActive << '\n'
               << "place_count\t" << result.placeCount << '\n'
               << "reported_cpu_count\t" << result.cpuCount << '\n'
               << "status\t" << result.status << '\n'
@@ -51,7 +53,8 @@ int main() {
               << "after_cpu_count\t" << after << '\n'
               << "child_cpu_count\t" << child << '\n';
 
-    if (before <= 0 || after <= 0 || child != after || result.status != 0) {
+    if (bindingRequested != result.bindingActive || before <= 0 || after <= 0 ||
+        child != after || result.status != 0) {
         return 1;
     }
     if (result.bindingActive) {
