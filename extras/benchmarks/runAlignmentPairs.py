@@ -138,7 +138,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--quiet-interval", type=float, default=5.0)
     parser.add_argument("--settle-seconds", type=float, default=5.0)
     parser.add_argument("--runner", type=Path, default=DEFAULT_RUNNER)
-    parser.add_argument("--skip-quiet-gate", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument(
+        "--skip-quiet-gate",
+        action="store_true",
+        help="skip telemetry only for an administratively dedicated benchmark host",
+    )
     return parser.parse_args()
 
 
@@ -189,6 +193,7 @@ def write_contract(
         "seed": args.seed,
         "expected_effect_percent": args.expected_effect_percent,
         "quiet_duration": args.quiet_duration,
+        "quiet_gate_skipped": args.skip_quiet_gate,
         "settle_seconds": args.settle_seconds,
         "baseline_bin": str(args.baseline_bin.resolve()),
         "baseline_sha256": sha256(args.baseline_bin),

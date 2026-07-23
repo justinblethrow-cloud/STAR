@@ -237,6 +237,8 @@ jq -e '
 [[ "$(wc -l < "${tmp_dir}/paired/schedule.tsv")" -eq 7 ]]
 jq -e '.tools.pair_driver_sha256 | length == 64' \
     "${tmp_dir}/paired/contract.json" > /dev/null
+jq -e '.quiet_gate_skipped == true' \
+    "${tmp_dir}/paired/contract.json" > /dev/null
 jq -e '.passed == true' "${tmp_dir}/paired/warmup-comparison.json" > /dev/null
 
 python3 "${repo_root}/extras/benchmarks/evaluateAlignmentNoninferiority.py" \
