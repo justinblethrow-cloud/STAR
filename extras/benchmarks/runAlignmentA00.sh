@@ -6,7 +6,8 @@ usage() {
 usage: runAlignmentA00.sh MODE STAR_BIN GENOME_DIR READ1 READ2 OUT_DIR
 
 MODE is mapping-only, unsorted-bam, or sorted-bam.
-Environment: THREADS=16 QUANT_MODE=GeneCounts PERF_MODE=none|stat|record.
+Environment: THREADS=16 QUANT_MODE=GeneCounts PERF_MODE=none|stat|record|gprofng.
+GPROFNG_CLOCK_PROFILE defaults to hi; GPROFNG_ARCHIVE defaults to usedldobjects.
 READ_FILES_COMMAND defaults to auto: zcat for two .gz inputs, otherwise none.
 OpenMP processor binding is rejected unless ALLOW_OMP_THREAD_BINDING=1.
 EOF
@@ -23,6 +24,8 @@ out_dir="$6"
 threads="${THREADS:-16}"
 quant_mode="${QUANT_MODE:-GeneCounts}"
 perf_mode="${PERF_MODE:-none}"
+gprofng_clock_profile="${GPROFNG_CLOCK_PROFILE:-hi}"
+gprofng_archive="${GPROFNG_ARCHIVE:-usedldobjects}"
 read_files_command="${READ_FILES_COMMAND:-auto}"
 allow_omp_thread_binding="${ALLOW_OMP_THREAD_BINDING:-0}"
 omp_dynamic_inherited="${OMP_DYNAMIC:-unset}"
@@ -44,6 +47,25 @@ if [[ "${allow_omp_thread_binding}" != "1" ]] &&
     exit 2
 fi
 export OMP_DYNAMIC=FALSE
+
+case "${perf_mode}" in
+    none|stat|record) ;;
+    gprofng)
+        command -v gprofng > /dev/null || {
+            printf 'PERF_MODE=gprofng requires gprofng in PATH\n' >&2
+            exit 2
+        }
+        [[ "${gprofng_clock_profile}" =~ ^(off|on|lo|hi|[1-9][0-9]*)$ ]] || {
+            printf 'invalid GPROFNG_CLOCK_PROFILE: %s\n' "${gprofng_clock_profile}" >&2
+            exit 2
+        }
+        case "${gprofng_archive}" in
+            off|on|ldobjects|src|usedldobjects|usedsrc) ;;
+            *) printf 'invalid GPROFNG_ARCHIVE: %s\n' "${gprofng_archive}" >&2; exit 2 ;;
+        esac
+        ;;
+    *) printf 'invalid PERF_MODE: %s\n' "${perf_mode}" >&2; exit 2 ;;
+esac
 
 [[ -x "${star_bin}" ]] || { printf 'STAR binary is not executable: %s\n' "${star_bin}" >&2; exit 2; }
 [[ -f "${genome_dir}/Genome" && -f "${genome_dir}/SA" && -f "${genome_dir}/SAindex" ]] || {
@@ -125,6 +147,11 @@ fi
     printf 'compiler\t%s\n' "$(g++ --version | head -1)"
     printf 'kernel\t%s\n' "$(uname -sr)"
     printf 'perf_mode\t%s\n' "${perf_mode}"
+    printf 'gprofng_clock_profile\t%s\n' "${gprofng_clock_profile}"
+    printf 'gprofng_archive\t%s\n' "${gprofng_archive}"
+    if [[ "${perf_mode}" == "gprofng" ]]; then
+        printf 'gprofng_version\t%s\n' "$(gprofng --version | head -1)"
+    fi
     printf 'read_files_command\t%s\n' "${read_command[*]:-None}"
     printf 'omp_dynamic_inherited\t%s\n' "${omp_dynamic_inherited}"
     printf 'omp_dynamic_effective\t%s\n' "${OMP_DYNAMIC}"
@@ -155,7 +182,16 @@ case "${perf_mode}" in
             perf record --call-graph dwarf -o "${out_dir}/perf.data" -- \
             "${command[@]}" > "${out_dir}/stdout.log" 2> "${out_dir}/stderr.log"
         ;;
-    *) printf 'invalid PERF_MODE: %s\n' "${perf_mode}" >&2; exit 2 ;;
+    gprofng)
+        /usr/bin/time -v -o "${out_dir}/time.txt" \
+            gprofng collect app \
+                -p "${gprofng_clock_profile}" \
+                -a "${gprofng_archive}" \
+                -F off \
+                -S 1 \
+                -O "${out_dir}/gprofng.er" \
+                "${command[@]}" > "${out_dir}/stdout.log" 2> "${out_dir}/stderr.log"
+        ;;
 esac
 
 printf 'finish_utc\t%s\n' "$(date --utc --iso-8601=seconds)" >> "${out_dir}/provenance.tsv"

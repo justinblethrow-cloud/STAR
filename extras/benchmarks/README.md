@@ -29,6 +29,22 @@ THREADS=16 PERF_MODE=stat extras/benchmarks/runAlignmentA00.sh \
   /local/fixture/R1.fastq.gz /local/fixture/R2.fastq.gz /evidence/run-01
 ```
 
+`PERF_MODE=gprofng` provides process-local clock sampling when Linux `perf`
+events are unavailable. It profiles all STAR pthreads without requiring a
+kernel policy change, records the collector version and settings, and writes
+the experiment to `gprofng.er` inside the run directory:
+
+```bash
+THREADS=96 PERF_MODE=gprofng GPROFNG_CLOCK_PROFILE=hi \
+  extras/benchmarks/runAlignmentA00.sh \
+  mapping-only source/STAR /local/index \
+  /local/fixture/R1.fastq /local/fixture/R2.fastq /evidence/profile-01
+```
+
+Use this mode for attribution, not release timing: sampler overhead makes its
+wall time non-comparable to uninstrumented benchmark runs. Hardware-counter
+claims still require a permitted and separately recorded `perf` collection.
+
 Alignment runners reject inherited `OMP_PROC_BIND` or `OMP_PLACES` settings.
 OpenMP runtimes can bind the initial process thread before `main()`, causing
 STAR's pthread mapping workers to inherit one place. Keep these variables

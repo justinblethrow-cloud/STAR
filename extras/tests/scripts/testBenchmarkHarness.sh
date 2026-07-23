@@ -138,6 +138,48 @@ fi
 rg -q 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-single.log"
 [[ ! -e "${tmp_dir}/unsafe-single" ]]
 
+mkdir -p "${tmp_dir}/mock-bin"
+cat > "${tmp_dir}/mock-bin/gprofng" <<'EOF_GPROFNG'
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ "${1:-}" == "--version" ]]; then
+    printf 'GNU gprofng mock 1.0\n'
+    exit 0
+fi
+[[ "${1:-}" == "collect" && "${2:-}" == "app" ]]
+shift 2
+while (( $# > 0 )); do
+    case "$1" in
+        -p|-a|-F|-S)
+            shift 2
+            ;;
+        -O)
+            mkdir -p "$2"
+            shift 2
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+"$@"
+EOF_GPROFNG
+chmod 0755 "${tmp_dir}/mock-bin/gprofng"
+
+env -u OMP_PROC_BIND -u OMP_PLACES \
+    PATH="${tmp_dir}/mock-bin:${PATH}" \
+    THREADS=1 QUANT_MODE=None PERF_MODE=gprofng \
+    GPROFNG_CLOCK_PROFILE=lo GPROFNG_ARCHIVE=usedldobjects \
+    "${repo_root}/extras/benchmarks/runAlignmentA00.sh" \
+    mapping-only /bin/true "${tmp_dir}/pair-genome" \
+    "${repo_root}/extras/tests/fixtures/alignment/read1.fastq" \
+    "${repo_root}/extras/tests/fixtures/alignment/read2.fastq" \
+    "${tmp_dir}/gprofng-run"
+[[ -d "${tmp_dir}/gprofng-run/gprofng.er" ]]
+rg -q $'perf_mode\tgprofng' "${tmp_dir}/gprofng-run/provenance.tsv"
+rg -q $'gprofng_clock_profile\tlo' "${tmp_dir}/gprofng-run/provenance.tsv"
+rg -q $'gprofng_version\tGNU gprofng mock 1.0' "${tmp_dir}/gprofng-run/provenance.tsv"
+
 if OMP_PROC_BIND=close OMP_PLACES=cores \
     python3 "${repo_root}/extras/benchmarks/runAlignmentPairs.py" \
     --baseline-bin "${tmp_dir}/STAR-baseline" \
