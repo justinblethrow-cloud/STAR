@@ -1,0 +1,106 @@
+name: Publish BlackSTAR Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing annotated vMAJOR.MINOR.PATCH tag
+        required: true
+        type: string
+
+permissions:
+  attestations: write
+  contents: write
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+
+      - name: Validate release identity
+        run: |
+          [[ "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' source/VERSION)"
+          test "${TAG}" = "v${version}"
+          git cat-file -e "${TAG}^{tag}"
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
+          test -f "docs/releases/${version}-release-notes.md"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make zlib1g-dev
+
+      - name: Build first release package
+        env:
+          DIST_DIR: ${{ runner.temp }}/build-1
+          JOBS: "2"
+        run: extras/scripts/buildBlackSTARRelease.sh
+
+      - name: Build independent reproduction
+        env:
+          DIST_DIR: ${{ runner.temp }}/build-2
+          JOBS: "2"
+        run: |
+          git worktree add --detach "${RUNNER_TEMP}/source-2" HEAD
+          cd "${RUNNER_TEMP}/source-2"
+          extras/scripts/buildBlackSTARRelease.sh
+
+      - name: Compare release products
+        run: |
+          version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' source/VERSION)"
+          package="blackstar-${version}-linux-x86_64"
+          cmp "${RUNNER_TEMP}/build-1/${package}.tar.gz" "${RUNNER_TEMP}/build-2/${package}.tar.gz"
+          cmp "${RUNNER_TEMP}/build-1/${package}.tar.gz.sha256" "${RUNNER_TEMP}/build-2/${package}.tar.gz.sha256"
+          cmp "${RUNNER_TEMP}/build-1/${package}.spdx.json" "${RUNNER_TEMP}/build-2/${package}.spdx.json"
+          cmp "${RUNNER_TEMP}/build-1/${package}/STAR" "${RUNNER_TEMP}/build-2/${package}/STAR"
+          cmp "${RUNNER_TEMP}/build-1/${package}/build-info.tsv" "${RUNNER_TEMP}/build-2/${package}/build-info.tsv"
+          cmp "${RUNNER_TEMP}/build-1/${package}/ldd.txt" "${RUNNER_TEMP}/build-2/${package}/ldd.txt"
+          cmp "${RUNNER_TEMP}/build-1/${package}/LICENSE" "${RUNNER_TEMP}/build-2/${package}/LICENSE"
+          cmp "${RUNNER_TEMP}/build-1/${package}/ATTRIBUTION.md" "${RUNNER_TEMP}/build-2/${package}/ATTRIBUTION.md"
+
+      - name: Attest release products
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            ${{ runner.temp }}/build-1/*.tar.gz
+            ${{ runner.temp }}/build-1/*.spdx.json
+            ${{ runner.temp }}/build-1/*/STAR
+
+      - name: Publish immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${TAG#v}"
+          package="blackstar-${version}-linux-x86_64"
+          gh release create "${TAG}" \
+            --verify-tag \
+            --title "BlackSTAR ${version}" \
+            --notes-file "docs/releases/${version}-release-notes.md" \
+            "${RUNNER_TEMP}/build-1/${package}/STAR#BlackSTAR Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${package}.tar.gz#BlackSTAR Linux x86-64 archive" \
+            "${RUNNER_TEMP}/build-1/${package}.tar.gz.sha256#Archive SHA-256 sidecar" \
+            "${RUNNER_TEMP}/build-1/${package}.spdx.json#SPDX 2.3 SBOM" \
+            "${RUNNER_TEMP}/build-1/${package}/build-info.tsv#Reproducible build metadata" \
+            "${RUNNER_TEMP}/build-1/${package}/ldd.txt#Runtime linkage metadata" \
+            "LICENSE#MIT license" \
+            "ATTRIBUTION.md#Upstream lineage and citation"
+
+      - name: Retain release evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blackstar-release-${{ inputs.tag }}
+          retention-days: 30
+          path: |
+            ${{ runner.temp }}/build-1
+            ${{ runner.temp }}/build-2

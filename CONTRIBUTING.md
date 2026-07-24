@@ -1,94 +1,105 @@
-# Contributing to STAR
+# Contributing to BlackSTAR
 
-The following is a set of guidelines for contributing to STAR hosted in the GitHub: https://github.com/alexdobin/STAR/. 
-These are mostly guidelines, not rules. 
-Use your best judgment, and feel free to propose changes to this document in a pull request.
+BlackSTAR accepts focused bug fixes, compatibility improvements,
+documentation, tests, and performance work. Contributions must preserve
+scientific correctness, deterministic output contracts, and the documented
+compatibility boundary.
 
-#### Table Of Contents
+Participation is governed by [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
-[Code of Conduct](#code-of-conduct)
+## Before Opening an Issue
 
-[How Can I Contribute?](#how-can-i-contribute)
-  * [Ask a question](#ask-a-question)
-  * [Reporting Bugs](#reporting-bugs)
-  * [Suggesting Enhancements](#suggesting-enhancements)
-  * [Pull Requests](#pull-requests)
+Use the latest qualified BlackSTAR release and retain:
 
-## Code of Conduct
+- the exact `STAR --version` output and executable checksum;
+- the complete STAR command line;
+- `Log.out` and `Log.final.out`;
+- operating system, compiler or package source, CPU, RAM, and storage details;
+- input and index identities that can be shared safely; and
+- whether official STAR 2.7.11b reproduces the behavior.
 
-This project and everyone participating in it is governed by the [Code of Conduct](CODE_OF_CONDUCT.md).
-By participating, you are expected to uphold this code.
+Do not upload private sequencing data, credentials, or customer information.
+Build the smallest public or synthetic reproducer that retains the failure.
 
-## How Can I Contribute?
+## Classifying Behavior
 
-### Ask a question
+Reports and pull requests must distinguish:
 
-Please do not file an issue to ask a question.
-The GitHub issue tracker is intended for bug reports and feature requests.
-We have an official discussion forum where the community chimes in with helpful advice if you have questions.
+- **Inherited upstream behavior**: official STAR 2.7.11b reproduces it.
+- **BlackSTAR regression**: official STAR does not reproduce it and BlackSTAR
+  violates the compatibility contract.
+- **BlackSTAR feature behavior**: the report concerns an explicitly
+  BlackSTAR-only interface such as Overlay or Delta.
+- **Unresolved provenance**: a reproducer is not yet sufficient to classify the
+  origin.
 
-* [STAR discussion forum](https://groups.google.com/forum/#!forum/rna-star)
+This classification prevents inherited STAR debt from being presented as a
+BlackSTAR regression while still allowing BlackSTAR to fix upstream defects.
 
-### Reporting Bugs
+## Development Setup
 
-This section guides you through submitting a bug report for STAR. 
-Following these guidelines helps maintainers and the community understand your report, 
-reproduce the behavior, and find related reports.
-If you find a **Closed** issue that seems like it is the same thing that you're experiencing, 
-open a new issue and include a link to the original issue in the body of your new one.
+Build the default binary:
 
-#### Before Submitting A Bug Report
+```bash
+make -C source -j"$(nproc)" STAR
+source/STAR --version
+```
 
-* You might be able to find the cause of the problem and fix things yourself. 
-Most importantly, check if you can reproduce the problem in the latest version of STAR
-and if the problem happens when you run with mostly default parameters.
-* Check the Log.out file for ERROR/WARNING/SOLUTION messages.
-* Perform a through STAR GitHub issues to see if the problem has already been reported. 
-If it has **and the issue is still open**, add a comment to the existing issue instead of opening a new one.
+Build the deterministic release package from a clean commit:
 
-#### How Do I Submit A (Good) Bug Report?
+```bash
+JOBS=16 extras/scripts/buildBlackSTARRelease.sh
+```
 
-Bugs are tracked as [GitHub issues](https://guides.github.com/features/issues/) on https://github.com/alexdobin/STAR/issues.
-Explain the problem and include additional details to help maintainers reproduce the problem:
+Run the focused release checks relevant to a change. Common entry points
+include:
 
-* **Use a clear and descriptive title** for the issue to identify the problem.
-* **Describe the exact steps which reproduce the problem** in as many details as possible. For example, start by explaining how you run STAR, e.g. which command exactly you used in the terminal. When listing steps, **don't just say what you did, but explain how you did it.
-* **Log.out**. Attach the Log.out file generated in the failed run. This file contains a lot of useful debugging information and is a starting point
-* **Provide specific examples to demonstrate the steps**. Include links to files or GitHub projects, or copy/pasteable snippets, which you use in those examples. If you're providing snippets in the issue, use [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
-* **Describe the behavior you observed after following the steps** and point out what exactly is the problem with that behavior.
-* **Explain which behavior you expected to see instead and why.**
-* **System information**. In many cases, the problems are associated with the hardware configurations. Provide a brief description of the CPU(s), RAM, storage. 
-* **Can you reliably reproduce the issue?** If not, provide details about how often the problem happens and under which conditions it normally happens.
+```bash
+extras/tests/scripts/testPackedArray.sh
+extras/tests/scripts/testSuffixComparator.sh
+extras/tests/scripts/testTranscriptInitialization.sh
+extras/tests/scripts/testJunctionAlignment.sh
+extras/tests/scripts/testReadChunkConfig.sh
+extras/tests/scripts/testGenomeInsertHardening.sh
+extras/tests/scripts/testSAindexParallel.sh
+extras/tests/scripts/testBenchmarkHarness.sh
+```
 
-Include details about your configuration and environment:
+Run architecture validation after changing diagrams or claims:
 
-### Suggesting Enhancements
+```bash
+python3 extras/docs/render_architecture.py --check --svg-only
+python3 extras/docs/validate_architecture.py
+```
 
-This section guides you through submitting an enhancement suggestion for Atom, including completely new features and minor improvements to existing functionality. Following these guidelines helps maintainers and the community understand your suggestion and find related suggestions.
+## Pull Requests
 
-#### Before Submitting An Enhancement Suggestion
+Every pull request must:
 
-* **Check the STAR manual and Release Notes** — you might discover that the enhancement is already available. Most importantly, check if you're using the latest version of STAR.
+1. State the user-visible behavior and its origin classification.
+2. Describe correctness and compatibility risks.
+3. Add or update tests that would fail without the change.
+4. Record exact commands used for validation.
+5. Avoid unrelated refactoring and generated-file churn.
+6. Update documentation and the changelog when behavior changes.
+7. Include matched, order-balanced evidence for performance claims.
 
-* **Perform a cursory search** to see if the enhancement has already been suggested. If it has, add a comment to the existing issue instead of opening a new one.
+Performance work must compare the candidate with a pinned control binary using
+identical inputs, indexes, output modes, storage placement, and thread
+allocation. Report wall time, CPU utilization, peak RSS, cache state, and
+output-equivalence gates. A faster result with unexplained output differences
+is a failed experiment.
 
-#### How Do I Submit A (Good) Enhancement Suggestion?
+Generated architecture SVG and PDF artifacts must be regenerated from their
+Mermaid sources. Large raw benchmark outputs should remain outside Git; commit
+bounded receipts and the scripts needed to reproduce them.
 
-Feature requests and enhancement suggestions are tracked as [GitHub issues](https://guides.github.com/features/issues/) on https://github.com/alexdobin/STAR/issues.
+## Review and Licensing
 
-* **Use a clear and descriptive title** for the issue to identify the suggestion.
-* **Provide a step-by-step description of the suggested enhancement** in as many details as possible.
-* **Provide specific examples to demonstrate the steps**. Include copy/pasteable snippets which you use in those examples, as [Markdown code blocks](https://help.github.com/articles/markdown-basics/#multiple-lines).
-* **Describe the current behavior** and **explain which behavior you expected to see instead** and why.
-* **Explain why this enhancement would be useful** to many STAR users.
-* **List some other tools where this enhancement exists.**
+Maintainers may request a smaller reproducer, additional platform evidence, or
+an upstream comparison before review. Acceptance requires passing CI and the
+release gates appropriate to the change.
 
-### Pull Requests
-
-Please read the guides on creating good pull requests (PR) and follow these guidelines:
-* **Use a clear and descriptive title** for the pull request.
-* **State the purpose of the PR**: is it a bug-fix, new feature implementation, documentation improvement, or cosmetic change? Why is it important?
-* **Explain the expected changes in STAR behavior**. Make sure that the default STAR behavior does not change.
-* **Provide detailed code documentation and commit messages**.
-
-Adopted from https://github.com/atom/atom/blob/master/CONTRIBUTING.md
+By submitting a contribution, you certify that you have the right to provide
+it under the repository's MIT License. No contributor license agreement is
+currently required.

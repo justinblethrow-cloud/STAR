@@ -280,6 +280,42 @@
       "caption": "Blackstar.2 promotes the Q01-qualified H01, A02, A05, and A06 alignment stack on top of blackstar.1 while preserving protected-master CI, explicit exclusions, and a separate external-deployment boundary.",
       "alt_text": "Promotion diagram from upstream STAR 2.7.11b to the qualified blackstar.1 index and insertion release, then through H01 affinity recovery, A02 adaptive input chunks, A05 NUMA-aware private loading, A06 transcript-recursion copy elision, and Q01 cumulative qualification. Replicated performance, exact-output safety, inherited insertion and SAindex compatibility, versioned release packaging, and protected-master build-and-test gates lead to the accepted blackstar.2 release boundary. A01, A02b, A09, alignReadsMulti, prefork workers, and threaded BAM compression remain excluded, and external deployment requires separate authorization.",
       "outputs": ["docs/architecture/diagrams/svg/F23-blackstar2-promotion.svg", "docs/architecture/diagrams/pdf/F23-blackstar2-promotion.pdf"]
+    },
+    {
+      "id": "F24",
+      "title": "Independent-successor transition",
+      "maturity": "roadmap",
+      "visibility": "public",
+      "code_commit": "d6fbf932ae2b155ce4f689bce106429ab2bc07f6",
+      "source": "docs/architecture/diagrams/src/F24-independent-successor.mmd",
+      "evidence": ["docs/decisions/0001-independent-successor.md", "docs/INDEPENDENCE_TRANSITION.md", "extras/maintenance/README.md"],
+      "caption": "BlackSTAR becomes a standalone successor only after a complete metadata export, exact Git restore drills, and explicit approval at the irreversible GitHub fork-detachment boundary.",
+      "alt_text": "Transition diagram from the protected BlackSTAR GitHub fork through release and pull-request export, a checksummed remote mirror and all-reference bundle, two exact local restore drills, and an explicit owner decision. Approval crosses the irreversible leave-fork-network boundary, followed by standalone verification, master-to-main rename, protection and metadata restoration, and the independently maintained successor. Declining approval leaves the fork unchanged.",
+      "outputs": ["docs/architecture/diagrams/svg/F24-independent-successor.svg", "docs/architecture/diagrams/pdf/F24-independent-successor.pdf"]
+    },
+    {
+      "id": "F25",
+      "title": "Version and compatibility identities",
+      "maturity": "roadmap",
+      "visibility": "public",
+      "code_commit": "d6fbf932ae2b155ce4f689bce106429ab2bc07f6",
+      "source": "docs/architecture/diagrams/src/F25-version-compatibility.mmd",
+      "evidence": ["docs/VERSIONING.md", "docs/COMPATIBILITY.md", "source/VERSION", "source/Parameters.cpp"],
+      "caption": "Independent BlackSTAR release version, executable lineage token, pinned STAR compatibility base, and genome-format version are separate identities exposed together through machine-readable version metadata.",
+      "alt_text": "Four-part identity diagram showing BlackSTAR release 1.0.0 as the support and API boundary, the wrapper-compatible executable token 2.7.11b-blackstar.3, official STAR 2.7.11b as a pinned behavioral oracle, and genome format 2.7.4a for conventional index loading. All four feed version JSON, while inherited CLI, Full indexes, and BlackSTAR-only Overlay and Delta paths feed explicit compatibility tests.",
+      "outputs": ["docs/architecture/diagrams/svg/F25-version-compatibility.svg", "docs/architecture/diagrams/pdf/F25-version-compatibility.pdf"]
+    },
+    {
+      "id": "F26",
+      "title": "Governance and release path",
+      "maturity": "roadmap",
+      "visibility": "public",
+      "code_commit": "d6fbf932ae2b155ce4f689bce106429ab2bc07f6",
+      "source": "docs/architecture/diagrams/src/F26-governance-release.mmd",
+      "evidence": ["GOVERNANCE.md", "CONTRIBUTING.md", "SECURITY.md", "docs/RELEASE_POLICY.md"],
+      "caption": "BlackSTAR classifies issue origin, requires compatibility and correctness evidence, adds matched performance gates where needed, and publishes only reproducible protected-main release artifacts.",
+      "alt_text": "Governance flow from issue, proposal, security report, or experiment through upstream-versus-BlackSTAR origin classification and a focused pull request. Required compiler, CodeQL, sanitizer, deterministic, and compatibility checks lead either directly to maintainer review or through matched performance and resource gates. Accepted work reaches protected main, two exact release builds, checksummed artifacts, SPDX SBOM and provenance, then an immutable semantic-version release. Prior release rollback and external deployment authorization remain separate boundaries.",
+      "outputs": ["docs/architecture/diagrams/svg/F26-governance-release.svg", "docs/architecture/diagrams/pdf/F26-governance-release.pdf"]
     }
   ]
 }

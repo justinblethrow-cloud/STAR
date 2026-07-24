@@ -1,0 +1,28 @@
+flowchart LR
+    FORK["GitHub fork<br/>protected master<br/>blackstar.1 and .2"] --> EXPORT["Export GitHub metadata<br/>release assets + PR and CI evidence"]
+    EXPORT --> BACKUP["Remote mirror + all-ref bundle<br/>SHA-256 manifest"]
+    BACKUP --> DRILL["Two local restore drills<br/>exact reference inventories"]
+    DRILL --> GATE{"Explicit owner approval<br/>for permanent detachment?"}
+
+    GATE -->|No| ABORT["ABORT<br/>fork remains unchanged"]
+    GATE -->|Yes| DETACH["GitHub Leave fork network<br/>irreversible boundary"]
+    DETACH --> VERIFY["Verify standalone identity<br/>isFork false + exact refs"]
+    VERIFY --> RENAME["Rename master to main<br/>restore strict protection"]
+    RENAME --> RESTORE["Restore releases, Pages,<br/>labels, Issues, Discussions,<br/>security and repository metadata"]
+    RESTORE --> SUCCESSOR["INDEPENDENT SUCCESSOR<br/>upstream lineage preserved<br/>BlackSTAR owns maintenance"]
+
+    LIMIT["Git history is recoverable;<br/>fork-network membership is not"] -.-> GATE
+    EXTERNAL["External pipeline adoption<br/>requires separate authorization"] -.-> SUCCESSOR
+
+    classDef current fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef evidence fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef danger fill:#fee2e2,stroke:#b91c1c,color:#111827,stroke-width:3px;
+    classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:3px;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class FORK current;
+    class EXPORT,BACKUP,DRILL,VERIFY,RENAME,RESTORE evidence;
+    class GATE decision;
+    class DETACH danger;
+    class SUCCESSOR accepted;
+    class ABORT,LIMIT,EXTERNAL note;

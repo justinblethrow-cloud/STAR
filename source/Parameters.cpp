@@ -366,6 +366,17 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                 std::cout << STAR_VERSION <<std::endl;
                 exit(0);
             };
+            if (oneArg=="--version-json") {
+                std::cout
+                    << "{\"blackstar_version\":\"" << BLACKSTAR_VERSION
+                    << "\",\"star_compatibility_version\":\""
+                    << STAR_COMPATIBILITY_VERSION
+                    << "\",\"executable_version\":\"" << STAR_VERSION
+                    << "\",\"genome_format_version\":\""
+                    << BLACKSTAR_GENOME_FORMAT_VERSION
+                    << "\"}" << std::endl;
+                exit(0);
+            };
 
             size_t found = oneArg.find("=");
             if (found!=string::npos && oneArg.substr(0,2)=="--") {// --parameter=value

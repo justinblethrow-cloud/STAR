@@ -1,0 +1,62 @@
+name: Performance regression
+description: Report a reproducible slowdown or resource regression
+title: "[Performance]: "
+labels:
+  - "type: performance"
+  - "needs: triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Performance reports require a matched control and correctness checks. Absolute timings from unrelated systems are not sufficient.
+  - type: input
+    id: candidate
+    attributes:
+      label: Candidate identity
+      description: BlackSTAR version, commit, build flags, and executable SHA-256.
+    validations:
+      required: true
+  - type: input
+    id: control
+    attributes:
+      label: Control identity
+      description: Pinned BlackSTAR or official STAR version and executable SHA-256.
+    validations:
+      required: true
+  - type: textarea
+    id: workload
+    attributes:
+      label: Workload
+      description: Inputs, index, read count and length, output mode, thread count, and commands.
+    validations:
+      required: true
+  - type: textarea
+    id: system
+    attributes:
+      label: System and cache state
+      description: CPU topology, RAM, NUMA policy, filesystem, storage device, competing load, and cold/warm definition.
+    validations:
+      required: true
+  - type: textarea
+    id: measurements
+    attributes:
+      label: Measurements
+      description: Order-balanced replicates, wall time, CPU use, peak RSS, and variability.
+    validations:
+      required: true
+  - type: textarea
+    id: correctness
+    attributes:
+      label: Correctness comparison
+      description: Metrics, junctions, counts, BAM canonicalization, index identity, or other applicable gates.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: Candidate and control used identical inputs and resource allocation.
+          required: true
+        - label: I removed private data, credentials, and customer information.
+          required: true

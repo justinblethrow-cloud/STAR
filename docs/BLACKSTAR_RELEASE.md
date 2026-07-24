@@ -1,12 +1,13 @@
 # BlackSTAR Release Boundary
 
-BlackSTAR `2.7.11b-blackstar.2` is a maintained fork of upstream STAR
-`2.7.11b`. It preserves the upstream genome compatibility version while
-adding qualified genome-generation, persistent named-sequence insertion, and
-high-thread alignment improvements.
+BlackSTAR `1.0.0` is an independently maintained successor derived from
+upstream STAR `2.7.11b`. It preserves the qualified STAR compatibility and
+genome-format boundaries while adding genome-generation, persistent
+named-sequence insertion, and high-thread alignment improvements. The
+transitional executable lineage token is `2.7.11b-blackstar.3`.
 
-The `blackstar.2` release target is x86-64 Linux. Upstream macOS source support
-has not been recertified for the BlackSTAR-specific paths or release builder.
+The `1.0.0` release target is x86-64 Linux. Inherited macOS source support has
+not been recertified for the BlackSTAR-specific paths or release builder.
 
 See [the acceptance record](BLACKSTAR_ACCEPTANCE.md) for closed audit findings,
 segregated upstream debt, and measured verification. See
@@ -57,7 +58,8 @@ changing measured biological outputs.
 
 A release candidate must pass:
 
-1. A clean OpenMP build with a fork-specific `--version` string.
+1. A clean OpenMP build with the declared legacy `--version` token and
+   structured `--version-json` identities.
 2. Focused ASan/UBSan tests for packed arrays, suffix comparison, transcript initialization, junction records, and SHA-256 identities.
 3. Genome-insert equivalence against a full rebuild, including alignments, junctions, and gene counts.
 4. Adversarial rejection tests for stale bases, namespace collisions, malformed annotations, package corruption, extra/missing files, and nonempty destinations.
@@ -88,7 +90,10 @@ From a clean tagged checkout, build a release package with:
 JOBS=16 extras/scripts/buildBlackSTARRelease.sh
 ```
 
-The builder derives `SOURCE_DATE_EPOCH` from the commit, fixes embedded build provenance, verifies the fork version and OpenMP linkage, and writes a binary, `build-info.tsv`, `ldd.txt`, a deterministic tarball, and SHA-256 checksums under `dist/`.
+The builder derives `SOURCE_DATE_EPOCH` from the commit, fixes embedded build
+provenance, verifies BlackSTAR identity and OpenMP linkage, and writes a
+binary, `build-info.tsv`, `ldd.txt`, an SPDX SBOM, a deterministic tarball, and
+SHA-256 checksums under `dist/`.
 
 Use `extras/scripts/selectBlackSTAR.sh` for deployment selection. It copies and
 revalidates a pinned standalone executable into a generation, then atomically

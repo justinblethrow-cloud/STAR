@@ -1,0 +1,40 @@
+name: Feature request
+description: Propose a broadly useful BlackSTAR capability
+title: "[Feature]: "
+labels:
+  - "type: enhancement"
+  - "needs: triage"
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Describe the user or operational problem independently of a proposed implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and correctness impact
+      description: Explain affected CLI, index, output, resource, or lifecycle contracts.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Proposed validation
+      description: State how biological correctness, determinism, and practical value would be established.
+    validations:
+      required: true

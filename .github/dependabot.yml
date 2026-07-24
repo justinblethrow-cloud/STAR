@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels:
+      - "type: dependencies"
+  - package-ecosystem: npm
+    directory: /extras/docs
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    labels:
+      - "type: dependencies"

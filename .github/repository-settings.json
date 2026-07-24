@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "repository": {
+    "default_branch": "main",
+    "description": "Independently maintained, performance-oriented successor to the STAR RNA-seq aligner",
+    "homepage": "https://justinblethrow-cloud.github.io/blackSTAR/",
+    "features": {
+      "discussions": true,
+      "issues": true,
+      "wiki": false
+    },
+    "private_vulnerability_reporting": true,
+    "topics": [
+      "bioinformatics",
+      "genomics",
+      "high-performance-computing",
+      "openmp",
+      "rna-seq",
+      "star-aligner",
+      "transcriptomics"
+    ]
+  },
+  "pages": {
+    "branch": "gh-pages",
+    "path": "/"
+  },
+  "branch_protection": {
+    "allow_deletions": false,
+    "allow_force_pushes": false,
+    "allow_fork_syncing": false,
+    "block_creations": false,
+    "enforce_admins": true,
+    "lock_branch": false,
+    "required_conversation_resolution": true,
+    "required_linear_history": true,
+    "required_pull_request_reviews": {
+      "dismiss_stale_reviews": false,
+      "require_code_owner_reviews": false,
+      "require_last_push_approval": false,
+      "required_approving_review_count": 0
+    },
+    "required_status_checks": {
+      "contexts": [
+        "build-and-test"
+      ],
+      "strict": true
+    },
+    "restrictions": null
+  },
+  "labels": {
+    "needs: reproducer": {
+      "color": "fbca04",
+      "description": "Requires a minimal public reproducer"
+    },
+    "needs: triage": {
+      "color": "d4c5f9",
+      "description": "Requires initial maintainer classification"
+    },
+    "origin: blackstar": {
+      "color": "1d76db",
+      "description": "Behavior introduced by BlackSTAR"
+    },
+    "origin: upstream": {
+      "color": "c5def5",
+      "description": "Behavior inherited from official STAR"
+    },
+    "security": {
+      "color": "b60205",
+      "description": "Security-related work; no private details"
+    },
+    "type: bug": {
+      "color": "d73a4a",
+      "description": "Reproducible incorrect behavior"
+    },
+    "type: compatibility": {
+      "color": "5319e7",
+      "description": "Compatibility contract or integration"
+    },
+    "type: dependencies": {
+      "color": "0366d6",
+      "description": "Dependency maintenance"
+    },
+    "type: enhancement": {
+      "color": "a2eeef",
+      "description": "Proposed feature or improvement"
+    },
+    "type: performance": {
+      "color": "f9d0c4",
+      "description": "Performance or resource behavior"
+    }
+  }
+}

@@ -1,0 +1,62 @@
+{
+  "alignment": {
+    "canonical_bam_check": true,
+    "mapping_pair_comparisons": 24,
+    "uncompressed_96_threads": {
+      "blackstar_median_wall_seconds": 55.2,
+      "median_reduction_percent": 33.10567936736162,
+      "speedup": 1.4943840579710144,
+      "upstream_median_wall_seconds": 82.49
+    },
+    "zcat_96_threads": {
+      "blackstar_median_wall_seconds": 63.15,
+      "median_reduction_percent": 30.74770539511977,
+      "speedup": 1.4286619160728424,
+      "upstream_median_wall_seconds": 90.22
+    }
+  },
+  "blackstar": {
+    "binary_sha256": "5d547c4a3ef69893fe5aa0613957448516b95b03eb17fb0e7c46348a13074202",
+    "revision": "d6fbf932ae2b155ce4f689bce106429ab2bc07f6",
+    "version": "2.7.11b-blackstar.2"
+  },
+  "full_chm13_index_96_threads": {
+    "blackstar_median_peak_rss_gib": 77.1474838256836,
+    "blackstar_median_wall_seconds": 607.18,
+    "byte_equivalence_checks": 42,
+    "median_paired_reduction_percent": 51.4419155163865,
+    "median_speedup": 2.0593893079482197,
+    "peak_rss_increase_percent": 46.178646768276444,
+    "upstream_median_peak_rss_gib": 52.77616500854492,
+    "upstream_median_wall_seconds": 1256.03
+  },
+  "host": {
+    "logical_cpus_used": 96,
+    "name": "ca2",
+    "storage": "node-local SSD"
+  },
+  "named_sequence_addition": {
+    "cold_cache_gates": 6,
+    "cold_input_file_cache": {
+      "blackstar_delta_median_wall_seconds": 39.04,
+      "median_reduction_percent": 96.8252802663142,
+      "median_speedup": 31.498843484965306,
+      "upstream_full_median_wall_seconds": 1225.62
+    },
+    "cold_warm_artifact_comparisons": 57,
+    "gfp_fragments_counted": 100,
+    "gst_fragments_counted": 100,
+    "warm_input_file_cache": {
+      "blackstar_delta_median_wall_seconds": 23.21,
+      "median_reduction_percent": 98.02070541683722,
+      "median_speedup": 50.523050409306336,
+      "upstream_full_median_wall_seconds": 1172.64
+    }
+  },
+  "schema": "blackstar-public-direct-comparison-v1",
+  "upstream": {
+    "binary_sha256": "2e8d6900ef1c4b2dd78f93a93ce4ff537d87c5263bdc58f1511428315a0cbdaf",
+    "revision": "b1edc1208d91a53bf40ebae8669f71d50b994851",
+    "version": "2.7.11b"
+  }
+}

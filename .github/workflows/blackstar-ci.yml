@@ -26,7 +26,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ make zlib1g-dev
+          sudo apt-get install -y g++ jq make python3-yaml zlib1g-dev
 
       - name: Install architecture renderer
         run: npm ci --prefix extras/docs
@@ -49,6 +49,17 @@ jobs:
             extras/benchmarks/runAlignmentPairs.py
           extras/tests/scripts/testBenchmarkHarness.sh
 
+      - name: Validate successor metadata
+        run: |
+          python3 -m py_compile \
+            extras/maintenance/export_github_state.py \
+            extras/maintenance/verify_transition_backup.py \
+            extras/maintenance/check_detachment_readiness.py \
+            extras/maintenance/finalize_successor_repo.py \
+            extras/maintenance/validate_successor_metadata.py \
+            extras/scripts/generateBlackSTARSbom.py
+          python3 extras/maintenance/validate_successor_metadata.py
+
       - name: Build BlackSTAR
         env:
           JOBS: "2"
@@ -56,8 +67,16 @@ jobs:
 
       - name: Verify release identity and OpenMP linkage
         run: |
-          test "$(source/STAR --version)" = "2.7.11b-blackstar.2"
+          test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
+          extras/tests/scripts/testBlackstarVersion.sh
           ldd source/STAR | grep -Eq 'libgomp|libomp'
+          test -f dist/blackstar-1.0.0-linux-x86_64.spdx.json
+          test -f dist/blackstar-1.0.0-linux-x86_64/LICENSE
+          test -f dist/blackstar-1.0.0-linux-x86_64/ATTRIBUTION.md
+          jq -e '
+            .spdxVersion == "SPDX-2.3" and
+            (.packages[] | select(.name == "BlackSTAR").versionInfo) == "1.0.0"
+          ' dist/blackstar-1.0.0-linux-x86_64.spdx.json
 
       - name: Build upstream 2.7.11b compatibility oracle
         run: |
@@ -109,3 +128,34 @@ jobs:
             dist
             ${{ runner.temp }}/genome-insert-hardening
             ${{ runner.temp }}/saindex-strategies
+
+  compiler-build:
+    name: compiler-${{ matrix.name }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: gcc
+            cxx: g++
+            packages: g++
+          - name: clang
+            cxx: clang++
+            packages: clang libomp-dev
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Install compiler
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ${{ matrix.packages }} jq make zlib1g-dev
+
+      - name: Build and inspect
+        env:
+          CXX: ${{ matrix.cxx }}
+        run: |
+          make -C source -j2 STAR CXX="${CXX}"
+          test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
+          source/STAR --version-json | jq -e '.blackstar_version == "1.0.0"'
+          ldd source/STAR | grep -Eq 'libgomp|libomp'
