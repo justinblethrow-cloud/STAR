@@ -58,11 +58,11 @@
       "title": "Threading and memory map",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F05-threading-memory.mmd",
-      "evidence": ["source/Genome_genomeGenerate.cpp", "source/genomeSAindex.cpp", "source/sjdbBuildIndex.cpp", "source/mapThreadsSpawn.cpp", "source/ReadAlignChunk_processChunks.cpp"],
-      "caption": "BlackSTAR parallelizes dominant index construction stages while normal alignment retains STAR's shared locked input dispatch and read-level worker threads.",
-      "alt_text": "Threading and memory diagram separating coordinator, genome-generation workers, SAindex workers, junction workers, and read-alignment workers; the alignment workers share packed index arrays and receive chunks through one input mutex that is held during parsing and copying.",
+      "evidence": ["source/Genome_genomeGenerate.cpp", "source/genomeSAindex.cpp", "source/sjdbBuildIndex.cpp", "source/mapThreadsSpawn.cpp", "source/ReadAlignChunk_processChunks.cpp", "source/AlignmentThreadAffinity.cpp", "source/ReadChunkConfig.cpp", "source/NumaMemoryPolicy.cpp"],
+      "caption": "BlackSTAR parallelizes dominant index stages and retains STAR's read-level alignment workers while adding conditional affinity recovery, adaptive record-safe chunks, and eligible private-load NUMA placement.",
+      "alt_text": "Threading and memory diagram separating coordinator, genome-generation workers, SAindex workers, junction workers, and read-alignment workers. The alignment path recovers the allowed CPU-place union when explicit OpenMP binding narrowed the spawning thread, serializes record parsing under the existing input mutex, dispatches adaptive one-megabyte chunks at high thread counts, and shares packed Genome, SA, and SAindex memory. Eligible private high-thread loads interleave pages while shared loads retain the default policy.",
       "outputs": ["docs/architecture/diagrams/svg/F05-threading-memory.svg", "docs/architecture/diagrams/pdf/F05-threading-memory.pdf"]
     },
     {
@@ -70,11 +70,11 @@
       "title": "Accepted BlackSTAR change map",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F06-change-map.mmd",
       "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md"],
-      "caption": "Accepted changes are concentrated in deterministic index construction, persistent sequence insertion, integrity validation, and deployment safeguards; normal alignment semantics remain upstream.",
-      "alt_text": "Side-by-side upstream and BlackSTAR modules with accepted additions highlighted for parallel index generation, Full Overlay Delta sequence insertion, package validation, atomic publication, and release selection.",
+      "caption": "Blackstar.2 combines the accepted deterministic index, persistent insertion, integrity, and deployment work from blackstar.1 with qualified affinity, dispatch, NUMA-placement, and transcript-recursion alignment improvements.",
+      "alt_text": "Side-by-side upstream and BlackSTAR modules with accepted additions highlighted for parallel index generation, Full Overlay Delta sequence insertion, package validation, atomic publication, release selection, alignment affinity recovery, adaptive high-thread input chunks, eligible private-genome NUMA interleave, and transcript-recursion copy elision. The normal STAR command and measured output interface is retained.",
       "outputs": ["docs/architecture/diagrams/svg/F06-change-map.svg", "docs/architecture/diagrams/pdf/F06-change-map.pdf"]
     },
     {
@@ -142,11 +142,11 @@
       "title": "Correctness and release boundary",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "821457378fa38bfb23b061b8f11ee0a09431dda7",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F12-release-boundary.mmd",
       "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md"],
-      "caption": "Release acceptance combines byte identity where formats are unchanged, mapping equivalence for BlackSTAR-specific formats, adversarial package rejection, and explicit exclusions.",
-      "alt_text": "Concentric release-gate diagram covering build identity, sanitizers, byte identity, mapping and count equivalence, corruption rejection, paired performance, deployment rollback, and exclusions for experimental multi-sample and BAM compression features.",
+      "caption": "Blackstar.2 release acceptance combines build identity, sanitizers, alignment runtime safety, byte identity where formats are unchanged, mapping equivalence, adversarial rejection, paired performance, and deployment controls.",
+      "alt_text": "Release-gate diagram covering fork version and OpenMP identity, focused sanitizers, ordinary and inherited-binding alignment paths, private and shared genome loading, uncompressed and compressed reads, canonical BAM records, byte identity for conventional formats, mapping and count equivalence for BlackSTAR formats, corruption rejection, paired full-size performance, deployment rollback, and explicit exclusions.",
       "outputs": ["docs/architecture/diagrams/svg/F12-release-boundary.svg", "docs/architecture/diagrams/pdf/F12-release-boundary.pdf"]
     },
     {
@@ -154,11 +154,11 @@
       "title": "Accepted, rejected, and superseded work",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F13-history.mmd",
       "evidence": ["docs/architecture/STATUS_HISTORY.md"],
-      "caption": "The history ledger separates qualified release work, the technically qualified but unreleased Q01 alignment stack, rejected experiments including A02b and A09, and invalidated or superseded evidence.",
-      "alt_text": "Status lanes listing blackstar.1 index and insertion work; the technically qualified but unreleased Q01 stack containing H01 affinity, A02 adaptive chunks, A05 NUMA placement, and A06 transcript recursion; rejected prefork, libdeflate, A01, A02b queue, and A09 LTO and PGO paths; archived multi-sample and BAM compression prototypes; and superseded benchmark evidence.",
+      "caption": "The history ledger separates accepted blackstar.1 and blackstar.2 release work from rejected experiments, archived prototypes, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing accepted release work for memory-adaptive index construction, bounded SAindex and junction work, Full Overlay Delta insertion, integrity and deployment gates, H01 affinity recovery, A02 adaptive chunks, A05 NUMA placement, A06 transcript recursion, and Q01 cumulative qualification. Separate lanes retain rejected prefork, libdeflate, A01, A02b, and A09 work, archived multi-sample and BAM-compression prototypes, and superseded benchmark evidence.",
       "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
     },
     {
@@ -166,11 +166,11 @@
       "title": "Experimental roadmap",
       "maturity": "roadmap",
       "visibility": "public",
-      "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
       "evidence": ["docs/experiments/ROADMAP.md"],
-      "caption": "The corrected alignment sequence now includes technically qualified but unreleased H01, A02, A05, and A06 work, rejected A09 toolchain variants, completed Q01 cumulative qualification, and later kernel and index experiments.",
-      "alt_text": "Gated roadmap from the qualified release through corrected A00, technically qualified but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, technically qualified A05 NUMA-aware private loading and A06 transcript-recursion copy elision, rejected A09 LTO and PGO variants, completed but unpromoted Q01 cumulative alignment qualification, then proposed alignment kernels, output, multi-sample, and index stages.",
+      "caption": "The roadmap traces blackstar.1 through accepted H01, A02, A05, and A06 work, rejected A02b and A09 alternatives, Q01 qualification, the blackstar.2 release, and later kernel and index experiments.",
+      "alt_text": "Gated roadmap from blackstar.1 through corrected A00, accepted H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, accepted A05 NUMA-aware private loading and A06 transcript-recursion copy elision, rejected A09 LTO and PGO variants, passed Q01 cumulative qualification, and the qualified blackstar.2 release, followed by proposed alignment kernels, output, multi-sample, and index stages.",
       "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
     },
     {
@@ -200,48 +200,48 @@
     {
       "id": "F17",
       "title": "H01 alignment-affinity recovery",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "496ee8a5687c21520b91603b6e04141fd16a4fa0",
       "source": "docs/architecture/diagrams/src/F17-alignment-affinity-recovery.mmd",
       "evidence": ["docs/experiments/H01-alignment-affinity-recovery.md", "docs/architecture/evidence/alignment-A00-A02-H01-20260723.tsv"],
-      "caption": "H01 restores the full CPU-place union before pthread creation when OpenMP binding is requested, recovering a 5.20-fold failure mode while passing ordinary-path noninferiority.",
+      "caption": "Accepted in blackstar.2, H01 restores the full CPU-place union before pthread creation when OpenMP binding is requested, recovering a 5.20-fold failure mode while passing ordinary-path noninferiority.",
       "alt_text": "Three-lane diagram showing the qualified release inheriting one two-CPU OpenMP place across 96 pthread workers and taking 223.54 seconds, H01 restoring 48 places and 96 CPUs before worker creation and taking 43.00 seconds, and the ordinary unbound fast path producing 43.49 versus 43.48 second medians across five pairs.",
       "outputs": ["docs/architecture/diagrams/svg/F17-alignment-affinity-recovery.svg", "docs/architecture/diagrams/pdf/F17-alignment-affinity-recovery.pdf"]
     },
     {
       "id": "F18",
       "title": "A02 adaptive input chunks",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "a438a4f55b855c42c04c89cc52bbc7f082547620",
       "source": "docs/architecture/diagrams/src/F18-adaptive-input-chunks.mmd",
       "evidence": ["docs/experiments/A02-input-dispatch-diagnostics.md", "docs/architecture/evidence/alignment-A02-adaptive-chunks-20260723.tsv", "source/ReadChunkConfig.cpp", "source/Parameters.cpp"],
-      "caption": "A02 uses 1 MB record-safe input chunks at 64 or more threads, reducing median full-corpus wall time by 13.41 percent uncompressed and 8.74 percent through zcat while lowering peak RSS.",
+      "caption": "Accepted in blackstar.2, A02 uses 1 MB record-safe input chunks at 64 or more threads, reducing median full-corpus wall time by 13.41 percent uncompressed and 8.74 percent through zcat while lowering peak RSS.",
       "alt_text": "Before-and-after alignment dispatch diagram showing H01 workers receiving 30 MB chunks with a long completion tail, A02 selecting 1 MB chunks at 64 or more threads while retaining legacy behavior below that boundary, and qualified results of 13.41 percent uncompressed and 8.74 percent gzip median gains, 6.77 percent lower peak RSS, six paired correctness passes, and a canonical BAM pass.",
       "outputs": ["docs/architecture/diagrams/svg/F18-adaptive-input-chunks.svg", "docs/architecture/diagrams/pdf/F18-adaptive-input-chunks.pdf"]
     },
     {
       "id": "F19",
       "title": "A05 NUMA-aware private genome placement",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "91de89210ed936d162ef6f7ad69984b0752e1641",
       "source": "docs/architecture/diagrams/src/F19-numa-placement.mmd",
       "evidence": ["docs/experiments/A02b-post-A02-profile.md", "docs/experiments/A05-numa-placement.md", "docs/architecture/evidence/alignment-A02b-A05-numa-20260723.tsv", "source/NumaMemoryPolicy.cpp", "source/STAR.cpp"],
-      "caption": "A05 applies NUMA interleave to eligible high-thread private genome loads while preserving caller policies, reducing the exact 96-thread full-corpus median by 22.51 percent over A02 with unchanged measured outputs.",
+      "caption": "Accepted in blackstar.2, A05 applies NUMA interleave to eligible high-thread private genome loads while preserving caller policies, reducing the exact 96-thread full-corpus median by 22.51 percent over A02 with unchanged measured outputs.",
       "alt_text": "Attribution and before-after diagram showing the rejected A02b producer-consumer queue, A02 private genome pages undergoing automatic NUMA migration, A05 selecting interleave only for eligible default-policy private loads while preserving inherited bind and interleave subsets, and exact public evidence of a 74.01 to 57.35 second uncompressed median with all output comparisons passing; gzip timing is labeled supportive because control variability exceeded its gate.",
       "outputs": ["docs/architecture/diagrams/svg/F19-numa-placement.svg", "docs/architecture/diagrams/pdf/F19-numa-placement.pdf"]
     },
     {
       "id": "F20",
       "title": "A06 transcript recursion copy elision",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "6032393155317b17fef1750672f1da6770ae6042",
       "source": "docs/architecture/diagrams/src/F20-transcript-recursion.mmd",
       "evidence": ["docs/experiments/A06-transcript-recursion.md", "docs/architecture/evidence/alignment-A06-transcript-recursion-20260723.tsv", "source/stitchWindowAligns.cpp", "source/stitchWindowAligns.h"],
-      "caption": "A06 forwards unchanged recursive transcript state by const reference and copies only mutating or terminal branches, reducing copy-constructor CPU by 35.97 percent and the five-pair full-corpus median by 2.29 percent with exact measured outputs.",
+      "caption": "Accepted in blackstar.2, A06 forwards unchanged recursive transcript state by const reference and copies only mutating or terminal branches, reducing copy-constructor CPU by 35.97 percent and the five-pair full-corpus median by 2.29 percent with exact measured outputs.",
       "alt_text": "Before-and-after recursive stitching diagram showing A05 copying transcript state on include, exclude, and terminal paths; A06 receiving a const reference, making a private copy only for include mutation or terminal finalization, and forwarding exclude state without copying; evidence shows copy CPU falling from 351.96 to 225.35 seconds, a five-pair median falling from 57.39 to 56.11 seconds, a positive paired interval, exact outputs, compressed-input support, a canonical BAM pass, and a clean end-to-end sanitizer run.",
       "outputs": ["docs/architecture/diagrams/svg/F20-transcript-recursion.svg", "docs/architecture/diagrams/pdf/F20-transcript-recursion.pdf"]
     },
@@ -260,14 +260,26 @@
     {
       "id": "F22",
       "title": "Q01 cumulative alignment qualification",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
       "source": "docs/architecture/diagrams/src/F22-cumulative-qualification.mmd",
       "evidence": ["docs/experiments/Q01-cumulative-alignment-qualification.md", "docs/architecture/evidence/alignment-Q01-cumulative-qualification-20260724.tsv"],
-      "caption": "Q01 technically qualifies the cumulative H01, A02, A05, and A06 Labs stack with 33.20 percent uncompressed and 28.54 percent compressed median paired full-corpus gains, exact outputs, safety checks, and reproducible packages, while leaving the release boundary unchanged.",
-      "alt_text": "Qualification diagram comparing qualified blackstar.1 with the cumulative H01, A02, A05, and A06 Labs stack. Replicated full-corpus tests show wall time falling from 84.28 to 56.17 seconds uncompressed and from 90.61 to 64.03 seconds through zcat. Shared-index BAM, inherited-affinity recovery, eight sanitizer scripts, 24 insertion checks, four SAindex checks, official upstream STAR compatibility, and two byte-identical package builds pass. The final state is technically qualified in Labs but explicitly not promoted, versioned, tagged, or released.",
+      "caption": "Q01 qualifies the cumulative H01, A02, A05, and A06 source promoted in blackstar.2 with 33.20 percent uncompressed and 28.54 percent compressed median paired full-corpus gains, exact outputs, safety checks, and reproducible packages.",
+      "alt_text": "Qualification diagram comparing qualified blackstar.1 with the H01, A02, A05, and A06 source promoted in blackstar.2. Replicated full-corpus tests show wall time falling from 84.28 to 56.17 seconds uncompressed and from 90.61 to 64.03 seconds through zcat. Shared-index BAM, inherited-affinity recovery, eight sanitizer scripts, 24 insertion checks, four SAindex checks, official upstream STAR compatibility, and two byte-identical qualification-package builds pass. The final state is accepted in blackstar.2.",
       "outputs": ["docs/architecture/diagrams/svg/F22-cumulative-qualification.svg", "docs/architecture/diagrams/pdf/F22-cumulative-qualification.pdf"]
+    },
+    {
+      "id": "F23",
+      "title": "BlackSTAR 2.7.11b-blackstar.2 promotion",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
+      "source": "docs/architecture/diagrams/src/F23-blackstar2-promotion.mmd",
+      "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md", "docs/experiments/Q01-cumulative-alignment-qualification.md", "docs/architecture/evidence/release-2.7.11b-blackstar.2.tsv"],
+      "caption": "Blackstar.2 promotes the Q01-qualified H01, A02, A05, and A06 alignment stack on top of blackstar.1 while preserving protected-master CI, explicit exclusions, and a separate external-deployment boundary.",
+      "alt_text": "Promotion diagram from upstream STAR 2.7.11b to the qualified blackstar.1 index and insertion release, then through H01 affinity recovery, A02 adaptive input chunks, A05 NUMA-aware private loading, A06 transcript-recursion copy elision, and Q01 cumulative qualification. Replicated performance, exact-output safety, inherited insertion and SAindex compatibility, versioned release packaging, and protected-master build-and-test gates lead to the accepted blackstar.2 release boundary. A01, A02b, A09, alignReadsMulti, prefork workers, and threaded BAM compression remain excluded, and external deployment requires separate authorization.",
+      "outputs": ["docs/architecture/diagrams/svg/F23-blackstar2-promotion.svg", "docs/architecture/diagrams/pdf/F23-blackstar2-promotion.pdf"]
     }
   ]
 }

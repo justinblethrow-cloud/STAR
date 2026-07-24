@@ -2,9 +2,9 @@
 
 ## Status
 
-- State: complete; cumulative Labs candidate technically qualified
-- Release disposition: not promoted, tagged, or released
-- Qualified release remains:
+- State: complete; cumulative release qualification
+- Release disposition: promoted in `2.7.11b-blackstar.2`
+- Qualified control release at Q01 time:
   `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Cumulative source revision used for paired timing:
   `7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb`
@@ -14,11 +14,11 @@
   `9d37e0f8009c28fd72e84c3c42fa272ed53b1f71`
 - Decided: 2026-07-24
 
-Q01 qualifies the cumulative source stack containing H01 affinity recovery,
+Q01 qualified the cumulative source stack containing H01 affinity recovery,
 A02 adaptive input chunks, A05 NUMA-aware private genome placement, and A06
-transcript-recursion copy elision. It does not alter the qualified
-`blackstar.1` release boundary. Promotion remains a separate deliberate
-operation.
+transcript-recursion copy elision. The qualified source stack was subsequently
+promoted as the `blackstar.2` alignment release boundary. This record preserves
+the pre-promotion comparison with `blackstar.1`.
 
 ## Candidate Stack
 
@@ -165,24 +165,25 @@ produced exact identities:
 | Archive | `c7b9f875e735935818233bd81441a06bfe0ca4bfbe1ee7972f0f4f5c93e266f9` | same |
 | `build-info.tsv` | `2e4afa3f7cd3392a4d9ac08616f98385b35322587f87aad8d7215c89a4505e18` | same |
 
-The binary was OpenMP-linked. The package still carries the current
+The binary was OpenMP-linked. The Q01 package still carries the then-current
 `2.7.11b-blackstar.1` source version string because Q01 does not perform a
-release-version bump. These packages are qualification artifacts and must not
-be distributed as a replacement `blackstar.1` release.
+release-version bump. These remain qualification artifacts and must not be
+distributed as either `.1` or `.2` release packages. The `.2` release uses
+clean packages built after the versioned promotion commit.
 
 ## Decision
 
-- Outcome: cumulative Labs candidate technically qualified.
+- Outcome: cumulative source technically qualified and promoted in
+  `blackstar.2`.
 - Performance: primary uncompressed and compressed gates passed.
 - Correctness: every paired output comparison passed.
 - Safety: shared-index lifecycle, canonical BAM, affinity failure recovery,
   sanitizers, insertion, SAindex, deployment, and upstream compatibility
   gates passed.
 - Reproducibility: two clean package builds were byte-identical.
-- Promotion: deliberately deferred. The qualified release worktree and tag
-  remain unchanged.
-- Next experimental stage: return to the index roadmap beginning with I01,
-  unless a deliberate release-promotion decision is made first.
+- Promotion: completed through the separate `.2` release boundary; Q01 raw
+  benchmark identities remain unchanged.
+- Next experimental stage: return to the index roadmap beginning with I01.
 
 ## Limitations
 
@@ -192,8 +193,8 @@ be distributed as a replacement `blackstar.1` release.
   support safety or failure recovery only.
 - No Q01 result establishes performance for long reads, single-end reads,
   alternate CPUs, network storage, BAM sorting, or other STAR modes.
-- Technical qualification does not itself define a release version, support
-  policy, or deployment approval.
+- Technical qualification does not itself authorize deployment into an
+  external pipeline.
 
 ## Plain-Language Takeaway
 
@@ -202,4 +203,4 @@ runtime by about one-third for uncompressed input and by about 29 percent for
 compressed input versus the qualified release. Outputs remained exact, memory
 use fell, inherited OpenMP binding was recovered, shared-index and BAM paths
 passed, and clean packages rebuilt byte-for-byte. The code is technically
-qualified in Labs, but it has not been promoted or released.
+qualified and now forms the accepted `blackstar.2` alignment boundary.

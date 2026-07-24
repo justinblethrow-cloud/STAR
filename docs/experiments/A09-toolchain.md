@@ -167,9 +167,9 @@ gain failed the project's practical threshold.
   intervals, but their five-pair median gains were only 1.21 and 1.20 percent.
   Neither met the 2 percent practical performance gate.
 - Cumulative source remains: H01+A02+A05+A06
-- Follow-up: Q01 completed cumulative release-style technical qualification on
-  that source stack. Return to profile-directed source or index experiments;
-  release promotion remains separate.
+- Follow-up: Q01 completed cumulative release-style technical qualification
+  and the source stack was promoted in `blackstar.2`. Return to
+  profile-directed source or index experiments.
 
 ## Limitations
 

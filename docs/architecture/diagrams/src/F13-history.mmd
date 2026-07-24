@@ -1,17 +1,14 @@
 flowchart LR
-    subgraph ACCEPTED["ACCEPTED IN blackstar.1"]
+    subgraph ACCEPTED["ACCEPTED RELEASE WORK"]
         A1["Parallel memory-adaptive SA"]
         A2["Parallel bounded SAindex and junctions"]
         A3["Full / Overlay / Delta insertion"]
         A4["Integrity, atomic publication, deployment gates"]
-    end
-
-    subgraph LABS["TECHNICALLY QUALIFIED IN LABS - NOT RELEASED"]
-        L1["H01 affinity recovery<br/>bound failure fixed; ordinary path noninferior"]
-        L2["A02 adaptive input chunks<br/>paired speedup; exact outputs preserved"]
-        L3["A05 NUMA-aware private loading<br/>22.51% primary gain; exact outputs preserved"]
-        L4["A06 transcript recursion copies<br/>2.29% five-pair gain; exact outputs preserved"]
-        L5["Q01 cumulative qualification<br/>33.20% uncompressed; 28.54% zcat<br/>median paired gains; technical gate passed"]
+        A5["H01 affinity recovery<br/>accepted in blackstar.2"]
+        A6["A02 adaptive input chunks<br/>accepted in blackstar.2"]
+        A7["A05 NUMA-aware private loading<br/>accepted in blackstar.2"]
+        A8["A06 transcript recursion copies<br/>accepted in blackstar.2"]
+        A9["Q01 cumulative qualification<br/>blackstar.2 release gate"]
     end
 
     subgraph REJECTED["REJECTED"]
@@ -37,12 +34,10 @@ flowchart LR
     S2 -->|replaced by hardened gate| A3
 
     classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
-    classDef labs fill:#dbeafe,stroke:#1d4ed8,color:#111827;
     classDef rejected fill:#fee2e2,stroke:#b91c1c,color:#111827;
     classDef archived fill:#fef3c7,stroke:#a16207,color:#111827;
     classDef superseded fill:#f3f4f6,stroke:#4b5563,color:#111827,stroke-dasharray: 5 5;
-    class A1,A2,A3,A4 accepted;
-    class L1,L2,L3,L4,L5 labs;
+    class A1,A2,A3,A4,A5,A6,A7,A8,A9 accepted;
     class R1,R2,R3,R4,R5 rejected;
     class X1,X2 archived;
     class S1,S2,S3 superseded;

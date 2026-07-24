@@ -2,7 +2,7 @@
 
 ## Status
 
-- State: cumulatively qualified Labs candidate; not released
+- State: accepted in `2.7.11b-blackstar.2`
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime parent: H01 commit `496ee8a5687c21520b91603b6e04141fd16a4fa0`
 - Diagnostic commit: `544237f25af23623346d8c305aebd96d0d798786`
@@ -140,7 +140,7 @@ Compact public evidence is recorded in
 
 ## Decision
 
-- Outcome: accepted as a Labs candidate; not promoted to a release
+- Outcome: accepted and promoted in `blackstar.2`
 - Reason: the smallest measured dispatch change passed uncompressed and
   compressed end-to-end performance gates, reduced memory use, preserved all
   measured outputs, and avoided a new queue or parser implementation.
@@ -158,8 +158,8 @@ Compact public evidence is recorded in
 - The primary corpus is paired short-read bulk RNA-seq on one dual-socket host.
 - The BAM run is a correctness gate, not a BAM performance claim.
 - A02 improves scheduling granularity but does not remove serialized parsing.
-- This candidate remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the
-  cumulative technical gate, but promotion remains deliberate and separate.
+- This change remains absent from `blackstar.1` and is accepted in
+  `blackstar.2` after Q01 cumulative qualification.
 
 ## Plain-Language Takeaway
 

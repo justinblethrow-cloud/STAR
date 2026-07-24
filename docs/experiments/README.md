@@ -42,24 +42,21 @@ claim an ordinary-path speedup.
 - [A00](A00-public-alignment-baseline.md): corrected public alignment baseline.
 - [A01](A01-touched-window-bins.md): excluded experiment; historical effect
   size invalidated by inherited CPU affinity.
-- [A02](A02-input-dispatch-diagnostics.md): cumulatively qualified adaptive
-  input-chunk Labs candidate; not included in `blackstar.1`.
+- [A02](A02-input-dispatch-diagnostics.md): qualified adaptive input-chunk
+  change accepted in `blackstar.2`.
 - [A02b](A02b-post-A02-profile.md): rejected producer/consumer redesign; the
   corrected post-A02 profile showed less than one worker-equivalent of lock
   wait and a 0.36-second completion tail.
-- [A05](A05-numa-placement.md): cumulatively qualified NUMA-aware private
-  genome placement candidate; not included in `blackstar.1`.
-- [A06](A06-transcript-recursion.md): cumulatively qualified
-  transcript-recursion copy-elision candidate; not included in `blackstar.1`.
+- [A05](A05-numa-placement.md): qualified NUMA-aware private genome placement
+  accepted in `blackstar.2`.
+- [A06](A06-transcript-recursion.md): qualified transcript-recursion
+  copy-elision accepted in `blackstar.2`.
 - [A09](A09-toolchain.md): rejected LTO and PGO variants; each preserved exact
   measured outputs but improved the five-pair median by only about 1.2 percent.
-- [H01](H01-alignment-affinity-recovery.md): cumulatively qualified Labs
-  hardening candidate for inherited OpenMP binding; not included in
-  `blackstar.1`.
+- [H01](H01-alignment-affinity-recovery.md): qualified hardening for inherited
+  OpenMP binding accepted in `blackstar.2`.
 - [Q01](Q01-cumulative-alignment-qualification.md): cumulative H01+A02+A05+A06
-  stack technically qualified with replicated uncompressed and compressed
-  gains, exact outputs, safety gates, and reproducible packages; not promoted
-  or included in `blackstar.1`.
+  release qualification supporting promotion into `blackstar.2`.
 
 ## Quiet-System Gate
 

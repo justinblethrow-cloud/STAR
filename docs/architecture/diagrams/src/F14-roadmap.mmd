@@ -1,21 +1,22 @@
 flowchart TD
-    RELEASE["Qualified blackstar.1 release"] --> A00["A00 Corrected public baseline<br/>COMPLETE"]
-    A00 --> H01["H01 Affinity recovery<br/>QUALIFIED IN LABS - NOT RELEASED"]
+    RELEASE1["Qualified blackstar.1 release"] --> A00["A00 Corrected public baseline<br/>COMPLETE"]
+    A00 --> H01["H01 Affinity recovery<br/>ACCEPTED IN BLACKSTAR.2"]
     A00 --> A01["A01 Touched-bin clearing<br/>EXCLUDED - EFFECT INVALIDATED"]
     H01 --> A02D["A02 Input-dispatch attribution<br/>DIAGNOSTICS COMPLETE"]
-    A02D --> A02["A02 Adaptive input chunks<br/>QUALIFIED IN LABS - NOT RELEASED"]
+    A02D --> A02["A02 Adaptive input chunks<br/>ACCEPTED IN BLACKSTAR.2"]
     A02 --> A02B["A02b Producer / consumer queue<br/>REJECTED AFTER PROFILE"]
-    A02B -->|profile redirected work| A05["A05 NUMA-aware private loading<br/>QUALIFIED IN LABS - NOT RELEASED"]
+    A02B -->|profile redirected work| A05["A05 NUMA-aware private loading<br/>ACCEPTED IN BLACKSTAR.2"]
     A05 --> PROFILE["Cumulative A05 CPU profile<br/>COMPLETE"]
-    PROFILE --> A06["A06 Transcript recursion copy elision<br/>QUALIFIED IN LABS - NOT RELEASED"]
+    PROFILE --> A06["A06 Transcript recursion copy elision<br/>ACCEPTED IN BLACKSTAR.2"]
     PROFILE --> A03["A03 Base / Delta SA specialization<br/>PROPOSED"]
     A03 --> A04["A04 Runtime-dispatched AVX2 comparison"]
     A00 --> A07["A07 Modern HTSlib ordered output"]
     A07 --> A08["A08 Resource-token multi-sample scheduler"]
     A06 --> A09["A09 LTO / PGO cumulative build<br/>REJECTED - ABOUT 1.2% EACH"]
-    A06 --> QUAL["Q01 Cumulative alignment qualification<br/>COMPLETE - NOT PROMOTED"]
+    A06 --> QUAL["Q01 Cumulative alignment qualification<br/>PROMOTION GATE PASSED"]
     A09 -.->|evidence only; not stacked| QUAL
-    QUAL --> I01["I01 Parallel genome preparation"]
+    QUAL --> RELEASE2["Qualified blackstar.2 release"]
+    RELEASE2 --> I01["I01 Parallel genome preparation"]
     I01 --> I02["I02 Parallel disjoint-byte SA pack"]
     I02 --> I03["I03 Partitioned junction merge"]
     I03 --> I04["I04 Comparator fix + multikey radix"]
@@ -35,8 +36,8 @@ flowchart TD
     classDef proposed fill:#f3f4f6,stroke:#4b5563,color:#111827;
     classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
     classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
-    class RELEASE,A00 accepted;
-    class H01,A02D,A02,A05,PROFILE,A06,QUAL active;
+    class RELEASE1,RELEASE2,A00,H01,A02,A05,A06,QUAL accepted;
+    class A02D,PROFILE active;
     class A01,A02B,A09 rejected;
     class A03,A04,A07,A08,I01,I02,I03,I04,I05,INDEXQUAL proposed;
     class DECIDE decision;

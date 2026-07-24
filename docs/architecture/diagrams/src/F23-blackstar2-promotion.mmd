@@ -1,0 +1,36 @@
+flowchart LR
+    UPSTREAM["Upstream STAR 2.7.11b<br/>compatibility oracle"] --> R1["BlackSTAR blackstar.1<br/>qualified index + insertion release"]
+
+    R1 --> H01["H01 affinity recovery"]
+    H01 --> A02["A02 adaptive input chunks"]
+    A02 --> A05["A05 NUMA-aware private loading"]
+    A05 --> A06["A06 transcript recursion copy elision"]
+
+    A06 --> Q01["Q01 cumulative qualification"]
+    Q01 --> PERF["33.20% uncompressed<br/>28.54% zcat<br/>median paired gains"]
+    Q01 --> SAFE["Exact outputs + lower RSS<br/>shared BAM + affinity + sanitizers"]
+    Q01 --> COMPAT["Insertion + SAindex + upstream<br/>compatibility gates retained"]
+
+    PERF --> RC["Versioned blackstar.2<br/>release candidate"]
+    SAFE --> RC
+    COMPAT --> RC
+    RC --> CI["Protected master<br/>required build-and-test<br/>linear history"]
+    CI --> R2["BlackSTAR blackstar.2<br/>accepted release boundary"]
+
+    EXCLUDED["NOT STACKED<br/>A01, A02b, A09<br/>alignReadsMulti, prefork,<br/>threaded BAM compression"] -.-> R2
+    DEPLOY["External deployment<br/>requires separate authorization"] -.-> R2
+
+    classDef upstream fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef prior fill:#dcfce7,stroke:#15803d,color:#111827;
+    classDef change fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef gate fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef release fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:3px;
+    classDef excluded fill:#fee2e2,stroke:#b91c1c,color:#111827,stroke-dasharray: 5 5;
+    classDef note fill:#fef3c7,stroke:#a16207,color:#111827,stroke-dasharray: 5 5;
+    class UPSTREAM upstream;
+    class R1 prior;
+    class H01,A02,A05,A06 change;
+    class Q01,PERF,SAFE,COMPAT,RC,CI gate;
+    class R2 release;
+    class EXCLUDED excluded;
+    class DEPLOY note;

@@ -16,12 +16,15 @@ flowchart TD
 
     INPUT[("Shared input streams")]
     INPUTLOCK["mutexInRead<br/>one worker parses and copies<br/>a whole chunk while locked"]
+    CHUNKS["Adaptive record-safe chunks<br/>1 MB at 64 or more threads"]
+    AFFINITY["Recover allowed CPU-place union<br/>before pthread creation when required"]
 
     subgraph MEMORY["Shared read-mostly memory"]
         G[("Genome")]
         SA[("Packed SA")]
         SAI[("SAindex")]
     end
+    PLACEMENT["Eligible private high-thread load:<br/>interleave allowed memory nodes<br/>Shared load: retain default policy"]
 
     TEMP[("Bounded per-thread temporary memory")]
     REDUCE["Ordered deterministic merge / reduction"]
@@ -35,10 +38,16 @@ flowchart TD
     B2 --- TEMP
     B3 --- TEMP
     B4 --- TEMP
-    INPUT --> INPUTLOCK
-    INPUTLOCK --> R1
-    INPUTLOCK --> R2
-    INPUTLOCK --> RN
+    INPUT --> INPUTLOCK --> CHUNKS
+    AFFINITY --> R1
+    AFFINITY --> R2
+    AFFINITY --> RN
+    CHUNKS --> R1
+    CHUNKS --> R2
+    CHUNKS --> RN
+    PLACEMENT --> G
+    PLACEMENT --> SA
+    PLACEMENT --> SAI
     G --- R1
     G --- R2
     G --- RN
@@ -54,5 +63,6 @@ flowchart TD
     classDef memory fill:#f3f4f6,stroke:#4b5563,color:#111827;
     classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
     class COORD,REDUCE,INPUTLOCK control;
+    class CHUNKS,AFFINITY,PLACEMENT accepted;
     class B1,B2,B3,B4,R1,R2,RN worker;
     class G,SA,SAI,TEMP,INPUT memory;

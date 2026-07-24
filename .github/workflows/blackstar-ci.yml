@@ -56,7 +56,7 @@ jobs:
 
       - name: Verify release identity and OpenMP linkage
         run: |
-          test "$(source/STAR --version)" = "2.7.11b-blackstar.1"
+          test "$(source/STAR --version)" = "2.7.11b-blackstar.2"
           ldd source/STAR | grep -Eq 'libgomp|libomp'
 
       - name: Build upstream 2.7.11b compatibility oracle

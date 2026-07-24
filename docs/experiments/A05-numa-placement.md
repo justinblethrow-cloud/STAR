@@ -2,7 +2,7 @@
 
 ## Status
 
-- State: cumulatively qualified Labs candidate; not released
+- State: accepted in `2.7.11b-blackstar.2`
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime parent: A02 commit `a438a4f55b855c42c04c89cc52bbc7f082547620`
 - Implementation commit: `eb54b0b94e488b95f7e0adaa6a21961e7b9f5306`
@@ -160,7 +160,7 @@ not. The gate was not changed after observing that control variance.
 
 ## Decision
 
-- Outcome: accepted as a Labs candidate; not promoted to a release
+- Outcome: accepted and promoted in `blackstar.2`
 - Reason: the primary full-corpus gate improved median wall time by 22.51
   percent with stable replicates, unchanged memory use, and exact measured
   outputs. Threshold, inherited-policy, shared-mode, portability, and BAM
@@ -180,8 +180,8 @@ not. The gate was not changed after observing that control variance.
   externally screened policy; index-only scoping is a separate experiment.
 - The compressed-input effect is positive in all five pairs but fails the
   predeclared arm-CV gate because the A02 control is unstable.
-- A05 remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the cumulative
-  technical gate, but promotion remains deliberate and separate.
+- A05 remains absent from `blackstar.1` and is accepted in `blackstar.2` after
+  Q01 cumulative qualification.
 
 ## Plain-Language Takeaway
 

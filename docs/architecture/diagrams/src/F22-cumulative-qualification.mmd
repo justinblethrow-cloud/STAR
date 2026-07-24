@@ -1,5 +1,5 @@
 flowchart TD
-    RELEASE["Qualified blackstar.1<br/>benchmark control"] --> STACK["Cumulative Labs stack<br/>H01 + A02 + A05 + A06"]
+    RELEASE["Qualified blackstar.1<br/>benchmark control"] --> STACK["Blackstar.2 alignment source<br/>H01 + A02 + A05 + A06"]
 
     STACK --> PERF["REPLICATED PERFORMANCE"]
     PERF --> U["Uncompressed full corpus<br/>84.28 s to 56.17 s<br/>33.20% median paired gain; 3/3 exact"]
@@ -16,14 +16,14 @@ flowchart TD
     STACK --> PACKAGE["REPRODUCIBLE PACKAGING"]
     PACKAGE --> REPRO["Two clean builds<br/>binary, archive, and build-info<br/>digests identical"]
 
-    U --> DECISION["TECHNICALLY QUALIFIED IN LABS"]
+    U --> DECISION["Q01 RELEASE GATE PASSED"]
     Z --> DECISION
     SHARED --> DECISION
     BOUND --> DECISION
     TESTS --> DECISION
     COMPAT --> DECISION
     REPRO --> DECISION
-    DECISION --> BOUNDARY["NOT PROMOTED, VERSIONED,<br/>TAGGED, OR RELEASED"]
+    DECISION --> BOUNDARY["ACCEPTED IN<br/>BLACKSTAR.2"]
 
     classDef release fill:#dcfce7,stroke:#15803d,color:#111827;
     classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
@@ -31,7 +31,7 @@ flowchart TD
     classDef passed fill:#ecfdf5,stroke:#047857,color:#111827;
     classDef boundary fill:#fef3c7,stroke:#a16207,color:#111827;
     class RELEASE release;
-    class STACK,DECISION candidate;
+    class STACK candidate;
     class PERF,SAFETY,HARDEN,PACKAGE gate;
     class U,Z,SHARED,BOUND,TESTS,COMPAT,REPRO passed;
-    class BOUNDARY boundary;
+    class DECISION,BOUNDARY release;

@@ -2,7 +2,7 @@
 
 ## Status
 
-- State: cumulatively qualified Labs candidate; not released
+- State: accepted in `2.7.11b-blackstar.2`
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime source parent: A05 commit
   `91de89210ed936d162ef6f7ad69984b0752e1641`
@@ -167,7 +167,7 @@ passed.
 
 ## Decision
 
-- Outcome: accepted as a Labs candidate; not promoted to a release
+- Outcome: accepted and promoted in `blackstar.2`
 - Reason: the five-pair confirmation improved median end-to-end wall time by
   2.29 percent, its paired interval excluded zero, memory use was unchanged,
   and all measured outputs matched. The independent compressed-input and BAM
@@ -177,7 +177,7 @@ passed.
   `6032393155317b17fef1750672f1da6770ae6042`
 - Runtime parent: A05
 - Follow-up: A09 evaluated and rejected cumulative LTO and PGO; Q01 then
-  qualified the source stack. Release promotion remains separate.
+  qualified the source stack for promotion in `blackstar.2`.
 
 ## Limitations
 
@@ -188,8 +188,8 @@ passed.
   the size and contents of `Transcript` state.
 - The profile comparison is diagnostic single-run evidence.
 - The compressed-input result has three pairs and remains supportive.
-- A06 remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the cumulative
-  technical gate, but promotion remains deliberate and separate.
+- A06 remains absent from `blackstar.1` and is accepted in `blackstar.2` after
+  Q01 cumulative qualification.
 
 ## Plain-Language Takeaway
 

@@ -7,18 +7,21 @@ authorize deployment and does not replace environment-specific pipeline tests.
 
 | Field | Value |
 |---|---|
-| Version | `2.7.11b-blackstar.1` |
-| Full-size benchmark commit | `3053d8effb53f015940794ada24155cfb350881a` |
-| Benchmark executable SHA-256 | `6726fea9633f62d7772cde2d00c374a2412cf6a11ab6f03e47d6ab8d07a19117` |
+| Version | `2.7.11b-blackstar.2` |
+| Prior qualified release | `2.7.11b-blackstar.1` at `821457378fa38bfb23b061b8f11ee0a09431dda7` |
+| Cumulative qualification record | `9998c445c5b87adacd2a4663bd964ce744aea300` |
+| Alignment benchmark source | `7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb` |
+| Alignment benchmark executable SHA-256 | `6b08a7925022c6a03813660c69d0b0bd1ed98a377ac9c1136dd987e3d4c8f85e` |
 | Platform | x86-64 Linux |
 | Required linkage | `libgomp` or `libomp` |
 
 The deployable executable is a clean release build from the final promotion
-commit. Verify that `source/` has no changes relative to the benchmark commit,
-then take the deployment checksum from that build's `build-info.tsv`. Embedded
-Git provenance means a documentation-only commit still changes the executable
-checksum. Record the final checksum in release metadata rather than editing it
-back into the source commit.
+commit. Verify that runtime source changes relative to the qualification
+record are limited to the release version, then take the deployment checksum
+from that build's `build-info.tsv`. Embedded Git provenance means a
+documentation-only commit still changes the executable checksum. Record the
+final checksum in release metadata rather than editing it back into the source
+commit.
 
 ## Prerequisites
 
@@ -40,7 +43,7 @@ back into the source commit.
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
   --candidate-sha256 CANDIDATE_SHA256 \
-  --candidate-version 2.7.11b-blackstar.1 \
+  --candidate-version 2.7.11b-blackstar.2 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
   --fallback-version 2.7.11b \
@@ -69,7 +72,7 @@ Do not bypass the selector with an unpinned binary path.
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
   --candidate-sha256 CANDIDATE_SHA256 \
-  --candidate-version 2.7.11b-blackstar.1 \
+  --candidate-version 2.7.11b-blackstar.2 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
   --fallback-version 2.7.11b \

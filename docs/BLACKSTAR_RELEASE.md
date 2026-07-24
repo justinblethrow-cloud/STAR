@@ -1,13 +1,19 @@
 # BlackSTAR Release Boundary
 
-BlackSTAR `2.7.11b-blackstar.1` is a focused fork of upstream STAR `2.7.11b`. It preserves the upstream genome compatibility version while adding tested genome-generation performance work and persistent named-sequence insertion.
+BlackSTAR `2.7.11b-blackstar.2` is a maintained fork of upstream STAR
+`2.7.11b`. It preserves the upstream genome compatibility version while
+adding qualified genome-generation, persistent named-sequence insertion, and
+high-thread alignment improvements.
 
-The `blackstar.1` release target is x86-64 Linux. Upstream macOS source support has not been recertified for the BlackSTAR-specific paths or release builder.
+The `blackstar.2` release target is x86-64 Linux. Upstream macOS source support
+has not been recertified for the BlackSTAR-specific paths or release builder.
 
 See [the acceptance record](BLACKSTAR_ACCEPTANCE.md) for closed audit findings,
 segregated upstream debt, and measured verification. See
 [the promotion runbook](BLACKSTAR_PROMOTION.md) for artifact pinning, canary,
 rollback, and staged rollout.
+The original `blackstar.1` acceptance record is retained under
+[docs/releases](releases/2.7.11b-blackstar.1-acceptance.md).
 
 ## Supported Changes
 
@@ -17,12 +23,28 @@ rollback, and staged rollout.
 - `genomeInsert Full`, `Overlay`, and cached `Delta` modes, including insert-only GTF annotations.
 - Atomic artifact publication, strict manifests, packaged inserted inputs, strong base identity, and Delta payload validation.
 - Fixes for unaligned packed-array access, optional transcriptome initialization, genome-transform output state, bounded inserted-suffix comparison, and in-memory splice-junction record alignment.
+- Alignment affinity recovery when an explicitly configured OpenMP runtime
+  narrows the initial thread before STAR creates pthread workers.
+- Adaptive record-safe input chunks at 64 or more mapping threads.
+- NUMA-aware placement for eligible high-thread private genome loads, with
+  inherited-policy preservation and shared-memory fallback.
+- Transcript-recursion copy elision that copies state only for mutating and
+  terminal branches.
 
 ## Explicitly Excluded Experiments
 
-The release branch does not contain the experimental `alignReadsMulti` or persistent prefork worker implementation. It also does not contain the experimental `outBAMcompressionThreadN` parameter, bundled-htslib threading changes, or per-bin threaded BAM compression. Those prototypes were archived because their lifecycle, output isolation, or resource semantics were not ready for production.
+The release branch does not contain the experimental `alignReadsMulti` or
+persistent prefork worker implementation. It also does not contain the
+experimental `outBAMcompressionThreadN` parameter, bundled-htslib threading
+changes, per-bin threaded BAM compression, A01 touched-bin reset, the rejected
+A02b producer/consumer queue, or A09 LTO/PGO variants. Those prototypes were
+excluded or archived because their evidence, lifecycle, output isolation,
+resource semantics, or practical effect did not meet the release gate.
 
-Normal STAR alignment behavior and parameters remain the supported runtime interface.
+The normal STAR alignment command and output interface remain supported.
+BlackSTAR-specific alignment changes alter scheduling, affinity recovery,
+eligible memory placement, and internal transcript-state ownership without
+changing measured biological outputs.
 
 ## Compatibility
 
@@ -40,10 +62,15 @@ A release candidate must pass:
 3. Genome-insert equivalence against a full rebuild, including alignments, junctions, and gene counts.
 4. Adversarial rejection tests for stale bases, namespace collisions, malformed annotations, package corruption, extra/missing files, and nonempty destinations.
 5. Byte identity across serial, bounded-parallel, and RAM-constrained SAindex paths.
-6. Randomized paired full-size benchmark reruns on a quiet system, with commands, version, timing, memory, I/O snapshots, and validation artifacts retained.
-7. Broad real-sample base-versus-Delta comparison plus single-end and paired-end synthetic added-reference controls.
-8. Downstream shadow through deduplication and counting, with inherited order-sensitive consumers corrected or isolated.
-9. Checksum-pinned candidate selection, executable mapping canary, explicit rollback, automatic fallback, and both-invalid state preservation.
+6. Randomized paired full-size index and alignment benchmarks, with commands,
+   binary identities, timing, memory, input identities, and validation
+   artifacts retained.
+7. Cumulative alignment qualification against `blackstar.1` for uncompressed
+   and compressed input, private and shared indexes, canonical BAM records,
+   inherited-affinity recovery, and exact timing-independent outputs.
+8. Broad real-sample base-versus-Delta comparison plus single-end and paired-end synthetic added-reference controls.
+9. Downstream shadow through deduplication and counting, with inherited order-sensitive consumers corrected or isolated.
+10. Checksum-pinned candidate selection, executable mapping canary, explicit rollback, automatic fallback, and both-invalid state preservation.
 
 The benchmark scripts are evidence collectors, not substitutes for correctness tests. A nonidentical `SA` is never labeled equivalent without mapping-level validation.
 
@@ -51,7 +78,7 @@ The benchmark scripts are evidence collectors, not substitutes for correctness t
 
 Deploy the exact tested binary or a reproducible build from a tagged commit. Record `STAR --version`, the commit, compiler version, compile flags, and an executable checksum. Build base indexes and genome-insert packages on local storage when possible, then publish completed artifacts to shared storage. Never deploy a `.tmp.<pid>.<attempt>` staging directory.
 
-Do not describe Delta loading as runtime-free. The accepted short-sample sweep
+Do not describe Delta loading as runtime-free. The `blackstar.1` short-sample sweep
 observed a descriptive 9.22-second mean increase, although alignment and count
 content remained exact outside the requested added references.
 

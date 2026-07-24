@@ -7,20 +7,26 @@ flowchart LR
         UGEN --> UINDEX --> UALIGN --> UOUT
     end
 
-    subgraph ACCEPTED["BlackSTAR blackstar.1 accepted additions"]
+    subgraph ACCEPTED["BlackSTAR blackstar.2 accepted additions"]
         PGEN["Parallel and memory-adaptive<br/>SA, SAindex, and junction stages"]
         INSERT["Persistent named-sequence insertion<br/>Full / Overlay / Delta"]
         VALIDATE["Strong identity, strict manifests,<br/>payload validation"]
         PUBLISH["Atomic publication and<br/>checksum-pinned selection"]
+        AFFINITY["Alignment affinity recovery<br/>for explicit OpenMP binding"]
+        CHUNKS["Adaptive high-thread<br/>record-safe input chunks"]
+        NUMA["Eligible private-genome<br/>NUMA interleave"]
+        TRANSCRIPT["Transcript recursion<br/>copy elision"]
         PGEN --> INSERT --> VALIDATE --> PUBLISH
+        AFFINITY --> CHUNKS --> NUMA --> TRANSCRIPT
     end
 
     UGEN -->|accelerated; byte-identical v1 output| PGEN
     UINDEX -->|base input| INSERT
     VALIDATE -->|validated package| UALIGN
-    UALIGN -. "normal alignment semantics preserved" .-> UOUT
+    UALIGN -->|same command and measured outputs| AFFINITY
+    TRANSCRIPT --> UOUT
 
     classDef upstream fill:#f3f4f6,stroke:#4b5563,color:#111827;
     classDef accepted fill:#dcfce7,stroke:#15803d,color:#111827;
     class UGEN,UALIGN,UINDEX,UOUT upstream;
-    class PGEN,INSERT,VALIDATE,PUBLISH accepted;
+    class PGEN,INSERT,VALIDATE,PUBLISH,AFFINITY,CHUNKS,NUMA,TRANSCRIPT accepted;
