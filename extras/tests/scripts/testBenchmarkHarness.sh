@@ -135,7 +135,7 @@ if OMP_PROC_BIND=close OMP_PLACES=cores \
     printf 'single-run harness accepted unsafe OpenMP binding\n' >&2
     exit 1
 fi
-rg -q 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-single.log"
+grep -Fq 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-single.log"
 [[ ! -e "${tmp_dir}/unsafe-single" ]]
 
 if GENOME_LOAD_MODE=LoadAndExit \
@@ -148,7 +148,7 @@ if GENOME_LOAD_MODE=LoadAndExit \
     printf 'single-run harness accepted a non-alignment genome-load mode\n' >&2
     exit 1
 fi
-rg -q 'unsupported GENOME_LOAD_MODE' "${tmp_dir}/invalid-genome-load.log"
+grep -Fq 'unsupported GENOME_LOAD_MODE' "${tmp_dir}/invalid-genome-load.log"
 [[ ! -e "${tmp_dir}/invalid-genome-load" ]]
 
 mkdir -p "${tmp_dir}/mock-bin"
@@ -190,11 +190,11 @@ env -u OMP_PROC_BIND -u OMP_PLACES \
     "${repo_root}/extras/tests/fixtures/alignment/read2.fastq" \
     "${tmp_dir}/gprofng-run"
 [[ -d "${tmp_dir}/gprofng-run/gprofng.er" ]]
-rg -q $'perf_mode\tgprofng' "${tmp_dir}/gprofng-run/provenance.tsv"
-rg -q $'gprofng_clock_profile\tlo' "${tmp_dir}/gprofng-run/provenance.tsv"
-rg -q $'gprofng_version\tGNU gprofng mock 1.0' "${tmp_dir}/gprofng-run/provenance.tsv"
-rg -q $'genome_load_mode\tLoadAndKeep' "${tmp_dir}/gprofng-run/provenance.tsv"
-rg -q -- '--genomeLoad LoadAndKeep' "${tmp_dir}/gprofng-run/command.sh"
+grep -Fq $'perf_mode\tgprofng' "${tmp_dir}/gprofng-run/provenance.tsv"
+grep -Fq $'gprofng_clock_profile\tlo' "${tmp_dir}/gprofng-run/provenance.tsv"
+grep -Fq $'gprofng_version\tGNU gprofng mock 1.0' "${tmp_dir}/gprofng-run/provenance.tsv"
+grep -Fq $'genome_load_mode\tLoadAndKeep' "${tmp_dir}/gprofng-run/provenance.tsv"
+grep -Fq -- '--genomeLoad LoadAndKeep' "${tmp_dir}/gprofng-run/command.sh"
 
 if OMP_PROC_BIND=close OMP_PLACES=cores \
     python3 "${repo_root}/extras/benchmarks/runAlignmentPairs.py" \
@@ -210,7 +210,7 @@ if OMP_PROC_BIND=close OMP_PLACES=cores \
     printf 'pair driver accepted unsafe OpenMP binding\n' >&2
     exit 1
 fi
-rg -q 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-paired.log"
+grep -Fq 'pthread workers may inherit one OpenMP place' "${tmp_dir}/unsafe-paired.log"
 [[ ! -e "${tmp_dir}/unsafe-paired" ]]
 
 ALLOW_OMP_THREAD_BINDING=1 OMP_PROC_BIND=close OMP_PLACES=cores \
