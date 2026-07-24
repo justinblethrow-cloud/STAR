@@ -2,7 +2,7 @@
 
 ## Status
 
-- State: accepted Labs candidate; not released
+- State: cumulatively qualified Labs candidate; not released
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime source parent: A05 commit
   `91de89210ed936d162ef6f7ad69984b0752e1641`
@@ -12,6 +12,7 @@
   `6032393155317b17fef1750672f1da6770ae6042`
 - Opened: 2026-07-23
 - Decided: 2026-07-23
+- Cumulative qualification: Q01 passed 2026-07-24
 
 ## Hypothesis
 
@@ -175,8 +176,8 @@ passed.
 - Accepted source commit:
   `6032393155317b17fef1750672f1da6770ae6042`
 - Runtime parent: A05
-- Follow-up: evaluate cumulative LTO and PGO builds before selecting another
-  source-level alignment kernel.
+- Follow-up: A09 evaluated and rejected cumulative LTO and PGO; Q01 then
+  qualified the source stack. Release promotion remains separate.
 
 ## Limitations
 
@@ -187,8 +188,8 @@ passed.
   the size and contents of `Transcript` state.
 - The profile comparison is diagnostic single-run evidence.
 - The compressed-input result has three pairs and remains supportive.
-- A06 is absent from `2.7.11b-blackstar.1` until cumulative qualification and
-  deliberate promotion.
+- A06 remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the cumulative
+  technical gate, but promotion remains deliberate and separate.
 
 ## Plain-Language Takeaway
 

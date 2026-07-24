@@ -6,11 +6,12 @@ flowchart LR
         A4["Integrity, atomic publication, deployment gates"]
     end
 
-    subgraph LABS["ACCEPTED IN LABS - NOT RELEASED"]
+    subgraph LABS["TECHNICALLY QUALIFIED IN LABS - NOT RELEASED"]
         L1["H01 affinity recovery<br/>bound failure fixed; ordinary path noninferior"]
         L2["A02 adaptive input chunks<br/>paired speedup; exact outputs preserved"]
         L3["A05 NUMA-aware private loading<br/>22.51% primary gain; exact outputs preserved"]
         L4["A06 transcript recursion copies<br/>2.29% five-pair gain; exact outputs preserved"]
+        L5["Q01 cumulative qualification<br/>33.20% uncompressed; 28.54% zcat<br/>median paired gains; technical gate passed"]
     end
 
     subgraph REJECTED["REJECTED"]
@@ -41,7 +42,7 @@ flowchart LR
     classDef archived fill:#fef3c7,stroke:#a16207,color:#111827;
     classDef superseded fill:#f3f4f6,stroke:#4b5563,color:#111827,stroke-dasharray: 5 5;
     class A1,A2,A3,A4 accepted;
-    class L1,L2,L3,L4 labs;
+    class L1,L2,L3,L4,L5 labs;
     class R1,R2,R3,R4,R5 rejected;
     class X1,X2 archived;
     class S1,S2,S3 superseded;

@@ -2,13 +2,14 @@
 
 ## Status
 
-- State: accepted Labs candidate; not released
+- State: cumulatively qualified Labs candidate; not released
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime parent: H01 commit `496ee8a5687c21520b91603b6e04141fd16a4fa0`
 - Diagnostic commit: `544237f25af23623346d8c305aebd96d0d798786`
 - Candidate commit: `a438a4f55b855c42c04c89cc52bbc7f082547620`
 - Opened: 2026-07-23
 - Decided: 2026-07-23
+- Cumulative qualification: Q01 passed 2026-07-24
 
 ## Hypothesis
 
@@ -145,9 +146,9 @@ Compact public evidence is recorded in
   measured outputs, and avoided a new queue or parser implementation.
 - Accepted commit: `a438a4f55b855c42c04c89cc52bbc7f082547620`
 - Supersedes: the A02 state of "diagnostics complete; implementation next"
-- Follow-up: retain the explicit fallback, qualify additional thread counts and
-  long-read workloads before release promotion, then profile the new tail
-  before considering a bounded producer/consumer redesign.
+- Follow-up: A02b profiled and rejected the producer/consumer redesign; A05,
+  A06, and Q01 then completed the cumulative path. Additional thread counts and
+  long-read workloads remain release-promotion caveats.
 
 ## Limitations
 
@@ -157,8 +158,8 @@ Compact public evidence is recorded in
 - The primary corpus is paired short-read bulk RNA-seq on one dual-socket host.
 - The BAM run is a correctness gate, not a BAM performance claim.
 - A02 improves scheduling granularity but does not remove serialized parsing.
-- This candidate is absent from `2.7.11b-blackstar.1` until a deliberate
-  cumulative release qualification and promotion.
+- This candidate remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the
+  cumulative technical gate, but promotion remains deliberate and separate.
 
 ## Plain-Language Takeaway
 

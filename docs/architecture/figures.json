@@ -154,11 +154,11 @@
       "title": "Accepted, rejected, and superseded work",
       "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb",
+      "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
       "source": "docs/architecture/diagrams/src/F13-history.mmd",
       "evidence": ["docs/architecture/STATUS_HISTORY.md"],
-      "caption": "The history ledger separates qualified release work, accepted but unreleased H01, A02, A05, and A06 candidates, rejected experiments including A02b and A09, and invalidated or superseded evidence.",
-      "alt_text": "Status lanes listing blackstar.1 index and insertion work, accepted Labs H01 affinity, A02 adaptive-chunk, A05 NUMA-placement, and A06 transcript-recursion candidates, rejected prefork, libdeflate, A01, A02b queue, and A09 LTO and PGO paths, archived multi-sample and BAM compression prototypes, and superseded benchmark evidence.",
+      "caption": "The history ledger separates qualified release work, the technically qualified but unreleased Q01 alignment stack, rejected experiments including A02b and A09, and invalidated or superseded evidence.",
+      "alt_text": "Status lanes listing blackstar.1 index and insertion work; the technically qualified but unreleased Q01 stack containing H01 affinity, A02 adaptive chunks, A05 NUMA placement, and A06 transcript recursion; rejected prefork, libdeflate, A01, A02b queue, and A09 LTO and PGO paths; archived multi-sample and BAM compression prototypes; and superseded benchmark evidence.",
       "outputs": ["docs/architecture/diagrams/svg/F13-history.svg", "docs/architecture/diagrams/pdf/F13-history.pdf"]
     },
     {
@@ -166,11 +166,11 @@
       "title": "Experimental roadmap",
       "maturity": "roadmap",
       "visibility": "public",
-      "code_commit": "7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb",
+      "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
       "source": "docs/architecture/diagrams/src/F14-roadmap.mmd",
       "evidence": ["docs/experiments/ROADMAP.md"],
-      "caption": "The corrected alignment sequence now includes accepted Labs candidates H01, A02, A05, and A06, rejected A09 toolchain variants, cumulative qualification, and later kernel and index experiments.",
-      "alt_text": "Gated roadmap from the qualified release through corrected A00, accepted but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, accepted A05 NUMA-aware private loading, cumulative profiling, accepted A06 transcript-recursion copy elision, rejected A09 LTO and PGO variants, then cumulative alignment qualification, alignment kernels, output, multi-sample, and index stages.",
+      "caption": "The corrected alignment sequence now includes technically qualified but unreleased H01, A02, A05, and A06 work, rejected A09 toolchain variants, completed Q01 cumulative qualification, and later kernel and index experiments.",
+      "alt_text": "Gated roadmap from the qualified release through corrected A00, technically qualified but unreleased H01 affinity recovery and A02 adaptive chunks, rejected A02b producer-consumer queue, technically qualified A05 NUMA-aware private loading and A06 transcript-recursion copy elision, rejected A09 LTO and PGO variants, completed but unpromoted Q01 cumulative alignment qualification, then proposed alignment kernels, output, multi-sample, and index stages.",
       "outputs": ["docs/architecture/diagrams/svg/F14-roadmap.svg", "docs/architecture/diagrams/pdf/F14-roadmap.pdf"]
     },
     {
@@ -256,6 +256,18 @@
       "caption": "A09 independently tested LTO and full-corpus-trained PGO; both preserved exact measured outputs and reduced binary size, but five-pair median gains of 1.21 and 1.20 percent missed the 2 percent practical gate.",
       "alt_text": "Two-branch toolchain evaluation from the cumulative H01, A02, A05, and A06 source. The LTO branch reduces binary size by 17.47 percent and improves the five-pair median from 55.75 to 55.32 seconds, a 1.21 percent gain. The PGO branch trains for 1 hour 20 minutes, reduces binary size by 22.15 percent, and improves the median from 55.89 to 55.20 seconds, a 1.20 percent gain. Both pass five of five output comparisons but are rejected below the 2 percent practical gate; a note explains that other builders must regenerate profiles for the exact source and compiler.",
       "outputs": ["docs/architecture/diagrams/svg/F21-toolchain.svg", "docs/architecture/diagrams/pdf/F21-toolchain.pdf"]
+    },
+    {
+      "id": "F22",
+      "title": "Q01 cumulative alignment qualification",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "9d37e0f8009c28fd72e84c3c42fa272ed53b1f71",
+      "source": "docs/architecture/diagrams/src/F22-cumulative-qualification.mmd",
+      "evidence": ["docs/experiments/Q01-cumulative-alignment-qualification.md", "docs/architecture/evidence/alignment-Q01-cumulative-qualification-20260724.tsv"],
+      "caption": "Q01 technically qualifies the cumulative H01, A02, A05, and A06 Labs stack with 33.20 percent uncompressed and 28.54 percent compressed median paired full-corpus gains, exact outputs, safety checks, and reproducible packages, while leaving the release boundary unchanged.",
+      "alt_text": "Qualification diagram comparing qualified blackstar.1 with the cumulative H01, A02, A05, and A06 Labs stack. Replicated full-corpus tests show wall time falling from 84.28 to 56.17 seconds uncompressed and from 90.61 to 64.03 seconds through zcat. Shared-index BAM, inherited-affinity recovery, eight sanitizer scripts, 24 insertion checks, four SAindex checks, official upstream STAR compatibility, and two byte-identical package builds pass. The final state is technically qualified in Labs but explicitly not promoted, versioned, tagged, or released.",
+      "outputs": ["docs/architecture/diagrams/svg/F22-cumulative-qualification.svg", "docs/architecture/diagrams/pdf/F22-cumulative-qualification.pdf"]
     }
   ]
 }

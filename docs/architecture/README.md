@@ -28,6 +28,7 @@ customer-derived evidence belong in an untracked internal derivative.
 19. [A05 NUMA-aware private genome placement](diagrams/svg/F19-numa-placement.svg)
 20. [A06 transcript recursion copy elision](diagrams/svg/F20-transcript-recursion.svg)
 21. [A09 LTO and PGO evaluation](diagrams/svg/F21-toolchain.svg)
+22. [Q01 cumulative alignment qualification](diagrams/svg/F22-cumulative-qualification.svg)
 
 The editable sources are under `diagrams/src/`. The generated SVG and PDF
 exports are presentation-ready but are never the source of truth.
@@ -40,6 +41,9 @@ exports are presentation-ready but are never the source of truth.
 - **Accepted**: included in the qualified BlackSTAR release boundary.
 - **Accepted Labs candidate**: passed its experiment gates but remains outside
   the qualified release boundary.
+- **Technically qualified Labs candidate**: passed cumulative release-style
+  technical gates but still has not been promoted, versioned, tagged, or
+  released.
 - **Experimental**: implemented or proposed in Labs, but not qualified.
 - **Rejected**: measured and intentionally excluded.
 - **Superseded**: historically useful evidence replaced by stronger evidence.

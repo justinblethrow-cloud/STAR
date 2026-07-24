@@ -2,12 +2,13 @@
 
 ## Status
 
-- State: accepted Labs hardening candidate; not in `blackstar.1`
+- State: cumulatively qualified Labs hardening candidate; not in `blackstar.1`
 - Parent commit: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Implementation commits: `64cd86aa90a5827b6f39ea202448f1833597a8f1` and
   `496ee8a5687c21520b91603b6e04141fd16a4fa0`
 - Opened: 2026-07-23
 - Decided: 2026-07-23
+- Cumulative qualification: Q01 passed 2026-07-24
 
 ## Failure Mode
 
@@ -74,12 +75,13 @@ comparison passed their exact-output or timing-independent correctness gates
 ## Decision
 
 - Outcome: accepted as a Labs hardening candidate
-- Release effect: none until deliberate promotion and cumulative qualification
+- Release effect: none until deliberate promotion; Q01 satisfied the
+  cumulative technical gate
 - Reason: it corrects a severe, reproducible environment-dependent failure
   while passing ordinary-path noninferiority, resource, sanitizer, and
   correctness gates.
-- Follow-up: consolidate H01 with the corrected evidence and base subsequent
-  alignment experiments on H01 rather than the excluded A01 branch.
+- Follow-up: completed by the cumulative Q01 safety and performance gates;
+  release promotion remains separate.
 
 ## Plain-Language Takeaway
 

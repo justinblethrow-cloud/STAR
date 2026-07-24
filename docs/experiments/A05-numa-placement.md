@@ -2,13 +2,14 @@
 
 ## Status
 
-- State: accepted Labs candidate; not released
+- State: cumulatively qualified Labs candidate; not released
 - Qualified-release ancestor: `821457378fa38bfb23b061b8f11ee0a09431dda7`
 - Runtime parent: A02 commit `a438a4f55b855c42c04c89cc52bbc7f082547620`
 - Implementation commit: `eb54b0b94e488b95f7e0adaa6a21961e7b9f5306`
 - Accepted commit: `91de89210ed936d162ef6f7ad69984b0752e1641`
 - Opened: 2026-07-23
 - Decided: 2026-07-23
+- Cumulative qualification: Q01 passed 2026-07-24
 
 ## Hypothesis
 
@@ -166,9 +167,8 @@ not. The gate was not changed after observing that control variance.
   safety checks passed.
 - Accepted commit: `91de89210ed936d162ef6f7ad69984b0752e1641`
 - Runtime parent: A02
-- Follow-up: profile the cumulative H01+A02+A05 stack before selecting any
-  additional CPU kernel. Do not infer a remaining parser opportunity from lock
-  occupancy alone.
+- Follow-up: the cumulative profile selected A06; A09 and Q01 then completed.
+  Do not infer a remaining parser opportunity from lock occupancy alone.
 
 ## Limitations
 
@@ -180,8 +180,8 @@ not. The gate was not changed after observing that control variance.
   externally screened policy; index-only scoping is a separate experiment.
 - The compressed-input effect is positive in all five pairs but fails the
   predeclared arm-CV gate because the A02 control is unstable.
-- A05 is absent from `2.7.11b-blackstar.1` until cumulative qualification and a
-  deliberate promotion.
+- A05 remains absent from `2.7.11b-blackstar.1`. Q01 satisfied the cumulative
+  technical gate, but promotion remains deliberate and separate.
 
 ## Plain-Language Takeaway
 
