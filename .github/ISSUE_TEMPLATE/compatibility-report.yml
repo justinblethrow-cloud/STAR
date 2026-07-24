@@ -1,0 +1,48 @@
+name: Compatibility report
+description: Report a STAR interface, index, output, or wrapper incompatibility
+title: "[Compatibility]: "
+labels:
+  - "type: compatibility"
+  - "needs: triage"
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Compatibility surface
+      options:
+        - Command-line interface
+        - Conventional genome index
+        - Alignment output
+        - Shared-memory lifecycle
+        - Wrapper or workflow integration
+        - Overlay or Delta package
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions and identities
+      description: BlackSTAR, official STAR, wrapper, index, and executable identities.
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer and observed difference
+    validations:
+      required: true
+  - type: textarea
+    id: contract
+    attributes:
+      label: Expected compatibility
+      description: Link the relevant compatibility promise or explain the expected inherited behavior.
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed private data, credentials, and customer information.
+          required: true

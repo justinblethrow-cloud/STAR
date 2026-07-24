@@ -1,0 +1,71 @@
+name: Bug report
+description: Report reproducible incorrect behavior or a crash
+title: "[Bug]: "
+labels:
+  - "type: bug"
+  - "needs: triage"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include private sequence data, customer identifiers, credentials, or presigned URLs.
+  - type: input
+    id: version
+    attributes:
+      label: BlackSTAR version
+      description: Paste `STAR --version` and the executable SHA-256.
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command and environment
+      description: Include the complete command and relevant environment variables.
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed and expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: reproducer
+    attributes:
+      label: Minimal reproducer
+      description: Provide synthetic or public inputs and exact reproduction steps.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Attach or paste relevant sections of `Log.out` and `Log.final.out`.
+    validations:
+      required: true
+  - type: textarea
+    id: system
+    attributes:
+      label: System information
+      description: OS, CPU, RAM, filesystem, storage placement, compiler or package source.
+    validations:
+      required: true
+  - type: dropdown
+    id: upstream
+    attributes:
+      label: Official STAR 2.7.11b comparison
+      options:
+        - "Official STAR does not reproduce the behavior"
+        - "Official STAR reproduces the behavior"
+        - "Not yet tested"
+        - "Not applicable to a BlackSTAR-only feature"
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Data safety
+      options:
+        - label: I removed private data, credentials, and customer information.
+          required: true

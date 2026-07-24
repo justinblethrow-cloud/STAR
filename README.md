@@ -1,119 +1,120 @@
-BlackSTAR 2.7.11b-blackstar.1
-============================
-Spliced Transcripts Alignment to a Reference
-© Alexander Dobin, 2009-2024
-https://www.ncbi.nlm.nih.gov/pubmed/23104886
+# BlackSTAR
 
-BlackSTAR is a focused performance and genome-insert fork of STAR 2.7.11b. See [the BlackSTAR release boundary](docs/BLACKSTAR_RELEASE.md) for supported changes and explicit exclusions, [the acceptance record](docs/BLACKSTAR_ACCEPTANCE.md) for current verification status, [the promotion runbook](docs/BLACKSTAR_PROMOTION.md) for canary and rollback, and [the genome-insert guide](docs/STARgenomeInsert.md) for Full, Overlay, and Delta usage.
+BlackSTAR is an independently maintained, performance-oriented successor to
+the STAR RNA-seq aligner. It is derived from STAR 2.7.11b and retains the
+`STAR` executable name and familiar command-line interface for operational
+compatibility.
 
-AUTHOR/SUPPORT
-==============
-Alex Dobin, dobin@cshl.edu </br>
-https://github.com/alexdobin/STAR/issues </br>
-https://groups.google.com/d/forum/rna-star
+BlackSTAR is not the official STAR project and is not affiliated with or
+endorsed by the original STAR authors. The upstream lineage, license, and
+scientific citation are preserved in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-HARDWARE/SOFTWARE REQUIREMENTS
-==============================
-  * x86-64 compatible processors
-  * 64-bit Linux for the tested BlackSTAR release target
+## Why BlackSTAR
 
-The inherited macOS source path remains available but has not been recertified for BlackSTAR-specific features or release artifacts.
+The current qualified release adds:
 
-MANUAL
-======
-https://github.com/alexdobin/STAR/blob/master/doc/STARmanual.pdf
+- deterministic, memory-adaptive parallel full-index construction;
+- persistent Full, Overlay, and cached Delta named-sequence insertion;
+- insert-only GTF support for added references;
+- improved high-thread alignment scheduling, affinity recovery, and NUMA
+  placement;
+- correctness fixes separated from inherited upstream behavior; and
+- reproducible release packages, checksums, acceptance evidence, and rollback
+  tooling.
 
-[RELEASEnotes](https://github.com/alexdobin/STAR/blob/master/RELEASEnotes.md) contains detailed information about the latest major release
-[CHANGES](https://github.com/alexdobin/STAR/blob/master/CHANGES.md) contains detailed information about all the changes in all releases
+Direct qualification against official STAR 2.7.11b measured:
 
-DIRECTORY CONTENTS
-==================
-  * source: all source files required for compilation
-  * bin: pre-compiled executables for Linux and Mac OS X
-  * doc: documentation
-  * extras: miscellaneous files and scripts
+| Workload | Official STAR | BlackSTAR | Result |
+| --- | ---: | ---: | ---: |
+| Full CHM13 index, 96 threads | 1,256.03 s | 607.18 s | 51.4% less wall time |
+| Uncompressed alignment, 96 threads | 82.49 s | 55.20 s | 33.1% less wall time |
+| Cold GFP/GST named-sequence addition | 1,225.62 s | 39.04 s | 31.5x speedup |
 
-COMPILING FROM SOURCE
-=====================
+The full-index improvement used more memory: median peak RSS increased from
+52.78 GiB to 77.15 GiB. Alignment gains were workload- and thread-dependent;
+the 32-thread result was close to upstream while 64- and 96-thread runs showed
+the largest gains. See [docs/PERFORMANCE.md](docs/PERFORMANCE.md) for the
+complete claims boundary and [docs/BLACKSTAR_ACCEPTANCE.md](docs/BLACKSTAR_ACCEPTANCE.md)
+for release gates.
 
-Download the latest [release from](https://github.com/alexdobin/STAR/releases) and uncompress it
---------------------------------------------------------
+## Compatibility
 
-```bash
-# Get latest STAR source from releases
-wget https://github.com/alexdobin/STAR/archive/2.7.11b.tar.gz
-tar -xzf 2.7.11b.tar.gz
-cd STAR-2.7.11b
+Conventional BlackSTAR indexes and alignment outputs retain the established
+STAR interfaces. Full indexes have been validated with official STAR 2.7.11b.
+Overlay and Delta packages are BlackSTAR-specific and require
+`--genomeLoad NoSharedMemory`.
 
-# Alternatively, get STAR source using git
-git clone https://github.com/alexdobin/STAR.git
-```
+Compatibility is a tested contract, not an assumption. See
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) before adopting a
+BlackSTAR-specific feature.
 
-Compile under Linux
--------------------
+## Installation
 
-```bash
-# Compile
-cd STAR/source
-make STAR
-```
-For processors that do not support AVX extensions, specify the target SIMD architecture, e.g.
-```
-make STAR CXXFLAGS_SIMD=sse
-```
+The latest qualified release is available from the
+[BlackSTAR releases page](https://github.com/justinblethrow-cloud/blackSTAR/releases).
+Release assets include the `STAR` executable, a deterministic Linux x86-64
+archive, checksums, linkage metadata, build provenance, license, and upstream
+attribution.
 
-
-Upstream compile guidance for Mac OS X (not BlackSTAR release-gated)
--------------------------------------------------------------------
+Build from source on Linux:
 
 ```bash
-# 1. Install brew (http://brew.sh/)
-# 2. Install gcc with brew:
-$ brew install gcc
-# 3. Build STAR:
-# run 'make' in the source directory
-# note that the path to c++ executable has to be adjusted to its current version
-$cd source
-$make STARforMacStatic CXX=/usr/local/Cellar/gcc/8.2.0/bin/g++-8
-# 4. Make it availible through the terminal
-$cp STAR /usr/local/bin
+git clone https://github.com/justinblethrow-cloud/blackSTAR.git
+cd blackSTAR/source
+make -j"$(nproc)" STAR
+./STAR --version
 ```
 
-All platforms - non-standard gcc
---------------------------------
+The release-gated target is 64-bit x86 Linux with GCC and an OpenMP runtime.
+The inherited macOS and non-x86 source paths are not currently release
+qualified.
 
-If g++ compiler (true g++, not Clang sym-link) is not on the path, you will need to tell `make` where to find it:
-```bash
-cd source
-make STARforMacStatic CXX=/path/to/gcc
-```
+## Named-Sequence Addition
 
-If employing STAR only on a single machine or a homogeneously setup cluster, you may aim at helping the compiler to optimize in way that is tailored to your platform. The flags LDFLAGSextra and CXXFLAGSextra are appended to the default optimizations specified in source/Makefile.
-```
-# platform-specific optimization for gcc/g++
-make CXXFLAGSextra=-march=native
-# together with link-time optimization
-make LDFLAGSextra=-flto CXXFLAGSextra="-flto -march=native"
-```
+`--runMode genomeInsert` adds transgenes, controls, decoys, plasmids, or other
+named FASTA records to an existing index. Full mode writes a conventional
+index. Overlay and Delta write compact packages that refer to an unchanged base
+index; Delta caches the insertion plan for reuse.
 
-FreeBSD ports
-=============
+See [docs/STARgenomeInsert.md](docs/STARgenomeInsert.md) for commands, GTF
+handling, validation, and package constraints.
 
-STAR can be installed on FreeBSD via the FreeBSD ports system.
-To install via the binary package, simply run:
-```
-pkg install star
-```
+## Documentation
 
-LIMITATIONS
-===========
-This release was tested with the default parameters for human and mouse genomes.
-Mammal genomes require at least 16GB of RAM, ideally 32GB.
-Please contact the author for a list of recommended parameters for much larger or much smaller genomes.
+- [Compatibility contract](docs/COMPATIBILITY.md)
+- [Performance evidence and limitations](docs/PERFORMANCE.md)
+- [Architecture Atlas](docs/architecture/README.md)
+- [Release boundary](docs/BLACKSTAR_RELEASE.md)
+- [Release acceptance](docs/BLACKSTAR_ACCEPTANCE.md)
+- [Versioning policy](docs/VERSIONING.md)
+- [Migration from STAR](docs/MIGRATING_FROM_STAR.md)
+- [Release process](docs/RELEASE_POLICY.md)
 
+The original STAR manual remains the authoritative reference for inherited
+STAR behavior. BlackSTAR documentation takes precedence for BlackSTAR-specific
+features and qualified differences.
 
-FUNDING
-=======
-The development of STAR is supported by the National Human Genome Research Institute of
-the National Institutes of Health under Award Number R01HG009318.
-The content is solely the responsibility of the authors and does not necessarily represent the official views of the National Institutes of Health.
+## Project Participation
+
+Use [GitHub Issues](https://github.com/justinblethrow-cloud/blackSTAR/issues)
+for reproducible bugs, compatibility reports, and performance regressions.
+Use [GitHub Discussions](https://github.com/justinblethrow-cloud/blackSTAR/discussions)
+for questions and design exploration.
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), and
+[SECURITY.md](SECURITY.md) before opening a report. The project is maintained
+on a best-effort basis and does not promise support response times.
+
+## License and Citation
+
+BlackSTAR remains available under the MIT License. Retain the upstream
+copyright notice when redistributing source or binaries.
+
+Scientific work using the STAR alignment method should continue to cite the
+original STAR publication:
+
+> Dobin A, et al. STAR: ultrafast universal RNA-seq aligner.
+> Bioinformatics. 2013;29(1):15-21. doi:10.1093/bioinformatics/bts635.
+
+Also record the exact BlackSTAR release tag, executable checksum, genome index
+identity, and command line used for reproducibility.

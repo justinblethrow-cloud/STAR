@@ -1,0 +1,31 @@
+flowchart TB
+    RELEASE["BlackSTAR release<br/>1.0.0<br/>support and API boundary"]
+    EXEC["Executable lineage token<br/>2.7.11b-blackstar.3<br/>wrapper-compatible legacy output"]
+    BASE["STAR compatibility base<br/>2.7.11b at pinned commit<br/>behavioral oracle"]
+    FORMAT["Genome format<br/>versionGenome 2.7.4a<br/>conventional index loading"]
+
+    RELEASE --> JSON["STAR --version-json<br/>reports all identities"]
+    EXEC --> JSON
+    BASE --> JSON
+    FORMAT --> JSON
+
+    BASE --> CLI["Inherited CLI and defaults"]
+    FORMAT --> FULL["Conventional Full indexes"]
+    RELEASE --> DELTA["BlackSTAR-only Overlay and Delta"]
+
+    CLI --> TESTS["Compatibility gates<br/>metrics + junctions + counts<br/>canonical BAM + byte identity"]
+    FULL --> TESTS
+    DELTA --> TESTS
+
+    RULE["Versions change independently;<br/>no one string represents all contracts"] -.-> JSON
+
+    classDef project fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:3px;
+    classDef identity fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef interface fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef gate fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef note fill:#fef3c7,stroke:#a16207,color:#111827,stroke-dasharray: 5 5;
+    class RELEASE project;
+    class EXEC,BASE,FORMAT,JSON identity;
+    class CLI,FULL,DELTA interface;
+    class TESTS gate;
+    class RULE note;

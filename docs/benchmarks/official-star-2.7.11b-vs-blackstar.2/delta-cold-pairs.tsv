@@ -1,0 +1,4 @@
+pair	first	upstream_full_wall_seconds	blackstar_delta_wall_seconds	reduction_percent	speedup
+1	blackstar-delta	1164.6	47.29	95.9393783273227	24.626770987523788
+2	upstream-full	1231.56	39.04	96.83003670141935	31.546106557377048
+3	blackstar-delta	1225.62	38.91	96.8252802663142	31.498843484965306

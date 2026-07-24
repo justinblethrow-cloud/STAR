@@ -1,0 +1,36 @@
+flowchart LR
+    REPORT["Issue, proposal,<br/>security report, or experiment"] --> CLASSIFY{"Origin and change class"}
+    CLASSIFY -->|Inherited| UPSTREAM["Upstream-origin behavior"]
+    CLASSIFY -->|BlackSTAR| BLACKSTAR["Regression or feature"]
+    CLASSIFY -->|Security| PRIVATE["Private advisory path"]
+
+    UPSTREAM --> PR["Focused pull request<br/>tests + compatibility impact"]
+    BLACKSTAR --> PR
+    PRIVATE --> PR
+
+    PR --> CI["Required CI<br/>GCC + Clang + CodeQL<br/>sanitizers + deterministic tests"]
+    CI --> TYPE{"Performance-sensitive?"}
+    TYPE -->|No| ACCEPT["Maintainer decision"]
+    TYPE -->|Yes| PERF["Pinned matched control<br/>order-balanced pairs<br/>correctness + resource gates"]
+    PERF --> ACCEPT
+
+    ACCEPT --> MAIN["Protected main<br/>linear history"]
+    MAIN --> RC["Exact release candidate<br/>two reproducible builds"]
+    RC --> PACKAGE["STAR + archive + checksums<br/>build metadata + SPDX SBOM<br/>provenance"]
+    PACKAGE --> TAG["Immutable vMAJOR.MINOR.PATCH<br/>release and acceptance record"]
+
+    FALLBACK["Prior release + canary<br/>remain the rollback boundary"] -.-> TAG
+    PROD["Repository release is not<br/>external deployment authorization"] -.-> TAG
+
+    classDef intake fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef decision fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef work fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef gate fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef release fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:3px;
+    classDef note fill:#ffffff,stroke:#6b7280,color:#374151,stroke-dasharray: 5 5;
+    class REPORT,UPSTREAM,BLACKSTAR,PRIVATE intake;
+    class CLASSIFY,TYPE decision;
+    class PR,PERF work;
+    class CI,ACCEPT,MAIN,RC gate;
+    class PACKAGE,TAG release;
+    class FALLBACK,PROD note;

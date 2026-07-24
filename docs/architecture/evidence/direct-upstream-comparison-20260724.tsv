@@ -1,0 +1,9 @@
+claim_id	metric	value	unit	scope	source_receipt
+DIRECT-INDEX-001	full CHM13 median paired wall-time reduction	51.4419	percent	96 threads; local SSD; three order-balanced pairs	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-INDEX-002	full CHM13 median speedup	2.0594	fold	same paired benchmark	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-INDEX-003	full CHM13 median peak-RSS increase	46.1786	percent	52.78 GiB official STAR; 77.15 GiB BlackSTAR	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-ALIGN-001	uncompressed alignment median wall-time reduction	33.1057	percent	96 threads; 12,768,316 public paired reads	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-ALIGN-002	zcat alignment median wall-time reduction	30.7477	percent	96 threads; same public paired reads	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-ALIGN-003	uncompressed alignment median wall-time reduction	2.3842	percent	32 threads; same public paired reads	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/alignment-scaling.tsv
+DIRECT-DELTA-001	verified-cold named-sequence insertion speedup	31.4988	fold	GFP and GST FASTA plus insert-only GTF; three order-balanced pairs	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
+DIRECT-DELTA-002	cold-to-warm Delta artifact comparisons	57/57	comparisons	same named-sequence addition benchmark	docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/summary.json
