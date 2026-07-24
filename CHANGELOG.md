@@ -3,7 +3,7 @@
 This changelog records BlackSTAR project releases. The inherited STAR history
 remains available in `CHANGES.md` and `RELEASEnotes.md`.
 
-## Unreleased
+## 1.0.0 - 2026-07-24
 
 - Transition project identity from a GitHub fork to an independently maintained
   successor while preserving upstream attribution.
@@ -12,6 +12,8 @@ remains available in `CHANGES.md` and `RELEASEnotes.md`.
 - Add BlackSTAR-owned issue intake, pull-request requirements, and migration
   documentation.
 - Add a recoverable GitHub fork-detachment procedure and evidence archive.
+- Make Linux release artifacts independent of the absolute checkout path,
+  including bundled HTSlib compilation.
 
 No alignment, indexing, or output behavior is changed by the project-identity
 work alone.

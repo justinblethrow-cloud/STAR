@@ -9,6 +9,7 @@ repo_root="$(cd "${script_dir}/../.." && pwd)"
 cxx="${CXX:-g++}"
 jobs="${JOBS:-$(nproc 2>/dev/null || echo 1)}"
 allow_dirty="${ALLOW_DIRTY:-0}"
+user_cxxflags_extra="${CXXFLAGSEXTRA:-}"
 
 cd "${repo_root}"
 if [[ "${allow_dirty}" != "1" && -n "$(git status --porcelain)" ]]; then
@@ -54,13 +55,17 @@ trap cleanup EXIT
 mkdir "${package_dir}"
 
 provenance="commit=${commit};tree=$([[ -z "$(git status --porcelain)" ]] && echo clean || echo dirty);release=${version};executable=${executable_version}"
+path_map_flags="-ffile-prefix-map=${repo_root}=. -fdebug-prefix-map=${repo_root}=. -fmacro-prefix-map=${repo_root}=."
+effective_cxxflags_extra="${user_cxxflags_extra:+${user_cxxflags_extra} }${path_map_flags}"
+htslib_cflags="-g -Wall -O2 ${path_map_flags}"
 export SOURCE_DATE_EPOCH="${source_date_epoch}"
-make -C source clean
+make -C source CLEAN
+make -C source/htslib -j"${jobs}" lib-static CFLAGS="${htslib_cflags}"
 make -C source -j"${jobs}" STAR \
     CXX="${cxx}" \
     BUILD_PLACE="blackstar-reproducible-build" \
     GIT_PROVENANCE="${provenance}" \
-    CXXFLAGSextra="${CXXFLAGSEXTRA:-}" \
+    CXXFLAGSextra="${effective_cxxflags_extra}" \
     LDFLAGSextra="${LDFLAGSEXTRA:-}"
 
 if [[ "$(source/STAR --version)" != "${executable_version}" ]]; then
@@ -99,7 +104,8 @@ sbom_sha256="$(sha256sum "${package_dir}/sbom.spdx.json" | awk '{print $1}')"
     printf 'build_utc\t%s\n' "${build_utc}"
     printf 'build_place\tblackstar-reproducible-build\n'
     printf 'compiler\t%s\n' "${compiler_version}"
-    printf 'cxxflags_extra\t%s\n' "${CXXFLAGSEXTRA:-}"
+    printf 'cxxflags_extra\t%s\n' "${user_cxxflags_extra}"
+    printf 'source_path_mapping\trepository root mapped to .\n'
     printf 'ldflags_extra\t%s\n' "${LDFLAGSEXTRA:-}"
     printf 'binary_sha256\t%s\n' "${binary_sha256}"
     printf 'license_sha256\t%s\n' "${license_sha256}"
