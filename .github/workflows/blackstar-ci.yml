@@ -65,6 +65,18 @@ jobs:
           JOBS: "2"
         run: extras/scripts/buildBlackSTARRelease.sh
 
+      - name: Build independent release reproduction
+        env:
+          DIST_DIR: ${{ runner.temp }}/release-build-2
+          JOBS: "2"
+        run: |
+          git worktree add --detach "${RUNNER_TEMP}/release-source-2" HEAD
+          cd "${RUNNER_TEMP}/release-source-2"
+          extras/scripts/buildBlackSTARRelease.sh
+
+      - name: Verify cross-path release reproducibility
+        run: extras/scripts/compareBlackSTARReleases.sh dist "${RUNNER_TEMP}/release-build-2"
+
       - name: Verify release identity and OpenMP linkage
         run: |
           test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
@@ -126,6 +138,7 @@ jobs:
           retention-days: 14
           path: |
             dist
+            ${{ runner.temp }}/release-build-2
             ${{ runner.temp }}/genome-insert-hardening
             ${{ runner.temp }}/saindex-strategies
 

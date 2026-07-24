@@ -23,7 +23,8 @@ Every stable release must:
 5. classify inherited upstream defects separately from BlackSTAR regressions;
 6. update the changelog, release boundary, acceptance record, and limitations;
 7. record compiler, flags, OpenMP linkage, commit, and source-date epoch; and
-8. reproduce the package and executable across two clean builds.
+8. reproduce every package artifact across two clean builds rooted at different
+   absolute source paths.
 
 Performance-affecting releases additionally require seeded, order-balanced
 candidate/control pairs on a controlled host. Raw outputs remain outside Git;
