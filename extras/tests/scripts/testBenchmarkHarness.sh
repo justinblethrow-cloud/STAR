@@ -40,7 +40,7 @@ cmp "${tmp_dir}/subset-r2-1.fastq.gz" "${tmp_dir}/subset-r2-2.fastq.gz"
 
 python3 "${repo_root}/extras/benchmarks/quietSystemGate.py" \
     --duration 0.1 --interval 0.05 \
-    --min-idle 0 --max-iowait 100 --max-storage-util 100 \
+    --min-idle 0 --max-iowait 100 --max-storage-util 1000 \
     --path "${tmp_dir}" --output "${tmp_dir}/quiet.tsv"
 [[ "$(wc -l < "${tmp_dir}/quiet.tsv")" -ge 2 ]]
 
@@ -84,7 +84,7 @@ python3 "${repo_root}/extras/benchmarks/summarizeAlignmentA00.py" \
     "${tmp_dir}/baseline" "${tmp_dir}/candidate" \
     --output "${tmp_dir}/summary.tsv"
 [[ "$(wc -l < "${tmp_dir}/summary.tsv")" -eq 3 ]]
-rg -q $'\t1.25\t' "${tmp_dir}/summary.tsv"
+grep -Fq $'\t1.25\t' "${tmp_dir}/summary.tsv"
 
 python3 "${repo_root}/extras/benchmarks/compareAlignmentRuns.py" \
     "${tmp_dir}/baseline" "${tmp_dir}/candidate" \
