@@ -37,6 +37,14 @@ cmp "${tmp_dir}/subset-r1-1.fastq.gz" "${tmp_dir}/subset-r1-2.fastq.gz"
 cmp "${tmp_dir}/subset-r2-1.fastq.gz" "${tmp_dir}/subset-r2-2.fastq.gz"
 [[ "$(gzip -cd "${tmp_dir}/subset-r1-1.fastq.gz" | wc -l)" -eq 8 ]]
 [[ "$(gzip -cd "${tmp_dir}/subset-r2-1.fastq.gz" | wc -l)" -eq 8 ]]
+python3 "${repo_root}/extras/benchmarks/makePairedFastqSubset.py" \
+    --read1 "${repo_root}/extras/tests/fixtures/alignment/read1.fastq" \
+    --read2 "${repo_root}/extras/tests/fixtures/alignment/read2.fastq" \
+    --records 2 \
+    --output1 "${tmp_dir}/subset-r1.fastq" \
+    --output2 "${tmp_dir}/subset-r2.fastq"
+[[ "$(wc -l < "${tmp_dir}/subset-r1.fastq")" -eq 8 ]]
+[[ "$(wc -l < "${tmp_dir}/subset-r2.fastq")" -eq 8 ]]
 
 for iteration in 1 2; do
     python3 "${repo_root}/extras/benchmarks/makeFastqSubset.py" \

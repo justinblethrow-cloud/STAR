@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Create a deterministic, validated first-N subset of paired gzip FASTQ files."""
+"""Create a deterministic, validated first-N subset of paired FASTQ files."""
 
 from __future__ import annotations
 
 import argparse
+from contextlib import contextmanager
 import gzip
 import hashlib
 import os
 from pathlib import Path
 import tempfile
+from typing import BinaryIO, Iterator
 
 
 def parse_args() -> argparse.Namespace:
@@ -21,7 +23,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def read_record(handle: gzip.GzipFile, label: str, index: int) -> list[bytes] | None:
+def read_record(handle: BinaryIO, label: str, index: int) -> list[bytes] | None:
     lines = [handle.readline() for _ in range(4)]
     if lines[0] == b"":
         if any(lines[1:]):
@@ -45,13 +47,24 @@ def canonical_name(header: bytes) -> bytes:
     return name
 
 
-def open_deterministic_gzip(path: Path) -> tuple[Path, gzip.GzipFile]:
+@contextmanager
+def open_input(path: Path) -> Iterator[BinaryIO]:
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rb") as handle:
+        yield handle
+
+
+def open_output(path: Path) -> tuple[Path, BinaryIO]:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, raw = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     os.close(fd)
     temporary = Path(raw)
     binary = temporary.open("wb")
-    return temporary, gzip.GzipFile(filename="", mode="wb", fileobj=binary, mtime=0)
+    if path.suffix == ".gz":
+        return temporary, gzip.GzipFile(
+            filename="", mode="wb", fileobj=binary, mtime=0
+        )
+    return temporary, binary
 
 
 def sha256(path: Path) -> str:
@@ -66,14 +79,20 @@ def main() -> int:
     args = parse_args()
     if args.records <= 0:
         raise SystemExit("--records must be positive")
+    for path in (args.read1, args.read2):
+        if not path.is_file():
+            raise SystemExit(f"input file is absent: {path}")
     if args.output1.resolve() == args.output2.resolve():
         raise SystemExit("mate outputs must be distinct")
+    input_paths = {args.read1.resolve(), args.read2.resolve()}
+    if args.output1.resolve() in input_paths or args.output2.resolve() in input_paths:
+        raise SystemExit("input and output paths must be distinct")
 
-    temp1, output1 = open_deterministic_gzip(args.output1)
-    temp2, output2 = open_deterministic_gzip(args.output2)
+    temp1, output1 = open_output(args.output1)
+    temp2, output2 = open_output(args.output2)
     completed = False
     try:
-        with gzip.open(args.read1, "rb") as read1, gzip.open(args.read2, "rb") as read2:
+        with open_input(args.read1) as read1, open_input(args.read2) as read2:
             for index in range(1, args.records + 1):
                 record1 = read_record(read1, "read1", index)
                 record2 = read_record(read2, "read2", index)
