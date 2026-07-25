@@ -67,12 +67,28 @@ def canonical_sam_digest(path: Path) -> str:
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
+def canonical_bam_header(path: Path, samtools: str) -> bytes:
+    completed = subprocess.run(
+        [samtools, "view", "-H", str(path)],
+        check=True,
+        stdout=subprocess.PIPE,
+    )
+    headers = []
+    for line in completed.stdout.decode("utf-8", errors="strict").splitlines():
+        if line.startswith("@PG") or line.startswith("@CO\tuser command line:"):
+            continue
+        headers.append(line)
+    return ("\n".join(headers) + "\n").encode()
+
+
 def canonical_bam_digest(path: Path, temp_root: Path) -> str:
     samtools = shutil.which("samtools")
     sort_bin = shutil.which("sort")
     if not samtools or not sort_bin:
         raise RuntimeError("samtools and GNU sort are required for canonical BAM comparison")
     value = hashlib.sha256()
+    value.update(canonical_bam_header(path, samtools))
+    value.update(b"\0alignment-records\0")
     env = dict(os.environ, LC_ALL="C")
     view = subprocess.Popen([samtools, "view", str(path)], stdout=subprocess.PIPE)
     sorter = subprocess.Popen(
