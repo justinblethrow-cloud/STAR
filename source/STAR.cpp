@@ -76,6 +76,8 @@ int main(int argInN, char *argIn[])
     Parameters P; // all parameters
     P.inputParameters(argInN, argIn);
 
+    BlackstarNumaPolicyState numaPolicyState;
+    numaPolicyState.restoreRequired=false;
     if (P.runMode == "alignReads")
     {
         const BlackstarNumaPolicyResult numaPolicy =
@@ -83,7 +85,8 @@ int main(int argInN, char *argIn[])
                 P.pGe.gLoadNumaPolicy,
                 P.runMode,
                 P.pGe.gLoad,
-                P.runThreadN
+                P.runThreadN,
+                numaPolicyState
             );
         P.inOut->logMain << "BLACKSTAR_NUMA_POLICY"
                          << "\trequested\t" << numaPolicy.requested
@@ -214,6 +217,55 @@ int main(int argInN, char *argIn[])
     ///////////////////////////////// Genome
     Genome genomeMain(P, P.pGe);
     genomeMain.genomeLoad();
+
+    if (numaPolicyState.restoreRequired)
+    {
+        int restoreFailureCount=0;
+        int restoreSuccessCount=0;
+        int restoreStatus=0;
+        string restoreReason="restored";
+        string restoreEffective=numaPolicyState.inheritedName;
+        #pragma omp parallel num_threads(P.runThreadN) reduction(+:restoreFailureCount,restoreSuccessCount)
+        {
+            const BlackstarNumaPolicyRestoreResult restoreResult =
+                blackstarRestoreNumaMemoryPolicy(numaPolicyState);
+            if (restoreResult.restored) {
+                restoreSuccessCount++;
+            } else {
+                restoreFailureCount++;
+                #pragma omp critical
+                {
+                    if (restoreStatus==0) {
+                        restoreStatus=restoreResult.status;
+                        restoreReason=restoreResult.reason;
+                        restoreEffective=restoreResult.effective;
+                    };
+                };
+            };
+        };
+        P.inOut->logMain << "BLACKSTAR_NUMA_RESTORE"
+                         << "\tattempted_threads\t" << restoreSuccessCount+restoreFailureCount
+                         << "\trestored_threads\t" << restoreSuccessCount
+                         << "\teffective\t" << restoreEffective
+                         << "\tstatus\t" << restoreStatus
+                         << "\treason\t" << restoreReason
+                         << '\n' << flush;
+        if (restoreFailureCount>0) {
+            ostringstream errOut;
+            errOut << "EXITING because BlackSTAR could not restore the inherited NUMA memory policy after genome loading\n";
+            errOut << "Failed threads=" << restoreFailureCount
+                   << "; status=" << restoreStatus
+                   << "; reason=" << restoreReason << "\n";
+            errOut << "SOLUTION: select --genomeLoadNumaPolicy Default or correct the host NUMA policy permissions.\n";
+            exitWithError(
+                errOut.str(),
+                std::cerr,
+                P.inOut->logMain,
+                EXIT_CODE_RUNTIME,
+                P
+            );
+        };
+    };
 
     if (P.pGe.transform.outYes) {
         genomeMain.Var = new Variation(P, genomeMain.chrStart, genomeMain.chrNameIndex, false);//no variation for mapGen, only for genOut
