@@ -61,14 +61,35 @@ void copyPreferredIfExists(const string &dirPreferred, const string &dirFallback
 uint64 parseUint64Token(const string &token, const string &path, Parameters &P)
 {
     uint64 value=0;
-    istringstream tokenStream(token);
-    tokenStream >> value;
-    if (tokenStream.fail()) {
+    bool valid=!token.empty();
+    for (string::const_iterator it=token.begin(); valid && it!=token.end(); ++it) {
+        if (*it<'0' || *it>'9') {
+            valid=false;
+            break;
+        };
+        const uint64 digit=static_cast<uint64>(*it-'0');
+        if (value>(numeric_limits<uint64>::max()-digit)/10) {
+            valid=false;
+            break;
+        };
+        value=value*10+digit;
+    };
+    if (!valid) {
         ostringstream errOut;
         errOut << "EXITING because of fatal ERROR: could not parse integer token '" << token << "' while writing " << path << "\n";
         exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
     return value;
+}
+
+uint64 checkedAdd(const uint64 value, const uint64 offset, const string &path, Parameters &P)
+{
+    if (value>numeric_limits<uint64>::max()-offset) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal ERROR: integer overflow while writing " << path << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
+    };
+    return value+offset;
 }
 
 vector<string> splitFields(const string &line)
@@ -102,7 +123,9 @@ void offsetField(vector<string> &fields, const uint64 fieldIndex, const uint64 o
         errOut << "EXITING because of fatal ERROR: malformed annotation sidecar line while writing " << path << "\n";
         exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
-    fields.at(fieldIndex)=to_string(parseUint64Token(fields.at(fieldIndex), path, P)+offset);
+    fields.at(fieldIndex)=to_string(
+        checkedAdd(parseUint64Token(fields.at(fieldIndex), path, P), offset, path, P)
+    );
 }
 
 bool readCountedFile(const string &path, uint64 &count, vector<string> &lines, Parameters &P)
@@ -122,12 +145,20 @@ bool readCountedFile(const string &path, uint64 &count, vector<string> &lines, P
 
     string line;
     if (!getline(fileIn, line)) {
-        return true;
+        ostringstream errOut;
+        errOut << "EXITING because of fatal ERROR: missing count in annotation sidecar " << path << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
     count=parseUint64Token(line, path, P);
 
     while (getline(fileIn, line)) {
         lines.push_back(line);
+    };
+    if (count!=lines.size()) {
+        ostringstream errOut;
+        errOut << "EXITING because of fatal ERROR: annotation sidecar count mismatch in " << path << "\n";
+        errOut << "Declared entries: " << count << "; observed entries: " << lines.size() << "\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
 
     return true;
@@ -172,7 +203,7 @@ void mergeCountedFile(const string &dirBase, const string &dirInsert, const stri
     };
 
     ofstream &fileOut=ofstrOpen(pathOut, ERROR_OUT, P);
-    fileOut << countBase+countInsert << "\n";
+    fileOut << checkedAdd(countBase, countInsert, pathOut, P) << "\n";
     for (auto &line : linesBase) {
         fileOut << line << "\n";
     };
@@ -255,7 +286,9 @@ string offsetSjdbListFromGTFLine(const string &line, const uint64 geneOffset, co
         if (genesOut!="") {
             genesOut += ",";
         };
-        genesOut += to_string(parseUint64Token(geneToken, path, P)+geneOffset);
+        genesOut += to_string(
+            checkedAdd(parseUint64Token(geneToken, path, P), geneOffset, path, P)
+        );
         if (geneEnd==string::npos) {
             break;
         };
@@ -272,6 +305,11 @@ void genomeInsertCopyAnnotationSidecars(const string &dirIn, const string &dirOu
     for (auto &fileName : annotationSidecarFiles) {
         copyIfExists(dirIn, dirOut, fileName);
     };
+}
+
+void genomeInsertCopyReferenceSidecars(const string &dirIn, const string &dirOut)
+{
+    copyIfExists(dirIn, dirOut, "extraReferences.txt");
 }
 
 void genomeInsertMergeAnnotationSidecars(const string &dirBase, const string &dirInsert, const string &dirOut, Parameters &P, bool copySjdbFiles)

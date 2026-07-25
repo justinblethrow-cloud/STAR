@@ -84,6 +84,17 @@ void Genome::genomeLoad(){//allocate and load Genome
         exitWithError(errOut.str(),std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
     };
 
+    if (P.runMode=="genomeInsert" &&
+        (P1.pGe.gTypeString!="Full" ||
+         P1.pGe.transform.typeString!="None")) {
+        ostringstream errOut;
+        errOut << "EXITING because --runMode genomeInsert supports only untransformed Full genome indexes\n";
+        errOut << "Loaded genomeType=" << P1.pGe.gTypeString
+               << "; genomeTransformType=" << P1.pGe.transform.typeString << "\n";
+        errOut << "SOLUTION: add sequences to the original untransformed Full index, then regenerate any transformed or transcriptome derivative.\n";
+        exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_GENOME_FILES, P);
+    };
+
     //find chr starts from files
     chrInfoLoad();
 

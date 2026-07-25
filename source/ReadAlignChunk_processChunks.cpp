@@ -3,6 +3,7 @@
 #include "ErrorWarning.h"
 #include "SequenceFuns.h"
 #include "GlobalVariables.h"
+#include "ReadChunkConfig.h"
 
 inline uint64 fastqReadOneLine(ifstream &streamIn, char *arrIn);
 inline void removeStringEndControl(string &str);
@@ -80,16 +81,6 @@ void ReadAlignChunk::processChunks() {//read-map-write chunks
                                 imate1=0;
                             };
 
-                            //read ID or number
-                            if (P.outSAMreadID=="Number") {
-                                chunkInSizeBytesTotal[imate1] += sprintf(chunkIn[imate1] + chunkInSizeBytesTotal[imate1], "@%llu", P.iReadAll);
-                            } else {
-                                chunkInSizeBytesTotal[imate1] += sprintf(chunkIn[imate1] + chunkInSizeBytesTotal[imate1], "@%s", str1.c_str());
-                            };
-
-                            //iReadAll, passFilterIllumina, passFilterIllumina
-                            chunkInSizeBytesTotal[imate1] += sprintf(chunkIn[imate1] + chunkInSizeBytesTotal[imate1], " %llu %c %i", P.iReadAll, passFilterIllumina, P.readFilesIndex);
-
                             string dummy;
                             for (int ii=3; ii<=9; ii++)
                                 P.inOut->readIn[0] >> dummy; //skip fields until sequence
@@ -100,10 +91,49 @@ void ReadAlignChunk::processChunks() {//read-map-write chunks
                                 revComplementNucleotides(seq1);
                                 reverse(qual1.begin(),qual1.end());
                             };
-                            
+
                             string attrs;
                             getline(P.inOut->readIn[0], attrs); //rest of the SAM line: str1 is now all SAM attributes - it's added to the read ID line (1st "fastq" line)
-                            chunkInSizeBytesTotal[imate1] += sprintf(chunkIn[imate1] + chunkInSizeBytesTotal[imate1], "%s\n%s\n+\n%s\n", attrs.c_str(), seq1.c_str(), qual1.c_str());
+                            if (attrs.size()>BAM_ATTR_MaxSize) {
+                                ostringstream errOut;
+                                errOut << ERROR_OUT << " EXITING because SAM optional attributes exceed STAR's supported record limit\n";
+                                errOut << "Attribute bytes: " << attrs.size()
+                                       << "; supported maximum: " << BAM_ATTR_MaxSize << "\n";
+                                errOut << "SOLUTION: remove unnecessary SAM tags or select a smaller tag set before mapping.\n";
+                                exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+                            };
+                            string samRecord;
+                            samRecord.reserve(str1.size()+attrs.size()+seq1.size()+qual1.size()+64);
+                            samRecord += '@';
+                            samRecord += P.outSAMreadID=="Number" ? to_string(P.iReadAll) : str1;
+                            samRecord += ' ';
+                            samRecord += to_string(P.iReadAll);
+                            samRecord += ' ';
+                            samRecord += passFilterIllumina;
+                            samRecord += ' ';
+                            samRecord += to_string(P.readFilesIndex);
+                            samRecord += attrs;
+                            samRecord += '\n';
+                            samRecord += seq1;
+                            samRecord += "\n+\n";
+                            samRecord += qual1;
+                            samRecord += '\n';
+
+                            std::uint64_t samChunkUsed=chunkInSizeBytesTotal[imate1];
+                            if (!appendReadChunkRecord(
+                                    chunkIn[imate1],
+                                    P.chunkInSizeBytesArray,
+                                    samChunkUsed,
+                                    samRecord
+                                )) {
+                                ostringstream errOut;
+                                errOut << ERROR_OUT << " EXITING because a SAM input record exceeds the configured read input buffer\n";
+                                errOut << "Record bytes: " << samRecord.size()
+                                       << "; available per-end buffer bytes: " << P.chunkInSizeBytesArray << "\n";
+                                errOut << "SOLUTION: increase the first value of --limitIObufferSize or --readChunkSizeBytes.\n";
+                                exitWithError(errOut.str(), std::cerr, P.inOut->logMain, EXIT_CODE_INPUT_FILES, P);
+                            };
+                            chunkInSizeBytesTotal[imate1]=samChunkUsed;
                         };
                     };
                     

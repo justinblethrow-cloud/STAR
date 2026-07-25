@@ -5,6 +5,8 @@
 #include <functional>
 #include <iostream>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 namespace {
 void expectInvalid(const std::function<void()> &operation)
@@ -50,12 +52,35 @@ int main()
     assert(!explicitTarget.adaptive);
     assert(explicitTarget.effectiveTotalBytes == 4000000);
 
+    const ReadChunkConfig samInput = calculateReadChunkConfig(
+        30000000, 0, 2, 96, reservePerEnd, false
+    );
+    assert(!samInput.adaptive);
+    assert(samInput.effectiveTotalBytes == 30000000);
+
     const ReadChunkConfig longRead = calculateReadChunkConfig(
-        30000000, 0, 2, 96, 1100000
+        30000000, 0, 2, 96, 1100000, true, 8
     );
     assert(longRead.adaptive);
-    assert(longRead.effectiveTotalBytes == 2200002);
-    assert(longRead.perEndPayloadBytes == 1);
+    assert(longRead.effectiveTotalBytes == 17600016);
+    assert(longRead.perEndPayloadBytes == 7700008);
+
+    std::vector<char> boundedBuffer(17, '#');
+    std::uint64_t used = 2;
+    assert(appendReadChunkRecord(
+        boundedBuffer.data(), 16, used, std::string("record")
+    ));
+    assert(used == 8);
+    assert(std::string(boundedBuffer.data()+2, 6) == "record");
+    assert(boundedBuffer.at(16) == '#');
+
+    const std::vector<char> beforeRejectedAppend = boundedBuffer;
+    const std::uint64_t usedBeforeRejectedAppend = used;
+    assert(!appendReadChunkRecord(
+        boundedBuffer.data(), 16, used, std::string(9, 'x')
+    ));
+    assert(used == usedBeforeRejectedAppend);
+    assert(boundedBuffer == beforeRejectedAppend);
 
     expectInvalid([&]() {
         calculateReadChunkConfig(30000000, 31000000, 2, 96, reservePerEnd);
@@ -68,6 +93,11 @@ int main()
     });
     expectInvalid([&]() {
         calculateReadChunkConfig(30000000, 0, 0, 96, reservePerEnd);
+    });
+    expectInvalid([&]() {
+        calculateReadChunkConfig(
+            30000000, 0, 2, 96, reservePerEnd, true, 0
+        );
     });
     expectInvalid([&]() {
         calculateReadChunkConfig(8589934592ULL, 0, 2, 1, reservePerEnd);
