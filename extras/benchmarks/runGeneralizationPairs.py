@@ -169,6 +169,7 @@ def write_contract(
         "read2": input_value(args.read2),
         "read2_sha256": input_digest(args.read2),
         "warmup_order": warmup_order or "none",
+        "warmup_position": "after_quiet_gate",
         "warmup_read1": input_value(args.warmup_read1),
         "warmup_read1_sha256": input_digest(args.warmup_read1),
         "warmup_read2": input_value(args.warmup_read2),
@@ -274,6 +275,8 @@ def main() -> int:
     )
     write_contract(args, orders, warmup_order)
 
+    run_quiet_gate(args)
+
     if warmup_order is not None:
         roles = (
             ("baseline", "candidate")
@@ -300,7 +303,6 @@ def main() -> int:
         ):
             raise RuntimeError("warmup correctness comparison failed")
 
-    run_quiet_gate(args)
     schedule: list[dict[str, str]] = []
     for pair, order in enumerate(orders, 1):
         roles = (

@@ -134,6 +134,11 @@ practical speedup threshold. The stricter `superiority_2_percent` field is true
 only when the lower bound of the paired bootstrap interval also clears two
 percent. Noninferiority must not be described as a speed improvement.
 
+The driver first requires a quiet host, then executes excluded, order-balanced
+warmups immediately before measurement. Use representative warmup inputs when
+startup state materially affects the workload; use the full corpus when a
+small subset does not establish stable timing.
+
 `makeFastqSubset.py` creates a validated, deterministic first-N subset for
 single-end or long-read FASTQ input. `makePairedFastqSubset.py` additionally
 checks mate names and should be used for paired or STARsolo fixtures.
