@@ -99,7 +99,9 @@ jobs:
       - name: Run focused sanitizer tests
         run: |
           extras/tests/scripts/testAlignmentThreadAffinity.sh
+          extras/tests/scripts/testNumaMemoryPolicy.sh
           extras/tests/scripts/testReadChunkConfig.sh
+          extras/tests/scripts/testSystemMemory.sh
           extras/tests/scripts/testPackedArray.sh
           extras/tests/scripts/testSuffixComparator.sh
           extras/tests/scripts/testTranscriptInitialization.sh
@@ -172,3 +174,37 @@ jobs:
           test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
           source/STAR --version-json | jq -e '.blackstar_version == "1.0.0"'
           ldd source/STAR | grep -Eq 'libgomp|libomp'
+
+  starlong-build-and-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ make zlib1g-dev
+
+      - name: Build short-read and long-read binaries in one tree
+        run: |
+          make -C source -j2 STAR
+          make -C source -j2 STARlong
+          test -x source/STAR
+          test -x source/STARlong
+
+      - name: Exercise STARlong-only code and high-thread chunk sizing
+        env:
+          THREADS: "96"
+          KEEP_TEST_OUTPUT: "1"
+          OUT_DIR: ${{ runner.temp }}/starlong-smoke
+        run: extras/tests/scripts/testSTARlong.sh
+
+      - name: Upload STARlong smoke evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blackstar-starlong-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 14
+          path: ${{ runner.temp }}/starlong-smoke
