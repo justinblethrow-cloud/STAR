@@ -65,6 +65,28 @@ python3 "${repo_root}/extras/benchmarks/quietSystemGate.py" \
     --min-idle 0 --max-iowait 100 --max-storage-util 1000 \
     --path "${tmp_dir}" --output "${tmp_dir}/quiet.tsv"
 [[ "$(wc -l < "${tmp_dir}/quiet.tsv")" -ge 2 ]]
+grep -Fq $'\tdevices' "${tmp_dir}/quiet.tsv"
+
+python3 - "${repo_root}/extras/benchmarks/quietSystemGate.py" "${tmp_dir}" <<'EOF_DEVICE'
+import importlib.util
+from pathlib import Path
+import sys
+
+spec = importlib.util.spec_from_file_location("quiet_gate", sys.argv[1])
+module = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = module
+spec.loader.exec_module(module)
+
+root = Path(sys.argv[2]) / "sys-block"
+(root / "dm-0" / "slaves").mkdir(parents=True)
+(root / "nvme0n1" / "nvme0n1p3").mkdir(parents=True)
+(root / "nvme0n1" / "nvme0n1p3" / "partition").write_text("3\n")
+(root / "nvme0n1p3").symlink_to(root / "nvme0n1" / "nvme0n1p3")
+(root / "dm-0" / "slaves" / "nvme0n1p3").symlink_to(
+    root / "nvme0n1" / "nvme0n1p3"
+)
+assert module.physical_devices("dm-0", root) == {"nvme0n1"}
+EOF_DEVICE
 
 for run in baseline candidate; do
     mkdir -p "${tmp_dir}/${run}"
