@@ -18,6 +18,7 @@
 #include "sjdbInsertJunctions.h"
 #include "genomeScanFastaFiles.h"
 #include "genomeSAindex.h"
+#include "SystemMemory.h"
 
 #include "serviceFuns.cpp"
 #include "streamFuns.h"
@@ -26,22 +27,6 @@
 
 char* globalG;
 uint globalL;
-
-static uint systemAvailableMemoryBytes()
-{
-#ifdef __linux__
-    ifstream memInfo("/proc/meminfo");
-    string field, unit;
-    uint value=0;
-
-    while (memInfo >> field >> value >> unit) {
-        if (field=="MemAvailable:") {
-            return value*1024LLU;
-        };
-    };
-#endif
-    return 0;
-};
 
 inline int funCompareSuffixesFromWord ( const void *a, const void *b, uint wordStart){
 
@@ -392,9 +377,11 @@ void Genome::genomeGenerate() {
         const uint64 saRamPeakBytes=max(saAllChunkScatterBytes,saRamPackPeakBytes);
         const uint64 saRamHeadroomBytes=max(saRamPeakBytes/10,(uint64) 2000000000LLU);
         const uint64 saRamRequiredBytes=saRamPeakBytes+saRamHeadroomBytes;
-        const uint64 systemAvailableBytes=systemAvailableMemoryBytes();
+        const SystemMemoryAvailability memoryAvailability=systemMemoryAvailability();
+        const uint64 systemAvailableBytes=memoryAvailability.effectiveAvailableBytes;
         const bool saRamLimitOK=saAvailableBytes>=saRamRequiredBytes;
-        const bool saRamSystemOK=systemAvailableBytes>0 && systemAvailableBytes>=saRamRequiredBytes;
+        const bool saRamSystemOK=!memoryAvailability.effectiveAvailableKnown ||
+                systemAvailableBytes>=saRamRequiredBytes;
         bool saChunksInMemoryActive=saRamLimitOK && saRamSystemOK;
         P.inOut->logMain  << "SA chunk all-scatter available bytes: " << saAvailableBytes << "; required temporary bytes: " << saAllChunkScatterBytes << "\n" <<flush;
         P.inOut->logMain  << "SA chunk estimated batched-fill batches: " << saChunkBatchN << "\n" <<flush;
@@ -402,7 +389,13 @@ void Genome::genomeGenerate() {
         P.inOut->logMain  << "SA chunk sort prefix length: " << indPrefLen << "\n" <<flush;
         P.inOut->logMain  << "SA chunk sort granularity: " << (saChunkBatchFill ? "prefix-bin" : "chunk") << "\n" <<flush;
         P.inOut->logMain  << "SA chunk retained bytes: " << saRetainedChunkBytes << "; RAM peak bytes: " << saRamPeakBytes << "; RAM headroom bytes: " << saRamHeadroomBytes << "\n" <<flush;
-        P.inOut->logMain  << "SA chunk system available bytes: " << systemAvailableBytes << "; limit available bytes: " << saAvailableBytes << "\n" <<flush;
+        P.inOut->logMain  << "SA chunk host available bytes: "
+                          << (memoryAvailability.hostAvailableKnown ? to_string(memoryAvailability.hostAvailableBytes) : "unknown")
+                          << "; cgroup available bytes: "
+                          << (memoryAvailability.cgroupAvailableKnown ? to_string(memoryAvailability.cgroupAvailableBytes) : "unbounded-or-unknown")
+                          << "; effective available bytes: "
+                          << (memoryAvailability.effectiveAvailableKnown ? to_string(systemAvailableBytes) : "unknown")
+                          << "; limit available bytes: " << saAvailableBytes << "\n" <<flush;
         if (saSortProfile) {
             uint saChunkMinCount=indPrefChunkCount[0];
             uint saChunkMaxCount=indPrefChunkCount[0];

@@ -9,7 +9,9 @@
 #include "streamFuns.h"
 #include "binarySearch2.h"
 #include "ErrorWarning.h"
+#include "SystemMemory.h"
 #include <cmath>
+#include <new>
 
 #include "funCompareUintAndSuffixes.h"
 
@@ -41,66 +43,95 @@ static bool sjdbSortIndicesParallel(Parameters &P, uint64* indArray, uint nInd, 
         return false;
     };
 
-    const uint64 indBytes=2*nInd*sizeof(uint64);
-    const uint64 auxBytes=indBytes + (uint64) P.runThreadN*bucketN*2*sizeof(uint64) + (bucketN+1)*sizeof(uint64);
+    const uint64 indBytes=(uint64) 2*nInd*sizeof(uint64);
+    const uint64 counterBytes=(uint64) P.runThreadN*bucketN*2*sizeof(uint64);
+    const uint64 boundaryBytes=(bucketN+1)*sizeof(uint64);
+    const uint64 auxBytes=indBytes+counterBytes+boundaryBytes;
     if (P.limitGenomeGenerateRAM>0 && auxBytes>P.limitGenomeGenerateRAM/4) {
         qsort((void*) indArray, nInd, 2*sizeof(uint64), funCompareUintAndSuffixes);
         return false;
     };
 
-    vector<uint64> bucketCount((uint) P.runThreadN*bucketN,0);
-    #pragma omp parallel num_threads(P.runThreadN)
-    {
-        uint tid=(uint) omp_get_thread_num();
-        uint64* threadBucketCount=bucketCount.data()+tid*bucketN;
-        #pragma omp for schedule(static)
-        for (uint ii=0; ii<nInd; ii++) {
-            ++threadBucketCount[sjdbSortBucket(indArray[2*ii],keyRange,bucketN)];
+    const SystemMemoryAvailability memoryAvailability=systemMemoryAvailability();
+    const uint64 memoryHeadroomBytes=max<uint64>(auxBytes/10, 256000000LLU);
+    const uint64 systemBudgetBytes=memoryAvailability.effectiveAvailableKnown &&
+            memoryAvailability.effectiveAvailableBytes>memoryHeadroomBytes
+            ? memoryAvailability.effectiveAvailableBytes-memoryHeadroomBytes : 0;
+    P.inOut->logMain << "Junction sort auxiliary bytes: " << auxBytes
+                     << "; memory headroom: " << memoryHeadroomBytes
+                     << "; effective available: "
+                     << (memoryAvailability.effectiveAvailableKnown
+                         ? to_string(memoryAvailability.effectiveAvailableBytes)
+                         : "unknown")
+                     << "\n" << flush;
+    if (memoryAvailability.effectiveAvailableKnown && auxBytes>systemBudgetBytes) {
+        P.inOut->logMain << "Junction sort fallback: serial qsort because the effective memory bound is too small\n" << flush;
+        qsort((void*) indArray, nInd, 2*sizeof(uint64), funCompareUintAndSuffixes);
+        return false;
+    };
+
+    try {
+        vector<uint64> bucketCount((uint) P.runThreadN*bucketN,0);
+        #pragma omp parallel num_threads(P.runThreadN)
+        {
+            uint tid=(uint) omp_get_thread_num();
+            uint64* threadBucketCount=bucketCount.data()+tid*bucketN;
+            #pragma omp for schedule(static)
+            for (uint ii=0; ii<nInd; ii++) {
+                ++threadBucketCount[sjdbSortBucket(indArray[2*ii],keyRange,bucketN)];
+            };
         };
-    };
 
-    vector<uint64> bucketStart(bucketN+1,0);
-    for (uint iBucket=0; iBucket<bucketN; iBucket++) {
-        uint64 bucketTotal=0;
-        for (int iThread=0; iThread<P.runThreadN; iThread++) {
-            bucketTotal += bucketCount[(uint) iThread*bucketN+iBucket];
+        vector<uint64> bucketStart(bucketN+1,0);
+        for (uint iBucket=0; iBucket<bucketN; iBucket++) {
+            uint64 bucketTotal=0;
+            for (int iThread=0; iThread<P.runThreadN; iThread++) {
+                bucketTotal += bucketCount[(uint) iThread*bucketN+iBucket];
+            };
+            bucketStart[iBucket+1]=bucketStart[iBucket]+bucketTotal;
         };
-        bucketStart[iBucket+1]=bucketStart[iBucket]+bucketTotal;
-    };
 
-    vector<uint64> bucketThreadStart((uint) P.runThreadN*bucketN,0);
-    for (uint iBucket=0; iBucket<bucketN; iBucket++) {
-        uint64 offset=bucketStart[iBucket];
-        for (int iThread=0; iThread<P.runThreadN; iThread++) {
-            bucketThreadStart[(uint) iThread*bucketN+iBucket]=offset;
-            offset += bucketCount[(uint) iThread*bucketN+iBucket];
+        vector<uint64> bucketThreadStart((uint) P.runThreadN*bucketN,0);
+        for (uint iBucket=0; iBucket<bucketN; iBucket++) {
+            uint64 offset=bucketStart[iBucket];
+            for (int iThread=0; iThread<P.runThreadN; iThread++) {
+                bucketThreadStart[(uint) iThread*bucketN+iBucket]=offset;
+                offset += bucketCount[(uint) iThread*bucketN+iBucket];
+            };
         };
-    };
 
-    uint64* indArray1=new uint64[2*nInd+2];
-    #pragma omp parallel num_threads(P.runThreadN)
-    {
-        uint tid=(uint) omp_get_thread_num();
-        uint64* threadBucketStart=bucketThreadStart.data()+tid*bucketN;
-        #pragma omp for schedule(static)
-        for (uint ii=0; ii<nInd; ii++) {
-            uint iBucket=sjdbSortBucket(indArray[2*ii],keyRange,bucketN);
-            uint64 jj=threadBucketStart[iBucket]++;
-            indArray1[2*jj]=indArray[2*ii];
-            indArray1[2*jj+1]=indArray[2*ii+1];
+        uint64* indArray1=new (nothrow) uint64[(uint64) 2*nInd+2];
+        if (indArray1==NULL) {
+            throw bad_alloc();
         };
-    };
+        #pragma omp parallel num_threads(P.runThreadN)
+        {
+            uint tid=(uint) omp_get_thread_num();
+            uint64* threadBucketStart=bucketThreadStart.data()+tid*bucketN;
+            #pragma omp for schedule(static)
+            for (uint ii=0; ii<nInd; ii++) {
+                uint iBucket=sjdbSortBucket(indArray[2*ii],keyRange,bucketN);
+                uint64 jj=threadBucketStart[iBucket]++;
+                indArray1[2*jj]=indArray[2*ii];
+                indArray1[2*jj+1]=indArray[2*ii+1];
+            };
+        };
 
-    #pragma omp parallel for num_threads(P.runThreadN) schedule(dynamic,1)
-    for (int iBucket=0; iBucket<(int) bucketN; iBucket++) {
-        qsort((void*) (indArray1+2*bucketStart[(uint) iBucket]),
-              bucketStart[(uint) iBucket+1]-bucketStart[(uint) iBucket],
-              2*sizeof(uint64), funCompareUintAndSuffixes);
-    };
+        #pragma omp parallel for num_threads(P.runThreadN) schedule(dynamic,1)
+        for (int iBucket=0; iBucket<(int) bucketN; iBucket++) {
+            qsort((void*) (indArray1+2*bucketStart[(uint) iBucket]),
+                  bucketStart[(uint) iBucket+1]-bucketStart[(uint) iBucket],
+                  2*sizeof(uint64), funCompareUintAndSuffixes);
+        };
 
-    memcpy(indArray,indArray1,indBytes);
-    delete [] indArray1;
-    return true;
+        memcpy(indArray,indArray1,indBytes);
+        delete [] indArray1;
+        return true;
+    } catch (const bad_alloc &) {
+        P.inOut->logMain << "Junction sort fallback: serial qsort after auxiliary allocation failure\n" << flush;
+        qsort((void*) indArray, nInd, 2*sizeof(uint64), funCompareUintAndSuffixes);
+        return false;
+    };
 };
 
 void sjdbBuildIndex (Parameters &P, char *Gsj, char *G, PackedArray &SA, PackedArray &SA2, PackedArray &SAi, Genome &mapGen, Genome &mapGen1) {

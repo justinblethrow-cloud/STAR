@@ -2,27 +2,12 @@
 #include "TimeFunctions.h"
 #include "SuffixArrayFuns.h"
 #include "ErrorWarning.h"
-
-#include <fstream>
+#include "SystemMemory.h"
 
 struct SAindexEvent {
     uint isa;
     uint indFull;
     int iL4;
-};
-
-static uint64 SAindexSystemAvailableMemoryBytes()
-{
-#ifdef __linux__
-    ifstream memInfo("/proc/meminfo");
-    string field;
-    string unit;
-    uint64 value=0;
-    while (memInfo >> field >> value >> unit) {
-        if (field=="MemAvailable:") return value*1024LLU;
-    };
-#endif
-    return 0;
 };
 
 static bool SAindexEventEqual(uint indFull1, int iL41, uint indFull2, int iL42)
@@ -215,8 +200,10 @@ void genomeSAindexChunk(char * G, PackedArray & SA, Parameters & P, PackedArray 
     const uint64 ramHeadroomBytes=max<uint64>(residentArrayBytes/20, 256000000LLU);
     const uint64 eventAvailableBytes=P.limitGenomeGenerateRAM>residentArrayBytes+ramHeadroomBytes
             ? P.limitGenomeGenerateRAM-residentArrayBytes-ramHeadroomBytes : 0;
-    const uint64 systemAvailableBytes=SAindexSystemAvailableMemoryBytes();
-    const uint64 systemEventAvailableBytes=systemAvailableBytes>ramHeadroomBytes
+    const SystemMemoryAvailability memoryAvailability=systemMemoryAvailability();
+    const uint64 systemAvailableBytes=memoryAvailability.effectiveAvailableBytes;
+    const uint64 systemEventAvailableBytes=memoryAvailability.effectiveAvailableKnown &&
+            systemAvailableBytes>ramHeadroomBytes
             ? systemAvailableBytes-ramHeadroomBytes : 0;
     const uint64 eventBudgetBytes=min<uint64>(
             min<uint64>(eventAvailableBytes, systemEventAvailableBytes), 256000000LLU);
@@ -227,7 +214,12 @@ void genomeSAindexChunk(char * G, PackedArray & SA, Parameters & P, PackedArray 
 
     P.inOut->logMain << "SAindex resident-array estimate: " << residentArrayBytes
                      << "; RAM headroom: " << ramHeadroomBytes
-                     << "; system available: " << systemAvailableBytes
+                     << "; host available: "
+                     << (memoryAvailability.hostAvailableKnown ? to_string(memoryAvailability.hostAvailableBytes) : "unknown")
+                     << "; cgroup available: "
+                     << (memoryAvailability.cgroupAvailableKnown ? to_string(memoryAvailability.cgroupAvailableBytes) : "unbounded-or-unknown")
+                     << "; effective available: "
+                     << (memoryAvailability.effectiveAvailableKnown ? to_string(systemAvailableBytes) : "unknown")
                      << "; event budget: " << eventBudgetBytes << "\n" << flush;
 
     uint* ind0=new uint[mapGen.pGe.gSAindexNbases];
