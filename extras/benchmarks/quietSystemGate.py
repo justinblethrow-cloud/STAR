@@ -61,6 +61,28 @@ def device_for_path(path: Path) -> str | None:
     return None
 
 
+def physical_devices(
+    device: str, sys_block: Path = Path("/sys/class/block")
+) -> set[str]:
+    entry = sys_block / device
+    if not entry.exists():
+        return {device}
+
+    slaves = entry / "slaves"
+    slave_names = sorted(path.name for path in slaves.iterdir()) if slaves.is_dir() else []
+    if slave_names:
+        result: set[str] = set()
+        for slave in slave_names:
+            result.update(physical_devices(slave, sys_block))
+        return result
+
+    if (entry / "partition").is_file():
+        parent = entry.resolve().parent.name
+        if parent and parent != device:
+            return physical_devices(parent, sys_block)
+    return {device}
+
+
 def competing_processes(pattern: re.Pattern[str] | None) -> list[tuple[int, str]]:
     if pattern is None:
         return []
@@ -88,11 +110,14 @@ def main() -> int:
     if args.duration <= 0 or args.interval <= 0 or args.interval > args.duration:
         raise SystemExit("duration and interval must be positive, with interval <= duration")
 
-    devices = set(args.device)
+    logical_devices = set(args.device)
     for path in args.path:
         device = device_for_path(path)
         if device:
-            devices.add(device)
+            logical_devices.add(device)
+    devices: set[str] = set()
+    for device in logical_devices:
+        devices.update(physical_devices(device))
     process_pattern = re.compile(args.competing_regex) if args.competing_regex else None
     samples: list[tuple[str, float, float, float, str]] = []
     failures: list[str] = []
@@ -135,9 +160,14 @@ def main() -> int:
         previous_disks = current_disks
         previous_time = current_time
 
-    lines = ["utc\tcpu_idle_percent\tiowait_percent\tstorage_util_percent\tcompetitors"]
+    device_text = ",".join(sorted(devices))
+    lines = [
+        "utc\tcpu_idle_percent\tiowait_percent\tstorage_util_percent"
+        "\tcompetitors\tdevices"
+    ]
     lines.extend(
-        f"{stamp}\t{idle:.3f}\t{iowait:.3f}\t{storage:.3f}\t{competitors}"
+        f"{stamp}\t{idle:.3f}\t{iowait:.3f}\t{storage:.3f}"
+        f"\t{competitors}\t{device_text}"
         for stamp, idle, iowait, storage, competitors in samples
     )
     output = "\n".join(lines) + "\n"
