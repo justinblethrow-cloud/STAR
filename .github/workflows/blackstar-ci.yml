@@ -26,7 +26,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ jq make python3-yaml zlib1g-dev
+          sudo apt-get install -y g++ jq make python3-yaml samtools zlib1g-dev
 
       - name: Install architecture renderer
         run: npm ci --prefix extras/docs
@@ -121,6 +121,13 @@ jobs:
           make -C "${RUNNER_TEMP}/star-upstream-2.7.11b/source" -j2 STAR
           echo "UPSTREAM_STAR_BIN=${RUNNER_TEMP}/star-upstream-2.7.11b/source/STAR" >> "${GITHUB_ENV}"
 
+      - name: Run specialized-mode compatibility tests
+        env:
+          KEEP_TEST_OUTPUT: "1"
+          OUT_DIR: ${{ runner.temp }}/specialized-modes
+          THREADS: "4"
+        run: extras/tests/scripts/testSpecializedModes.sh
+
       - name: Run focused sanitizer tests
         run: |
           extras/tests/scripts/testAlignmentThreadAffinity.sh
@@ -168,6 +175,7 @@ jobs:
             ${{ runner.temp }}/release-build-2
             ${{ runner.temp }}/genome-insert-hardening
             ${{ runner.temp }}/saindex-strategies
+            ${{ runner.temp }}/specialized-modes
 
   compiler-build:
     name: compiler-${{ matrix.name }}
@@ -205,6 +213,8 @@ jobs:
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       - name: Install build dependencies
         run: |
@@ -218,11 +228,18 @@ jobs:
           test -x source/STAR
           test -x source/STARlong
 
+      - name: Build official STARlong compatibility oracle
+        run: |
+          git worktree add --detach "${RUNNER_TEMP}/star-upstream-long" 2.7.11b
+          make -C "${RUNNER_TEMP}/star-upstream-long/source" -j2 STARlong
+          echo "UPSTREAM_STARLONG_BIN=${RUNNER_TEMP}/star-upstream-long/source/STARlong" >> "${GITHUB_ENV}"
+
       - name: Exercise STARlong-only code and high-thread chunk sizing
         env:
           THREADS: "96"
           KEEP_TEST_OUTPUT: "1"
           OUT_DIR: ${{ runner.temp }}/starlong-smoke
+          REQUIRE_UPSTREAM_STARLONG: "1"
         run: extras/tests/scripts/testSTARlong.sh
 
       - name: Upload STARlong smoke evidence
