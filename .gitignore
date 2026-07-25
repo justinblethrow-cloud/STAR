@@ -21,6 +21,7 @@ extras/doc-latex/*.toc
 
 # Don't track the STAR binary once it has being built
 source/STAR
+source/STARlong
 source/parametersDefault.xxd
 /dist/
 /benchmarks/labs/
