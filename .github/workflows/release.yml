@@ -14,12 +14,20 @@ permissions:
   id-token: write
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-24.04
+    container: ubuntu:20.04
     timeout-minutes: 60
     env:
       TAG: ${{ inputs.tag }}
     steps:
+      - name: Install older-userspace build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y binutils g++ git gzip make python3 zlib1g-dev
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
@@ -35,16 +43,13 @@ jobs:
           git merge-base --is-ancestor HEAD origin/main
           test -f "docs/releases/${version}-release-notes.md"
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y g++ make zlib1g-dev
-
-      - name: Build first release package
+      - name: Build first release package set
         env:
           DIST_DIR: ${{ runner.temp }}/build-1
           JOBS: "2"
-        run: extras/scripts/buildBlackSTARRelease.sh
+        run: |
+          CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
 
       - name: Build independent reproduction
         env:
@@ -53,10 +58,66 @@ jobs:
         run: |
           git worktree add --detach "${RUNNER_TEMP}/source-2" HEAD
           cd "${RUNNER_TEMP}/source-2"
-          extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
 
       - name: Compare release products
-        run: extras/scripts/compareBlackSTARReleases.sh "${RUNNER_TEMP}/build-1" "${RUNNER_TEMP}/build-2"
+        run: |
+          CPU_TARGET=baseline extras/scripts/compareBlackSTARReleases.sh "${RUNNER_TEMP}/build-1" "${RUNNER_TEMP}/build-2"
+          CPU_TARGET=avx2 extras/scripts/compareBlackSTARReleases.sh "${RUNNER_TEMP}/build-1" "${RUNNER_TEMP}/build-2"
+
+      - name: Verify release compatibility floors
+        run: |
+          version="${TAG#v}"
+          for target in baseline avx2; do
+            package="${RUNNER_TEMP}/build-1/blackstar-${version}-linux-x86_64-${target}"
+            minimum_glibc="$(awk -F '\t' '$1=="minimum_glibc" {print $2}' "${package}/compatibility.tsv")"
+            dpkg --compare-versions "${minimum_glibc}" le "2.31"
+          done
+          grep -Fxq $'ymm_instructions\tabsent' \
+            "${RUNNER_TEMP}/build-1/blackstar-${version}-linux-x86_64-baseline/compatibility.tsv"
+          grep -Fxq $'ymm_instructions\tpresent' \
+            "${RUNNER_TEMP}/build-1/blackstar-${version}-linux-x86_64-avx2/compatibility.tsv"
+
+      - name: Verify release variant result equivalence
+        env:
+          DIST_DIR: ${{ runner.temp }}/build-1
+        run: extras/tests/scripts/testReleaseVariants.sh
+
+      - name: Stage release products for publication
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blackstar-release-products-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          path: ${{ runner.temp }}/build-1
+
+      - name: Retain independent reproduction evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blackstar-release-reproduction-${{ github.run_id }}
+          if-no-files-found: ignore
+          retention-days: 30
+          path: ${{ runner.temp }}/build-2
+
+  publish:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          ref: ${{ inputs.tag }}
+
+      - name: Download qualified release products
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: blackstar-release-products-${{ github.run_id }}
+          path: ${{ runner.temp }}/build-1
 
       - name: Attest release products
         uses: actions/attest-build-provenance@0f67c3f4856b2e3261c31976d6725780e5e4c373 # v4.1.1
@@ -71,26 +132,25 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${TAG#v}"
-          package="blackstar-${version}-linux-x86_64"
+          baseline="blackstar-${version}-linux-x86_64-baseline"
+          avx2="blackstar-${version}-linux-x86_64-avx2"
           gh release create "${TAG}" \
             --verify-tag \
             --title "BlackSTAR ${version}" \
             --notes-file "docs/releases/${version}-release-notes.md" \
-            "${RUNNER_TEMP}/build-1/${package}/STAR#BlackSTAR Linux x86-64 executable" \
-            "${RUNNER_TEMP}/build-1/${package}.tar.gz#BlackSTAR Linux x86-64 archive" \
-            "${RUNNER_TEMP}/build-1/${package}.tar.gz.sha256#Archive SHA-256 sidecar" \
-            "${RUNNER_TEMP}/build-1/${package}.spdx.json#SPDX 2.3 SBOM" \
-            "${RUNNER_TEMP}/build-1/${package}/build-info.tsv#Reproducible build metadata" \
-            "${RUNNER_TEMP}/build-1/${package}/ldd.txt#Runtime linkage metadata" \
+            "${RUNNER_TEMP}/build-1/${baseline}/STAR#BlackSTAR baseline Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${baseline}.tar.gz#BlackSTAR baseline Linux x86-64 archive" \
+            "${RUNNER_TEMP}/build-1/${baseline}.tar.gz.sha256#Baseline archive SHA-256 sidecar" \
+            "${RUNNER_TEMP}/build-1/${baseline}.spdx.json#Baseline SPDX 2.3 SBOM" \
+            "${RUNNER_TEMP}/build-1/${baseline}/build-info.tsv#Baseline reproducible build metadata" \
+            "${RUNNER_TEMP}/build-1/${baseline}/compatibility.tsv#Baseline compatibility metadata" \
+            "${RUNNER_TEMP}/build-1/${baseline}/ldd.txt#Baseline runtime linkage metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}/STAR#BlackSTAR AVX2 Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${avx2}.tar.gz#BlackSTAR AVX2 Linux x86-64 archive" \
+            "${RUNNER_TEMP}/build-1/${avx2}.tar.gz.sha256#AVX2 archive SHA-256 sidecar" \
+            "${RUNNER_TEMP}/build-1/${avx2}.spdx.json#AVX2 SPDX 2.3 SBOM" \
+            "${RUNNER_TEMP}/build-1/${avx2}/build-info.tsv#AVX2 reproducible build metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}/compatibility.tsv#AVX2 compatibility metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}/ldd.txt#AVX2 runtime linkage metadata" \
             "LICENSE#MIT license" \
             "ATTRIBUTION.md#Upstream lineage and citation"
-
-      - name: Retain release evidence
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
-        with:
-          name: blackstar-release-${{ inputs.tag }}
-          retention-days: 30
-          path: |
-            ${{ runner.temp }}/build-1
-            ${{ runner.temp }}/build-2

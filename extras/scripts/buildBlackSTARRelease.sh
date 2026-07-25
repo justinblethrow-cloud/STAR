@@ -10,6 +10,26 @@ cxx="${CXX:-g++}"
 jobs="${JOBS:-$(nproc 2>/dev/null || echo 1)}"
 allow_dirty="${ALLOW_DIRTY:-0}"
 user_cxxflags_extra="${CXXFLAGSEXTRA:-}"
+cpu_target="${CPU_TARGET:-baseline}"
+
+case "${cpu_target}" in
+    baseline)
+        target_cxxflags="-march=x86-64 -mtune=generic"
+        simd_cxxflags="-march=x86-64 -mtune=generic"
+        ;;
+    avx2)
+        target_cxxflags="-march=x86-64 -mtune=generic"
+        simd_cxxflags="-mavx2 -mtune=generic"
+        ;;
+    *)
+        echo "ERROR: CPU_TARGET must be baseline or avx2" >&2
+        exit 2
+        ;;
+esac
+if [[ -n "${CXXFLAGS:-}" || -n "${CPPFLAGS:-}" || -n "${CXXFLAGS_SIMD:-}" ]]; then
+    echo "ERROR: release builds do not accept CXXFLAGS, CPPFLAGS, or CXXFLAGS_SIMD overrides; use CXXFLAGSEXTRA for non-ISA additions" >&2
+    exit 2
+fi
 
 cd "${repo_root}"
 if [[ "${allow_dirty}" != "1" && -n "$(git status --porcelain)" ]]; then
@@ -33,7 +53,7 @@ if [[ -z "${compatibility_version}" || -z "${genome_format_version}" ]]; then
 fi
 
 dist_root="${DIST_DIR:-${repo_root}/dist}"
-package_name="blackstar-${version}-linux-x86_64"
+package_name="blackstar-${version}-linux-x86_64-${cpu_target}"
 package_final="${dist_root}/${package_name}"
 archive="${dist_root}/${package_name}.tar.gz"
 sbom="${dist_root}/${package_name}.spdx.json"
@@ -56,7 +76,7 @@ mkdir "${package_dir}"
 
 provenance="commit=${commit};tree=$([[ -z "$(git status --porcelain)" ]] && echo clean || echo dirty);release=${version};executable=${executable_version}"
 path_map_flags="-ffile-prefix-map=${repo_root}=. -fdebug-prefix-map=${repo_root}=. -fmacro-prefix-map=${repo_root}=."
-effective_cxxflags_extra="${user_cxxflags_extra:+${user_cxxflags_extra} }${path_map_flags}"
+effective_cxxflags_extra="${user_cxxflags_extra:+${user_cxxflags_extra} }${target_cxxflags} -D'BLACKSTAR_CPU_TARGET=\"${cpu_target}\"' ${path_map_flags}"
 htslib_cflags="-g -Wall -O2 ${path_map_flags}"
 export SOURCE_DATE_EPOCH="${source_date_epoch}"
 make -C source CLEAN
@@ -66,10 +86,19 @@ make -C source -j"${jobs}" STAR \
     BUILD_PLACE="blackstar-reproducible-build" \
     GIT_PROVENANCE="${provenance}" \
     CXXFLAGSextra="${effective_cxxflags_extra}" \
+    CXXFLAGS_SIMD="${simd_cxxflags}" \
     LDFLAGSextra="${LDFLAGSEXTRA:-}"
 
 if [[ "$(source/STAR --version)" != "${executable_version}" ]]; then
     echo "ERROR: built binary reports an unexpected version" >&2
+    exit 1
+fi
+reported_cpu_target="$(
+    source/STAR --version-json |
+        python3 -c 'import json, sys; print(json.load(sys.stdin)["cpu_target"])'
+)"
+if [[ "${reported_cpu_target}" != "${cpu_target}" ]]; then
+    echo "ERROR: built binary reports CPU target ${reported_cpu_target}, expected ${cpu_target}" >&2
     exit 1
 fi
 if ! ldd source/STAR | grep -Eq 'libgomp|libomp'; then
@@ -80,15 +109,22 @@ fi
 install -m 0755 source/STAR "${package_dir}/STAR"
 install -m 0644 LICENSE "${package_dir}/LICENSE"
 install -m 0644 ATTRIBUTION.md "${package_dir}/ATTRIBUTION.md"
+python3 extras/scripts/inspectBlackSTARBinary.py \
+    --binary "${package_dir}/STAR" \
+    --cpu-target "${cpu_target}" \
+    --output "${package_dir}/compatibility.tsv"
 binary_sha256="$(sha256sum "${package_dir}/STAR" | awk '{print $1}')"
+compatibility_sha256="$(sha256sum "${package_dir}/compatibility.tsv" | awk '{print $1}')"
 license_sha256="$(sha256sum "${package_dir}/LICENSE" | awk '{print $1}')"
 attribution_sha256="$(sha256sum "${package_dir}/ATTRIBUTION.md" | awk '{print $1}')"
 compiler_version="$("${cxx}" --version | sed -n '1p')"
+build_glibc="$(getconf GNU_LIBC_VERSION 2>/dev/null || echo unknown)"
 build_utc="$(date -u -d "@${source_date_epoch}" '+%Y-%m-%dT%H:%M:%SZ')"
 python3 extras/scripts/generateBlackSTARSbom.py \
     --repo-root "${repo_root}" \
     --binary "${package_dir}/STAR" \
     --commit "${commit}" \
+    --artifact-variant "linux-x86_64-${cpu_target}" \
     --source-date-epoch "${source_date_epoch}" \
     --output "${package_dir}/sbom.spdx.json"
 sbom_sha256="$(sha256sum "${package_dir}/sbom.spdx.json" | awk '{print $1}')"
@@ -104,10 +140,15 @@ sbom_sha256="$(sha256sum "${package_dir}/sbom.spdx.json" | awk '{print $1}')"
     printf 'build_utc\t%s\n' "${build_utc}"
     printf 'build_place\tblackstar-reproducible-build\n'
     printf 'compiler\t%s\n' "${compiler_version}"
+    printf 'build_glibc\t%s\n' "${build_glibc}"
+    printf 'cpu_target\t%s\n' "${cpu_target}"
+    printf 'target_cxxflags\t%s\n' "${target_cxxflags}"
+    printf 'simd_cxxflags\t%s\n' "${simd_cxxflags}"
     printf 'cxxflags_extra\t%s\n' "${user_cxxflags_extra}"
     printf 'source_path_mapping\trepository root mapped to .\n'
     printf 'ldflags_extra\t%s\n' "${LDFLAGSEXTRA:-}"
     printf 'binary_sha256\t%s\n' "${binary_sha256}"
+    printf 'compatibility_sha256\t%s\n' "${compatibility_sha256}"
     printf 'license_sha256\t%s\n' "${license_sha256}"
     printf 'attribution_sha256\t%s\n' "${attribution_sha256}"
     printf 'sbom_sha256\t%s\n' "${sbom_sha256}"

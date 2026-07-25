@@ -33,6 +33,7 @@ def main() -> int:
     parser.add_argument("--repo-root", type=Path, required=True)
     parser.add_argument("--binary", type=Path, required=True)
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--artifact-variant", required=True)
     parser.add_argument("--source-date-epoch", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -49,7 +50,7 @@ def main() -> int:
     ).strftime("%Y-%m-%dT%H:%M:%SZ")
     namespace = (
         "https://github.com/justinblethrow-cloud/blackSTAR/"
-        f"sbom/{blackstar_version}/{args.commit}"
+        f"sbom/{blackstar_version}/{args.commit}/{args.artifact_variant}"
     )
     document = {
         "SPDXID": "SPDXRef-DOCUMENT",
@@ -59,7 +60,7 @@ def main() -> int:
         },
         "dataLicense": "CC0-1.0",
         "documentNamespace": namespace,
-        "name": f"BlackSTAR-{blackstar_version}",
+        "name": f"BlackSTAR-{blackstar_version}-{args.artifact_variant}",
         "packages": [
             {
                 "SPDXID": "SPDXRef-Package-BlackSTAR",
@@ -82,7 +83,8 @@ def main() -> int:
                 "name": "BlackSTAR",
                 "sourceInfo": (
                     f"Git commit {args.commit}; executable identity "
-                    f"{executable_version}"
+                    f"{executable_version}; artifact variant "
+                    f"{args.artifact_variant}"
                 ),
                 "versionInfo": blackstar_version,
             },

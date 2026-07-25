@@ -1,5 +1,6 @@
 *.o
 Depend.list
+Depend.long.list
 __pycache__/
 *.pyc
 node_modules/

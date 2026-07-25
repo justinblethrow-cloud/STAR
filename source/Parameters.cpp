@@ -374,6 +374,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                     << "\",\"executable_version\":\"" << STAR_VERSION
                     << "\",\"genome_format_version\":\""
                     << BLACKSTAR_GENOME_FORMAT_VERSION
+                    << "\",\"cpu_target\":\""
+                    << BLACKSTAR_CPU_TARGET
                     << "\"}" << std::endl;
                 exit(0);
             };
