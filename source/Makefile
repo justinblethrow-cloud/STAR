@@ -98,6 +98,9 @@ OBJECTS = systemFunctions.o funPrimaryAlignMark.o \
 	bam_cat.o serviceFuns.o GlobalVariables.cpp \
 	BAMoutput.o BAMfunctions.o ReadAlign_alignBAM.o BAMbinSortByCoordinate.o signalFromBAM.o bamRemoveDuplicates.o BAMbinSortUnmapped.o
 
+LONG_OBJECTS := $(patsubst %.o,%.long.o,$(filter %.o,$(OBJECTS)))
+LONG_LINK_SOURCES := $(filter %.cpp %.c,$(OBJECTS))
+
 SOURCES := $(wildcard *.cpp) $(wildcard *.c)
 
 
@@ -107,15 +110,25 @@ SOURCES := $(wildcard *.cpp) $(wildcard *.c)
 %.o : %.c
 	$(CXX) -c $(CPPFLAGS) $(CFLAGS) $<
 
+%.long.o : %.cpp
+	$(CXX) -c $(CPPFLAGS) $(CXXFLAGS) -o $@ $<
+
+%.long.o : %.c
+	$(CXX) -c $(CPPFLAGS) $(CFLAGS) -D'COMPILE_FOR_LONG_READS' -o $@ $<
+
 all: cleanCompileInfo STAR$(SFX)
 
 opal/opal.o : opal/opal.cpp opal/opal.h
 	cd opal && \
 	$(CXX) -c -I./ -std=c++11 $(CPPFLAGS) $(CXXFLAGS) $(CXXFLAGSextra) $(CXXFLAGS_SIMD) opal.cpp
 
+opal/opal.long.o : opal/opal.cpp opal/opal.h
+	cd opal && \
+	$(CXX) -c -I./ -std=c++11 $(CPPFLAGS) $(CXXFLAGS) $(CXXFLAGSextra) $(CXXFLAGS_SIMD) -o opal.long.o opal.cpp
+
 .PHONY: clean
 clean:
-	'rm' -f *.o opal/opal.o STAR STARstatic STARlong Depend.list parametersDefault.xxd
+	'rm' -f *.o *.long.o opal/opal.o opal/opal.long.o STAR STARstatic STARlong Depend.list Depend.long.list parametersDefault.xxd
 
 .PHONY: CLEAN
 CLEAN: clean
@@ -140,7 +153,10 @@ Depend.list: $(SOURCES) parametersDefault.xxd htslib
 	echo $(SOURCES)
 	'rm' -f ./Depend.list
 	$(CXX) $(CXXFLAGS_common) -MM $^ >> Depend.list
+Depend.long.list: Depend.list
+	sed -E 's/^([^[:space:]:]+)\.o:/\1.long.o:/' Depend.list > Depend.long.list
 include Depend.list
+include Depend.long.list
 endif
 endif
 endif
@@ -168,13 +184,13 @@ STARstatic$(SFX) : Depend.list parametersDefault.xxd $(OBJECTS)
 
 STARlong$(SFX) : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
 STARlong$(SFX) : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_shared) $(LDFLAGS)
-STARlong$(SFX) : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong$(SFX) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+STARlong$(SFX) : Depend.list Depend.long.list parametersDefault.xxd $(LONG_OBJECTS) $(LONG_LINK_SOURCES)
+	$(CXX) -o STARlong$(SFX) $(CXXFLAGS) $(LONG_OBJECTS) $(LONG_LINK_SOURCES) $(LDFLAGS)
 
 STARlongStatic$(SFX) : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
 STARlongStatic$(SFX) : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_static) $(LDFLAGS)
-STARlongStatic$(SFX) : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong$(SFX) $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+STARlongStatic$(SFX) : Depend.list Depend.long.list parametersDefault.xxd $(LONG_OBJECTS) $(LONG_LINK_SOURCES)
+	$(CXX) -o STARlong$(SFX) $(CXXFLAGS) $(LONG_OBJECTS) $(LONG_LINK_SOURCES) $(LDFLAGS)
 
 
 
@@ -190,8 +206,8 @@ gdb : Depend.list parametersDefault.xxd $(OBJECTS)
 
 gdb-long : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_gdb) -D'COMPILE_FOR_LONG_READS' $(CXXFLAGS)
 gdb-long : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_gdb) $(LDFLAGS)
-gdb-long : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+gdb-long : Depend.list Depend.long.list parametersDefault.xxd $(LONG_OBJECTS) $(LONG_LINK_SOURCES)
+	$(CXX) -o STARlong $(CXXFLAGS) $(LONG_OBJECTS) $(LONG_LINK_SOURCES) $(LDFLAGS)
 
 STARforMacStatic : CXXFLAGS := $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_MAC' $(CXXFLAGS)
 STARforMacStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_Mac_static) $(LDFLAGS)
@@ -200,5 +216,5 @@ STARforMacStatic : Depend.list parametersDefault.xxd $(OBJECTS)
 
 STARlongForMacStatic : CXXFLAGS := -D'COMPILE_FOR_LONG_READS' $(CXXFLAGSextra) $(CXXFLAGS_main) -D'COMPILE_FOR_MAC' $(CXXFLAGS)
 STARlongForMacStatic : LDFLAGS := $(LDFLAGSextra) $(LDFLAGS_Mac_static) $(LDFLAGS)
-STARlongForMacStatic : Depend.list parametersDefault.xxd $(OBJECTS)
-	$(CXX) -o STARlong $(CXXFLAGS) $(OBJECTS) $(LDFLAGS)
+STARlongForMacStatic : Depend.list Depend.long.list parametersDefault.xxd $(LONG_OBJECTS) $(LONG_LINK_SOURCES)
+	$(CXX) -o STARlong $(CXXFLAGS) $(LONG_OBJECTS) $(LONG_LINK_SOURCES) $(LDFLAGS)
