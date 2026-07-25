@@ -224,6 +224,125 @@ expect_failure "malformed-gtf" "expected 9 tab-separated GTF fields" \
     --genomeInsertOutMode Overlay --genomeInsertOutDir "${out_root}/malformed-output" \
     --outFileNamePrefix "${out_root}/malformed_"
 
+unsupported_type_base="${out_root}/unsupported-genome-type-base"
+cp -a "${base_index}" "${unsupported_type_base}"
+awk -F '\t' -v OFS='\t' '
+    $1=="genomeType" {$2="SuperTranscriptome"}
+    {print}
+' "${unsupported_type_base}/genomeParameters.txt" \
+    > "${unsupported_type_base}/genomeParameters.txt.new"
+mv "${unsupported_type_base}/genomeParameters.txt.new" \
+    "${unsupported_type_base}/genomeParameters.txt"
+expect_failure "unsupported-genome-type" "supports only untransformed Full genome indexes" \
+    "${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${unsupported_type_base}" --genomeFastaFiles "${insert_fasta}" \
+    --genomeInsertOutMode Overlay --genomeInsertOutDir "${out_root}/unsupported-type-output" \
+    --outFileNamePrefix "${out_root}/unsupported-type_"
+
+transformed_base="${out_root}/transformed-base"
+cp -a "${base_index}" "${transformed_base}"
+awk -F '\t' -v OFS='\t' '
+    $1=="genomeTransformType" {$2="Diploid"}
+    {print}
+' "${transformed_base}/genomeParameters.txt" \
+    > "${transformed_base}/genomeParameters.txt.new"
+mv "${transformed_base}/genomeParameters.txt.new" \
+    "${transformed_base}/genomeParameters.txt"
+expect_failure "unsupported-genome-transform" "supports only untransformed Full genome indexes" \
+    "${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${transformed_base}" --genomeFastaFiles "${insert_fasta}" \
+    --genomeInsertOutMode Delta --genomeInsertOutDir "${out_root}/transformed-output" \
+    --outFileNamePrefix "${out_root}/transformed_"
+
+malformed_count_base="${out_root}/malformed-count-base"
+cp -a "${base_index}" "${malformed_count_base}"
+sed '1s/.*/999/' "${malformed_count_base}/geneInfo.tab" \
+    > "${malformed_count_base}/geneInfo.tab.new"
+mv "${malformed_count_base}/geneInfo.tab.new" \
+    "${malformed_count_base}/geneInfo.tab"
+expect_failure "malformed-sidecar-count" "annotation sidecar count mismatch" \
+    "${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${malformed_count_base}" --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutDir "${out_root}/malformed-count-output" \
+    --outFileNamePrefix "${out_root}/malformed-count_"
+
+malformed_integer_base="${out_root}/malformed-integer-base"
+cp -a "${base_index}" "${malformed_integer_base}"
+sed '1s/.*/2junk/' "${malformed_integer_base}/geneInfo.tab" \
+    > "${malformed_integer_base}/geneInfo.tab.new"
+mv "${malformed_integer_base}/geneInfo.tab.new" \
+    "${malformed_integer_base}/geneInfo.tab"
+expect_failure "malformed-sidecar-integer" "could not parse integer token '2junk'" \
+    "${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${malformed_integer_base}" --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutDir "${out_root}/malformed-integer-output" \
+    --outFileNamePrefix "${out_root}/malformed-integer_"
+
+extra_reference_base="${out_root}/extra-reference-base"
+cp -a "${base_index}" "${extra_reference_base}"
+printf '@SQ\tSN:decoy_reference\tLN:100\n' \
+    > "${extra_reference_base}/extraReferences.txt"
+extra_reference_full="${out_root}/extra-reference-full"
+"${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${extra_reference_base}" --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutDir "${extra_reference_full}" \
+    --outFileNamePrefix "${out_root}/extra-reference-full_" \
+    > "${out_root}/extra-reference-full.log" 2>&1
+cmp "${extra_reference_base}/extraReferences.txt" \
+    "${extra_reference_full}/extraReferences.txt"
+
+extra_reference_delta="${out_root}/extra-reference-delta"
+"${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
+    --genomeDir "${extra_reference_base}" --genomeFastaFiles "${insert_fasta}" \
+    --sjdbGTFfile "${insert_gtf}" \
+    --genomeInsertOutMode Delta --genomeInsertOutDir "${extra_reference_delta}" \
+    --outFileNamePrefix "${out_root}/extra-reference-delta_" \
+    > "${out_root}/extra-reference-delta.log" 2>&1
+printf '@SQ\tSN:changed_decoy_reference\tLN:100\n' \
+    > "${extra_reference_base}/extraReferences.txt"
+align_expect_failure "changed-extra-reference" "${extra_reference_delta}" \
+    "genome insert artifact does not match the loaded base genome index"
+
+sam_input="${out_root}/reads.sam"
+cat > "${sam_input}" <<'EOF_SAM_INPUT'
+@HD	VN:1.6	SO:unsorted
+samRead	4	*	0	0	*	*	0	0	ACGTACGTAC	HHHHHHHHHH	RG:Z:test
+EOF_SAM_INPUT
+"${star_bin}" \
+    --runThreadN 96 \
+    --genomeDir "${base_index}" \
+    --readFilesIn "${sam_input}" \
+    --readFilesType SAM SE \
+    --outSAMtype None \
+    --outSJtype None \
+    --outFileNamePrefix "${out_root}/sam-high-thread_" \
+    > "${out_root}/sam-high-thread.log" 2>&1
+if ! grep -Fq "Read input chunk buffer: 30000000 bytes total" \
+        "${out_root}/sam-high-thread_Log.out"; then
+    echo "ERROR: SAM input unexpectedly enabled adaptive chunk sizing" >&2
+    exit 1
+fi
+
+oversized_sam_input="${out_root}/oversized-attributes.sam"
+{
+    printf '@HD\tVN:1.6\tSO:unsorted\n'
+    printf 'samRead\t4\t*\t0\t0\t*\t*\t0\t0\tACGTACGTAC\tHHHHHHHHHH\tZZ:Z:'
+    head -c 10001 /dev/zero | tr '\0' A
+    printf '\n'
+} > "${oversized_sam_input}"
+expect_failure "oversized-sam-attributes" "SAM optional attributes exceed STAR's supported record limit" \
+    "${star_bin}" \
+    --runThreadN 96 \
+    --genomeDir "${base_index}" \
+    --readFilesIn "${oversized_sam_input}" \
+    --readFilesType SAM SE \
+    --outSAMtype None \
+    --outSJtype None \
+    --outFileNamePrefix "${out_root}/oversized-sam_"
+
 inherited_overhang_output="${out_root}/inherited-overhang-output"
 "${star_bin}" --runMode genomeInsert --runThreadN "${threads}" \
     --genomeDir "${base_index}" --genomeFastaFiles "${insert_fasta}" \
@@ -517,6 +636,14 @@ reference_namespace_collisions	pass
 annotation_namespace_collisions	pass
 transcript_context_validation	pass
 strict_gtf_shape	pass
+unsupported_genome_type_rejected	pass
+transformed_genome_rejected	pass
+annotation_sidecar_count_validation	pass
+annotation_sidecar_integer_validation	pass
+extra_references_preserved	pass
+extra_references_identity_pinned	pass
+high_thread_sam_input	pass
+oversized_sam_attributes_rejected	pass
 base_sjdb_overhang_contract	pass
 nonempty_destination_preserved	pass
 failed_stage_cleanup	pass

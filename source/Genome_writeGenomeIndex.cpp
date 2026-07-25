@@ -9,10 +9,10 @@ void writeAnnotationSidecars(Genome &genome, const string &dirOut)
 {
     if (!(genome.P.runMode=="genomeInsert" && genome.P.sjdbInsert.pass1 && genome.pGe.sjdbGTFfile!="-")) {
         genomeInsertCopyAnnotationSidecars(genome.pGe.gDir, dirOut);
-        return;
+    } else {
+        genomeInsertMergeAnnotationSidecars(genome.pGe.gDir, genome.P.sjdbInsert.outDir, dirOut, genome.P, true);
     };
-
-    genomeInsertMergeAnnotationSidecars(genome.pGe.gDir, genome.P.sjdbInsert.outDir, dirOut, genome.P, true);
+    genomeInsertCopyReferenceSidecars(genome.pGe.gDir, dirOut);
 }
 }
 

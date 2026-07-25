@@ -34,6 +34,8 @@ const vector<string> optionalIdentityFiles = {
     "transcriptInfo.tab"
 };
 
+const string conditionalSemanticIdentityFile="extraReferences.txt";
+
 struct IdentityFile {
     string name;
     bool present;
@@ -136,6 +138,10 @@ string genomeInsertBaseIdentityFromDirectory(const string &directory, uint threa
         for (vector<string>::const_iterator it=optionalIdentityFiles.begin(); it!=optionalIdentityFiles.end(); ++it) {
             identities.push_back(identityFromPath(directory, *it, false, threadN));
         }
+        uint64 conditionalSize=0;
+        if (regularFile(joinPath(directory, conditionalSemanticIdentityFile), &conditionalSize)) {
+            identities.push_back(identityFromPath(directory, conditionalSemanticIdentityFile, true, threadN));
+        }
         return aggregateIdentity(identities);
     } catch (const exception &error) {
         identityFailure(error.what(), P);
@@ -168,6 +174,15 @@ string genomeInsertBaseIdentityFromLoaded(Genome &genome)
         }
         for (vector<string>::const_iterator it=optionalIdentityFiles.begin(); it!=optionalIdentityFiles.end(); ++it) {
             identities.push_back(identityFromPath(genome.pGe.gDir, *it, false, P.runThreadN));
+        }
+        uint64 conditionalSize=0;
+        if (regularFile(joinPath(genome.pGe.gDir, conditionalSemanticIdentityFile), &conditionalSize)) {
+            identities.push_back(identityFromPath(
+                genome.pGe.gDir,
+                conditionalSemanticIdentityFile,
+                true,
+                P.runThreadN
+            ));
         }
         return aggregateIdentity(identities);
     } catch (const exception &error) {

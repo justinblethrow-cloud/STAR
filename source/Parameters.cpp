@@ -1232,7 +1232,14 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                         , std::cerr, inOut->logMain, EXIT_CODE_PARAMETER, *this);
     
     const uint64 chunkInReservePerEnd =
-        2ULL*(DEF_readSeqLengthMax+1) + 2ULL*DEF_readNameLengthMax;
+        2ULL*(DEF_readSeqLengthMax+1) +
+        2ULL*DEF_readNameLengthMax +
+        (readFilesTypeN==10 ? BAM_ATTR_MaxSize : 0);
+#ifdef COMPILE_FOR_LONG_READS
+    const uint32 chunkInMinimumRecordSlots=8;
+#else
+    const uint32 chunkInMinimumRecordSlots=1;
+#endif
     ReadChunkConfig readChunkConfig;
     try {
         readChunkConfig = calculateReadChunkConfig(
@@ -1240,7 +1247,9 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
             readChunkSizeBytes,
             readNends,
             runThreadN,
-            chunkInReservePerEnd
+            chunkInReservePerEnd,
+            readFilesTypeN!=10,
+            chunkInMinimumRecordSlots
         );
     } catch (const std::invalid_argument &error) {
         exitWithError(

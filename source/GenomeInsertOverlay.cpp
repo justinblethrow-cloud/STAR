@@ -53,6 +53,29 @@ void fail(const string &message, int exitCode, Parameters &P)
     exitWithError(message, std::cerr, P.inOut->logMain, exitCode, P);
 }
 
+void validateBaseGenomeKind(const string &baseDirectory, Parameters &P)
+{
+    const string parametersPath=baseDirectory+"/genomeParameters.txt";
+    ifstream parametersFile(parametersPath.c_str());
+    if (!parametersFile.good()) {
+        fail("EXITING because of fatal INPUT FILE error: could not open base genome parameters "
+             +parametersPath+"\n", EXIT_CODE_GENOME_FILES, P);
+    }
+
+    Parameters baseParameters;
+    baseParameters.inOut=P.inOut;
+    baseParameters.scanAllLines(parametersFile, 3, -1);
+    if (baseParameters.pGe.gTypeString!="Full" ||
+        baseParameters.pGe.transform.typeString!="None") {
+        ostringstream error;
+        error << "EXITING because --runMode genomeInsert supports only untransformed Full genome indexes\n";
+        error << "Loaded genomeType=" << baseParameters.pGe.gTypeString
+              << "; genomeTransformType=" << baseParameters.pGe.transform.typeString << "\n";
+        error << "SOLUTION: add sequences to the original untransformed Full index, then regenerate any transformed or transcriptome derivative.\n";
+        fail(error.str(), EXIT_CODE_GENOME_FILES, P);
+    }
+}
+
 string stripTrailingSlash(string path)
 {
     while (path.size()>1 && path.back()=='/') path.erase(path.end()-1);
@@ -852,6 +875,9 @@ string genomeInsertDeltaFilePath(const string &directory)
 void genomeInsertOutputPrepare(Parameters &P)
 {
     const string baseDirectory=addTrailingSlash(absoluteExistingPath(stripTrailingSlash(P.pGe.gDir), "base genomeDir", P), P);
+    // Overlay publication bypasses Genome::genomeLoad, so validate every
+    // genomeInsert output mode before staging any files.
+    validateBaseGenomeKind(stripTrailingSlash(baseDirectory), P);
     vector<string> fastaFiles;
     for (vector<string>::const_iterator it=P.pGe.gFastaFiles.begin(); it!=P.pGe.gFastaFiles.end(); ++it) {
         fastaFiles.push_back(absoluteExistingPath(*it, "inserted FASTA", P));
