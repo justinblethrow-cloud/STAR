@@ -2,6 +2,7 @@
 #define H_BLACKSTAR_NUMA_MEMORY_POLICY
 
 #include <string>
+#include <vector>
 
 enum BlackstarNumaInheritedPolicy {
     BlackstarNumaInheritedUnknown,
@@ -28,6 +29,22 @@ struct BlackstarNumaPolicyResult {
     std::string reason;
 };
 
+struct BlackstarNumaPolicyState {
+    bool restoreRequired;
+    int inheritedMode;
+    unsigned long maximumNodes;
+    std::vector<unsigned long> inheritedMask;
+    std::string inheritedName;
+};
+
+struct BlackstarNumaPolicyRestoreResult {
+    bool attempted;
+    bool restored;
+    int status;
+    std::string effective;
+    std::string reason;
+};
+
 BlackstarNumaPolicyChoice blackstarSelectNumaMemoryPolicy(
     const std::string &requested,
     const std::string &runMode,
@@ -42,7 +59,12 @@ BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
     const std::string &requested,
     const std::string &runMode,
     const std::string &genomeLoad,
-    int runThreads
+    int runThreads,
+    BlackstarNumaPolicyState &state
+);
+
+BlackstarNumaPolicyRestoreResult blackstarRestoreNumaMemoryPolicy(
+    const BlackstarNumaPolicyState &state
 );
 
 #endif

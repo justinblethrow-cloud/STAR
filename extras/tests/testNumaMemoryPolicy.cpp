@@ -107,14 +107,23 @@ int main()
         false, false, false, "invalid-request"
     );
 
+    BlackstarNumaPolicyState state;
     const BlackstarNumaPolicyResult unchanged =
         blackstarApplyNumaMemoryPolicy(
-            "Default", "alignReads", "NoSharedMemory", 96
+            "Default", "alignReads", "NoSharedMemory", 96, state
         );
     passed &= !unchanged.active &&
               unchanged.status == 0 &&
               unchanged.effective == "Default" &&
-              unchanged.reason == "explicit-default";
+              unchanged.reason == "explicit-default" &&
+              !state.restoreRequired;
+
+    const BlackstarNumaPolicyRestoreResult restore =
+        blackstarRestoreNumaMemoryPolicy(state);
+    passed &= !restore.attempted &&
+              restore.restored &&
+              restore.status == 0 &&
+              restore.reason == "not-required";
 
     return passed ? 0 : 1;
 }

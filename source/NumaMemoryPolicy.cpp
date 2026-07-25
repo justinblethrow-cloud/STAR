@@ -129,6 +129,34 @@ int applyInterleave(const std::vector<unsigned long> &mask)
     };
     return errno == 0 ? EIO : errno;
 }
+
+int restoreMemoryPolicy(
+    int mode,
+    const std::vector<unsigned long> &mask,
+    unsigned long maximumNodes
+)
+{
+    const int baseMode=basePolicyMode(mode);
+    const bool maskMustBeEmpty=baseMode==MPOL_DEFAULT
+#ifdef MPOL_LOCAL
+        || baseMode==MPOL_LOCAL
+#endif
+        ;
+    const bool maskEmpty=countNodes(mask)==0;
+    const unsigned long *maskPointer=
+        maskMustBeEmpty || maskEmpty ? NULL : mask.data();
+    const unsigned long maxNodes=
+        maskPointer==NULL ? 0 : maximumNodes;
+    if (syscall(
+            SYS_set_mempolicy,
+            mode,
+            maskPointer,
+            maxNodes
+        ) == 0) {
+        return 0;
+    };
+    return errno == 0 ? EIO : errno;
+}
 #endif
 }
 
@@ -192,9 +220,16 @@ BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
     const std::string &requested,
     const std::string &runMode,
     const std::string &genomeLoad,
-    int runThreads
+    int runThreads,
+    BlackstarNumaPolicyState &state
 )
 {
+    state.restoreRequired=false;
+    state.inheritedMode=0;
+    state.maximumNodes=0;
+    state.inheritedMask.clear();
+    state.inheritedName="NotCaptured";
+
     BlackstarNumaPolicyResult result = {
         false,
         -1,
@@ -218,7 +253,7 @@ BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
         result.allowedNodeCount = allowedMemoryNodes(allowedMask);
         if (result.allowedNodeCount < 0) {
             result.status = errno == 0 ? EIO : errno;
-        } else if (requested == "Auto") {
+        } else {
             int inheritedMode = MPOL_DEFAULT;
             std::vector<unsigned long> inheritedMask;
             const int inheritedStatus =
@@ -227,6 +262,10 @@ BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
                 inheritedPolicy = classifyInheritedPolicy(inheritedMode);
                 result.inherited = inheritedPolicyName(inheritedMode);
                 result.inheritedNodeCount = countNodes(inheritedMask);
+                state.inheritedMode=inheritedMode;
+                state.maximumNodes=maximumNumaNodes;
+                state.inheritedMask=inheritedMask;
+                state.inheritedName=result.inherited;
             } else {
                 result.status = inheritedStatus;
                 result.inherited = "Unavailable";
@@ -274,11 +313,47 @@ BlackstarNumaPolicyResult blackstarApplyNumaMemoryPolicy(
     if (result.status == 0) {
         result.active = true;
         result.effective = "Interleave";
+        state.restoreRequired=true;
     } else {
         result.reason = "set-mempolicy-failed";
     };
 #else
     result.status = ENOTSUP;
+#endif
+    return result;
+}
+
+BlackstarNumaPolicyRestoreResult blackstarRestoreNumaMemoryPolicy(
+    const BlackstarNumaPolicyState &state
+)
+{
+    BlackstarNumaPolicyRestoreResult result = {
+        state.restoreRequired,
+        !state.restoreRequired,
+        0,
+        state.restoreRequired ? "Interleave" : state.inheritedName,
+        state.restoreRequired ? "not-restored" : "not-required"
+    };
+    if (!state.restoreRequired) {
+        return result;
+    }
+
+#if defined(__linux__) && defined(SYS_get_mempolicy) && defined(SYS_set_mempolicy)
+    result.status=restoreMemoryPolicy(
+        state.inheritedMode,
+        state.inheritedMask,
+        state.maximumNodes
+    );
+    if (result.status==0) {
+        result.restored=true;
+        result.effective=state.inheritedName;
+        result.reason="restored";
+    } else {
+        result.reason="restore-mempolicy-failed";
+    }
+#else
+    result.status=ENOTSUP;
+    result.reason="platform-unsupported";
 #endif
     return result;
 }
