@@ -57,13 +57,16 @@ jobs:
             extras/maintenance/check_detachment_readiness.py \
             extras/maintenance/finalize_successor_repo.py \
             extras/maintenance/validate_successor_metadata.py \
+            extras/scripts/inspectBlackSTARBinary.py \
             extras/scripts/generateBlackSTARSbom.py
           python3 extras/maintenance/validate_successor_metadata.py
 
-      - name: Build BlackSTAR
+      - name: Build BlackSTAR release variants
         env:
           JOBS: "2"
-        run: extras/scripts/buildBlackSTARRelease.sh
+        run: |
+          CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
 
       - name: Build independent release reproduction
         env:
@@ -72,23 +75,45 @@ jobs:
         run: |
           git worktree add --detach "${RUNNER_TEMP}/release-source-2" HEAD
           cd "${RUNNER_TEMP}/release-source-2"
-          extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
 
       - name: Verify cross-path release reproducibility
-        run: extras/scripts/compareBlackSTARReleases.sh dist "${RUNNER_TEMP}/release-build-2"
+        run: |
+          CPU_TARGET=baseline extras/scripts/compareBlackSTARReleases.sh dist "${RUNNER_TEMP}/release-build-2"
+          CPU_TARGET=avx2 extras/scripts/compareBlackSTARReleases.sh dist "${RUNNER_TEMP}/release-build-2"
 
       - name: Verify release identity and OpenMP linkage
         run: |
           test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
-          extras/tests/scripts/testBlackstarVersion.sh
+          EXPECTED_CPU_TARGET=avx2 extras/tests/scripts/testBlackstarVersion.sh
           ldd source/STAR | grep -Eq 'libgomp|libomp'
-          test -f dist/blackstar-1.0.0-linux-x86_64.spdx.json
-          test -f dist/blackstar-1.0.0-linux-x86_64/LICENSE
-          test -f dist/blackstar-1.0.0-linux-x86_64/ATTRIBUTION.md
+          test -f dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
+          test -f dist/blackstar-1.0.0-linux-x86_64-baseline/LICENSE
+          test -f dist/blackstar-1.0.0-linux-x86_64-baseline/ATTRIBUTION.md
+          test -f dist/blackstar-1.0.0-linux-x86_64-avx2.spdx.json
+          grep -Fxq $'cpu_target\tbaseline' \
+            dist/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv
+          grep -Fxq $'ymm_instructions\tabsent' \
+            dist/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv
+          grep -Fxq $'cpu_target\tavx2' \
+            dist/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv
+          grep -Fxq $'ymm_instructions\tpresent' \
+            dist/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv
           jq -e '
             .spdxVersion == "SPDX-2.3" and
             (.packages[] | select(.name == "BlackSTAR").versionInfo) == "1.0.0"
-          ' dist/blackstar-1.0.0-linux-x86_64.spdx.json
+          ' dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
+          test "$(
+            jq -r .documentNamespace \
+              dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
+          )" != "$(
+            jq -r .documentNamespace \
+              dist/blackstar-1.0.0-linux-x86_64-avx2.spdx.json
+          )"
+
+      - name: Verify release variant result equivalence
+        run: extras/tests/scripts/testReleaseVariants.sh
 
       - name: Build upstream 2.7.11b compatibility oracle
         run: |
@@ -208,3 +233,55 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
           path: ${{ runner.temp }}/starlong-smoke
+
+  release-portability:
+    runs-on: ubuntu-24.04
+    container: ubuntu:20.04
+    timeout-minutes: 45
+    steps:
+      - name: Install older-userspace build dependencies
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          apt-get update
+          apt-get install -y binutils g++ git gzip make python3 zlib1g-dev
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Build explicit CPU variants on glibc 2.31
+        env:
+          DIST_DIR: ${{ runner.temp }}/portable-dist
+          JOBS: "2"
+        run: |
+          CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
+          CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
+
+      - name: Verify ABI and ISA floors
+        env:
+          DIST_DIR: ${{ runner.temp }}/portable-dist
+        run: |
+          for target in baseline avx2; do
+            compatibility="${DIST_DIR}/blackstar-1.0.0-linux-x86_64-${target}/compatibility.tsv"
+            minimum_glibc="$(awk -F '\t' '$1=="minimum_glibc" {print $2}' "${compatibility}")"
+            dpkg --compare-versions "${minimum_glibc}" le "2.31"
+          done
+          grep -Fxq $'ymm_instructions\tabsent' \
+            "${DIST_DIR}/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv"
+          grep -Fxq $'ymm_instructions\tpresent' \
+            "${DIST_DIR}/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv"
+
+      - name: Verify release variant result equivalence
+        env:
+          DIST_DIR: ${{ runner.temp }}/portable-dist
+        run: extras/tests/scripts/testReleaseVariants.sh
+
+      - name: Upload portability evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: blackstar-portable-release-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 14
+          path: ${{ runner.temp }}/portable-dist

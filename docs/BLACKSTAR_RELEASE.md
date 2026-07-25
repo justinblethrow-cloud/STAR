@@ -6,8 +6,10 @@ genome-format boundaries while adding genome-generation, persistent
 named-sequence insertion, and high-thread alignment improvements. The
 transitional executable lineage token is `2.7.11b-blackstar.3`.
 
-The `1.0.0` release target is x86-64 Linux. Inherited macOS source support has
-not been recertified for the BlackSTAR-specific paths or release builder.
+The qualified release target is x86-64 Linux. Release automation emits a
+baseline x86-64 artifact and an explicitly labeled AVX2 artifact. Inherited
+macOS source support has not been recertified for the BlackSTAR-specific paths
+or release builder.
 
 See [the acceptance record](BLACKSTAR_ACCEPTANCE.md) for closed audit findings,
 segregated upstream debt, and measured verification. See
@@ -53,6 +55,11 @@ changing measured biological outputs.
 - Full genome-insert output uses the conventional STAR index file set. The additional `blackstar.complete.tsv` file is ignored by stock STAR.
 - Overlay and Delta directories are BlackSTAR-specific. Delta v2 and overlay manifest v2 are the only supported development formats.
 - Overlay and Delta loading requires `NoSharedMemory` and validates the loaded base index against the package identity.
+- Baseline release binaries target generic x86-64 and contain no YMM
+  instructions. AVX2 release binaries are separately named and must contain
+  AVX2/YMM instructions.
+- `STAR --version-json`, `build-info.tsv`, and `compatibility.tsv` independently
+  record the selected CPU target.
 
 ## Release Gates
 
@@ -73,6 +80,9 @@ A release candidate must pass:
 8. Broad real-sample base-versus-Delta comparison plus single-end and paired-end synthetic added-reference controls.
 9. Downstream shadow through deduplication and counting, with inherited order-sensitive consumers corrected or isolated.
 10. Checksum-pinned candidate selection, executable mapping canary, explicit rollback, automatic fallback, and both-invalid state preservation.
+11. Independent byte-identical rebuilds of both release variants, ISA-label
+    validation, an older-userspace ABI floor, and exact alignment and gene-count
+    equivalence between baseline and AVX2 binaries.
 
 The benchmark scripts are evidence collectors, not substitutes for correctness tests. A nonidentical `SA` is never labeled equivalent without mapping-level validation.
 
@@ -84,15 +94,19 @@ Do not describe Delta loading as runtime-free. The `blackstar.1` short-sample sw
 observed a descriptive 9.22-second mean increase, although alignment and count
 content remained exact outside the requested added references.
 
-From a clean tagged checkout, build a release package with:
+From a clean tagged checkout, build both release variants with:
 
 ```bash
-JOBS=16 extras/scripts/buildBlackSTARRelease.sh
+CPU_TARGET=baseline JOBS=16 extras/scripts/buildBlackSTARRelease.sh
+CPU_TARGET=avx2 JOBS=16 extras/scripts/buildBlackSTARRelease.sh
 ```
 
-The builder derives `SOURCE_DATE_EPOCH` from the commit, fixes embedded build
-provenance, verifies BlackSTAR identity and OpenMP linkage, and writes a
-binary, `build-info.tsv`, `ldd.txt`, an SPDX SBOM, a deterministic tarball, and
+`CPU_TARGET` defaults to `baseline`. The release workflow builds on Ubuntu
+20.04, rejects ambient ISA compiler flags, and enforces a GLIBC requirement no
+newer than 2.31. The builder derives `SOURCE_DATE_EPOCH` from the commit, fixes
+embedded build provenance, verifies BlackSTAR identity, CPU-target identity,
+ISA content, and OpenMP linkage, and writes a binary, `build-info.tsv`,
+`compatibility.tsv`, `ldd.txt`, an SPDX SBOM, a deterministic tarball, and
 SHA-256 checksums under `dist/`.
 
 Use `extras/scripts/selectBlackSTAR.sh` for deployment selection. It copies and

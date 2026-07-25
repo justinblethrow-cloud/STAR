@@ -13,6 +13,7 @@ expected_executable="$(sed -n 's/^#define STAR_VERSION "\(.*\)"$/\1/p' "${repo_r
 expected_blackstar="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' "${repo_root}/source/VERSION")"
 expected_compatibility="$(sed -n 's/^#define STAR_COMPATIBILITY_VERSION "\(.*\)"$/\1/p' "${repo_root}/source/VERSION")"
 expected_genome="$(sed -n 's/^#define BLACKSTAR_GENOME_FORMAT_VERSION "\(.*\)"$/\1/p' "${repo_root}/source/VERSION")"
+expected_cpu_target="${EXPECTED_CPU_TARGET:-development}"
 
 [[ "$("${star}" --version)" == "${expected_executable}" ]]
 
@@ -21,7 +22,8 @@ python3 - "${version_json}" \
     "${expected_blackstar}" \
     "${expected_compatibility}" \
     "${expected_executable}" \
-    "${expected_genome}" <<'PY'
+    "${expected_genome}" \
+    "${expected_cpu_target}" <<'PY'
 import json
 import sys
 
@@ -31,6 +33,7 @@ expected = {
     "star_compatibility_version": sys.argv[3],
     "executable_version": sys.argv[4],
     "genome_format_version": sys.argv[5],
+    "cpu_target": sys.argv[6],
 }
 if actual != expected:
     raise SystemExit(f"version metadata differs: {actual!r} != {expected!r}")

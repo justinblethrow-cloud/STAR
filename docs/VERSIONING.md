@@ -11,6 +11,7 @@ machine-readable STAR ancestry and genome-format identities.
 | STAR compatibility base | `2.7.11b` | Pinned inherited behavior oracle |
 | BlackSTAR lineage identity | `2.7.11b-blackstar.3` | Transitional executable identity |
 | Genome format | `2.7.4a` | Conventional index loading compatibility |
+| CPU target | `baseline` or `avx2` | Release artifact ISA requirement |
 
 These values must not be collapsed into one string. A project release can
 change without changing the genome format, and a compatibility-base update can
@@ -36,8 +37,9 @@ Prereleases use tags such as `v1.1.0-rc.1`. Published tags are immutable.
 For the 1.x transition, the release package and manifest carry the independent
 version while `STAR --version` retains a lineage-shaped value for wrappers that
 expect a STAR-like token. A structured version command and `build-info.tsv`
-must report both identities. Changing the legacy `--version` token requires a
-separate compatibility survey and release decision.
+must report the independent, compatibility, genome-format, and CPU-target
+identities. Changing the legacy `--version` token requires a separate
+compatibility survey and release decision.
 
 ## Compatibility-Base Updates
 

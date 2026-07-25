@@ -9,7 +9,15 @@ fi
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "${script_dir}/../.." && pwd)"
 version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' "${repo_root}/source/VERSION")"
-package="blackstar-${version}-linux-x86_64"
+cpu_target="${CPU_TARGET:-baseline}"
+case "${cpu_target}" in
+    baseline|avx2) ;;
+    *)
+        echo "ERROR: CPU_TARGET must be baseline or avx2" >&2
+        exit 2
+        ;;
+esac
+package="blackstar-${version}-linux-x86_64-${cpu_target}"
 first="$1"
 second="$2"
 status=0
@@ -20,6 +28,7 @@ products=(
     "${package}.spdx.json"
     "${package}/STAR"
     "${package}/build-info.tsv"
+    "${package}/compatibility.tsv"
     "${package}/ldd.txt"
     "${package}/LICENSE"
     "${package}/ATTRIBUTION.md"

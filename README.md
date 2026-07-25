@@ -52,9 +52,11 @@ BlackSTAR-specific feature.
 
 The latest qualified release is available from the
 [BlackSTAR releases page](https://github.com/justinblethrow-cloud/blackSTAR/releases).
-Release assets include the `STAR` executable, a deterministic Linux x86-64
-archive, checksums, linkage metadata, build provenance, license, and upstream
-attribution.
+Current release automation produces separately labeled baseline x86-64 and
+AVX2 `STAR` executables. Each variant includes a deterministic archive,
+checksums, compatibility and linkage metadata, build provenance, license, and
+upstream attribution. Use the baseline artifact unless AVX2 support is known
+for every target host.
 
 Build from source on Linux:
 
