@@ -107,3 +107,38 @@ enter timing summaries.
 Large raw evidence belongs outside Git under
 `benchmarks/labs/<experiment>/<UTC timestamp>/`. Copy only anonymous,
 reviewed summaries into the architecture evidence ledger.
+
+## Cross-Workload Generalization
+
+Use the generalization runner for STAR modes whose input or output contract
+does not fit the paired A00 harness:
+
+```bash
+extras/benchmarks/runGeneralizationPairs.py \
+  --mode single-mapping \
+  --baseline-bin /local/bin/STAR-upstream \
+  --candidate-bin /local/bin/STAR-blackstar \
+  --genome-dir /local/index \
+  --read1 /local/reads/single.fastq \
+  --threads 96 --pairs 3 --output /local/evidence/single
+```
+
+Supported modes are paired and single-end mapping, two-pass mapping,
+`BySJout`, chimeric detection, coordinate-sorted BAM, transcriptome BAM,
+STARsolo, and STARlong. The driver uses seeded order-balanced pairs and
+requires exact mode-specific outputs. Its acceptance test is a two-percent
+wall-time noninferiority margin, no more than five-percent median RSS growth,
+bounded replicate variability, and complete correctness. A separate
+`median_gain_at_least_2_percent` identifies point estimates above the project's
+practical speedup threshold. The stricter `superiority_2_percent` field is true
+only when the lower bound of the paired bootstrap interval also clears two
+percent. Noninferiority must not be described as a speed improvement.
+
+`makeFastqSubset.py` creates a validated, deterministic first-N subset for
+single-end or long-read FASTQ input. `makePairedFastqSubset.py` additionally
+checks mate names and should be used for paired or STARsolo fixtures.
+
+For 10x v3 STARsolo data, pass the cDNA read as `--read1`, the barcode/UMI read
+as `--read2`, and export `STARSOLO_WHITELIST`. The runner pins the v3 layout to
+a 16-base cell barcode followed by a 12-base UMI. For STARlong, pass the
+STARlong binaries, select `--mode starlong`, and omit `--read2`.

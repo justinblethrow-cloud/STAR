@@ -38,6 +38,20 @@ cmp "${tmp_dir}/subset-r2-1.fastq.gz" "${tmp_dir}/subset-r2-2.fastq.gz"
 [[ "$(gzip -cd "${tmp_dir}/subset-r1-1.fastq.gz" | wc -l)" -eq 8 ]]
 [[ "$(gzip -cd "${tmp_dir}/subset-r2-1.fastq.gz" | wc -l)" -eq 8 ]]
 
+for iteration in 1 2; do
+    python3 "${repo_root}/extras/benchmarks/makeFastqSubset.py" \
+        --input "${tmp_dir}/read1.fastq.gz" \
+        --records 2 \
+        --output "${tmp_dir}/single-${iteration}.fastq.gz"
+done
+cmp "${tmp_dir}/single-1.fastq.gz" "${tmp_dir}/single-2.fastq.gz"
+[[ "$(gzip -cd "${tmp_dir}/single-1.fastq.gz" | wc -l)" -eq 8 ]]
+python3 "${repo_root}/extras/benchmarks/makeFastqSubset.py" \
+    --input "${tmp_dir}/read1.fastq.gz" \
+    --records 2 \
+    --output "${tmp_dir}/single.fastq"
+[[ "$(wc -l < "${tmp_dir}/single.fastq")" -eq 8 ]]
+
 python3 "${repo_root}/extras/benchmarks/quietSystemGate.py" \
     --duration 0.1 --interval 0.05 \
     --min-idle 0 --max-iowait 100 --max-storage-util 1000 \
@@ -90,6 +104,32 @@ python3 "${repo_root}/extras/benchmarks/compareAlignmentRuns.py" \
     "${tmp_dir}/baseline" "${tmp_dir}/candidate" \
     --output "${tmp_dir}/comparison.json"
 jq -e '.passed == true and (.checks | length) == 4' "${tmp_dir}/comparison.json" > /dev/null
+
+for run in bam-header-a bam-header-b; do
+    mkdir -p "${tmp_dir}/${run}"
+    cp "${tmp_dir}/baseline/star.Log.final.out" "${tmp_dir}/${run}/star.Log.final.out"
+done
+{
+    printf '@HD\tVN:1.4\tSO:unsorted\n'
+    printf '@SQ\tSN:chr1\tLN:8\n'
+    printf 'read1\t0\tchr1\t1\t255\t8M\t*\t0\t0\tACGTACGT\tIIIIIIII\n'
+} | samtools view -b -o "${tmp_dir}/bam-header-a/star.Aligned.out.bam"
+{
+    printf '@HD\tVN:1.4\tSO:unsorted\n'
+    printf '@SQ\tSN:chr1\tLN:9\n'
+    printf 'read1\t0\tchr1\t1\t255\t8M\t*\t0\t0\tACGTACGT\tIIIIIIII\n'
+} | samtools view -b -o "${tmp_dir}/bam-header-b/star.Aligned.out.bam"
+if python3 "${repo_root}/extras/benchmarks/compareAlignmentRuns.py" \
+    "${tmp_dir}/bam-header-a" "${tmp_dir}/bam-header-b" \
+    --canonical-bam --temp-dir "${tmp_dir}" \
+    --output "${tmp_dir}/bam-header-comparison.json"; then
+    printf 'canonical BAM comparison ignored a semantic header difference\n' >&2
+    exit 1
+fi
+jq -e '
+    .passed == false and
+    any(.checks[]; .name == "canonical BAM records" and .passed == false)
+' "${tmp_dir}/bam-header-comparison.json" > /dev/null
 
 mkdir -p "${tmp_dir}/pair-genome"
 for file in Genome SA SAindex genomeParameters.txt; do

@@ -41,13 +41,18 @@ jobs:
           bash -n extras/benchmarks/preparePublicAlignmentFixture.sh
           bash -n extras/benchmarks/runAlignmentA00.sh
           python3 -m py_compile \
+            extras/benchmarks/makeFastqSubset.py \
             extras/benchmarks/makePairedFastqSubset.py \
             extras/benchmarks/quietSystemGate.py \
             extras/benchmarks/summarizeAlignmentA00.py \
             extras/benchmarks/compareAlignmentRuns.py \
+            extras/benchmarks/compareGeneralizationRuns.py \
             extras/benchmarks/evaluateAlignmentNoninferiority.py \
-            extras/benchmarks/runAlignmentPairs.py
+            extras/benchmarks/runAlignmentPairs.py \
+            extras/benchmarks/runGeneralizationPairs.py
+          bash -n extras/benchmarks/runGeneralizationMode.sh
           extras/tests/scripts/testBenchmarkHarness.sh
+          extras/tests/scripts/testGeneralizationHarness.sh
 
       - name: Validate successor metadata
         run: |
