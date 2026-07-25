@@ -84,6 +84,9 @@ assert result["median_improvement_percent"] == 10.0
 assert result["median_gain_at_least_2_percent"]
 assert result["superiority_2_percent"]
 EOF_CHECK
+jq -e '
+    .warmup_position == "after_quiet_gate"
+' "${out_root}/result/contract.json" > /dev/null
 
 STARSOLO_WHITELIST="${out_root}/whitelist.txt" \
 python3 "${repo_root}/extras/benchmarks/runGeneralizationPairs.py" \
