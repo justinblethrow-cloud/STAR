@@ -26,7 +26,7 @@ jobs:
           DEBIAN_FRONTEND: noninteractive
         run: |
           apt-get update
-          apt-get install -y binutils g++ git gzip make python3 zlib1g-dev
+          apt-get install -y binutils g++ git gzip make python3 xxd zlib1g-dev
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
