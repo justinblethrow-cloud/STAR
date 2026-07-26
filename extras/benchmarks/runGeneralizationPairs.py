@@ -12,8 +12,10 @@ import random
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 
+from compareAlignmentRuns import canonical_bam_digest
 from runAlignmentPairs import (
     bootstrap_median_ci,
     coefficient_of_variation,
@@ -176,6 +178,12 @@ def write_contract(
         "warmup_read2_sha256": input_digest(args.warmup_read2),
         "starsolo_whitelist": input_value(whitelist),
         "starsolo_whitelist_sha256": input_digest(whitelist),
+        "transcriptome_primary_oracle": (
+            "upstream-equivalent records after clearing SAM flag 0x100; "
+            "exact candidate primary flags across all candidate runs"
+            if args.mode == "transcriptome-bam"
+            else "not-applicable"
+        ),
         "tools": {
             "pair_driver_sha256": sha256(Path(__file__)),
             "runner_sha256": sha256(args.runner),
@@ -277,13 +285,13 @@ def main() -> int:
 
     run_quiet_gate(args)
 
+    warmups: dict[str, Path] = {}
     if warmup_order is not None:
         roles = (
             ("baseline", "candidate")
             if warmup_order == "AB"
             else ("candidate", "baseline")
         )
-        warmups: dict[str, Path] = {}
         assert args.warmup_read1 is not None
         for position, role in enumerate(roles, 1):
             output = args.output / f"warmup-{position}-{role}"
@@ -388,6 +396,42 @@ def main() -> int:
             }
         )
 
+    candidate_primary_digests: list[dict[str, str]] = []
+    candidate_primary_deterministic = True
+    if args.mode == "transcriptome-bam":
+        candidate_runs = [
+            args.output / row["run_dir"]
+            for row in schedule
+            if row["role"] == "candidate"
+        ]
+        if "candidate" in warmups:
+            candidate_runs.insert(0, warmups["candidate"])
+        parent = args.output
+        with tempfile.TemporaryDirectory(
+            prefix="blackstar-transcriptome-primary-", dir=parent
+        ) as raw:
+            temp_root = Path(raw)
+            for run in candidate_runs:
+                primary_digest = canonical_bam_digest(
+                    run / "star.Aligned.toTranscriptome.out.bam",
+                    temp_root,
+                )
+                candidate_primary_digests.append(
+                    {
+                        "run": run.name,
+                        "sha256": primary_digest,
+                    }
+                )
+        candidate_primary_deterministic = (
+            bool(candidate_primary_digests)
+            and len(
+                {
+                    item["sha256"]
+                    for item in candidate_primary_digests
+                }
+            ) == 1
+        )
+
     ci_low, ci_high = bootstrap_median_ci(improvements, args.seed ^ 0x6E)
     baseline_cv = coefficient_of_variation(baseline_times)
     candidate_cv = coefficient_of_variation(candidate_times)
@@ -405,6 +449,10 @@ def main() -> int:
         "wall_time_noninferiority": ci_low >= -args.margin_percent,
         "rss": rss_increase <= args.max_rss_increase_percent,
     }
+    if args.mode == "transcriptome-bam":
+        gates["candidate_transcriptome_primary_determinism"] = (
+            candidate_primary_deterministic
+        )
     result = {
         "schema": "blackstar-generalization-result-v1",
         "mode": args.mode,
@@ -421,6 +469,7 @@ def main() -> int:
         "median_rss_increase_percent": rss_increase,
         "median_gain_at_least_2_percent": statistics.median(improvements) >= 2.0,
         "superiority_2_percent": ci_low >= 2.0,
+        "candidate_transcriptome_primary_digests": candidate_primary_digests,
     }
     (args.output / "result.json").write_text(
         json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

@@ -12,8 +12,7 @@ struct ReadChunkConfig {
 };
 
 bool automaticReadChunkSizingAllowed(
-    std::uint32_t readFilesType,
-    bool transcriptomeBam
+    std::uint32_t readFilesType
 );
 
 ReadChunkConfig calculateReadChunkConfig(

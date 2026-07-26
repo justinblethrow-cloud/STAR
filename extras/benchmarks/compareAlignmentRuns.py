@@ -81,7 +81,9 @@ def canonical_bam_header(path: Path, samtools: str) -> bytes:
     return ("\n".join(headers) + "\n").encode()
 
 
-def canonical_bam_digest(path: Path, temp_root: Path) -> str:
+def canonical_bam_digest(
+    path: Path, temp_root: Path, remove_flags: int = 0
+) -> str:
     samtools = shutil.which("samtools")
     sort_bin = shutil.which("sort")
     if not samtools or not sort_bin:
@@ -90,7 +92,11 @@ def canonical_bam_digest(path: Path, temp_root: Path) -> str:
     value.update(canonical_bam_header(path, samtools))
     value.update(b"\0alignment-records\0")
     env = dict(os.environ, LC_ALL="C")
-    view = subprocess.Popen([samtools, "view", str(path)], stdout=subprocess.PIPE)
+    view_command = [samtools, "view"]
+    if remove_flags:
+        view_command.extend(("--remove-flags", str(remove_flags)))
+    view_command.append(str(path))
+    view = subprocess.Popen(view_command, stdout=subprocess.PIPE)
     sorter = subprocess.Popen(
         [sort_bin, "-T", str(temp_root), "-S", "2G"],
         stdin=view.stdout,

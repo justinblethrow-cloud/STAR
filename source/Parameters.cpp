@@ -1242,13 +1242,8 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
 #else
     const uint32 chunkInMinimumRecordSlots=1;
 #endif
-    // TranscriptomeSAM chooses a primary transcript alignment with a
-    // per-chunk RNG. Preserve legacy chunking so automatic tuning does not
-    // change compatibility-visible primary and secondary BAM flags.
-    const bool adaptiveReadChunksAllowed = automaticReadChunkSizingAllowed(
-        readFilesTypeN,
-        quant.trSAM.bamYes
-    );
+    const bool adaptiveReadChunksAllowed =
+        automaticReadChunkSizingAllowed(readFilesTypeN);
     ReadChunkConfig readChunkConfig;
     try {
         readChunkConfig = calculateReadChunkConfig(
@@ -1279,11 +1274,6 @@ void Parameters::inputParameters (int argInN, char* argIn[]) {//input parameters
                    << chunkInSizeBytesArray << " bytes per end, mode="
                    << (readChunkConfig.adaptive ? "adaptive" : "configured")
                    << '\n';
-    if (quant.trSAM.bamYes && readChunkSizeBytes==0 && runThreadN>=64) {
-        inOut->logMain
-            << "Automatic read chunk sizing disabled for TranscriptomeSAM "
-            << "primary-alignment compatibility\n";
-    }
     
     
     ///////////////////////////////////////////////////////// outSJ

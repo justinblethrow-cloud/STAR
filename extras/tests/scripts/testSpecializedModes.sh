@@ -116,6 +116,8 @@ with (root / "genome.fa").open("w", encoding="ascii", newline="\n") as handle:
         (
             'chrA\tfixture\texon\t10001\t10300\t.\t+\t.\tgene_id "geneA"; transcript_id "txA";',
             'chrA\tfixture\texon\t11001\t11300\t.\t+\t.\tgene_id "geneA"; transcript_id "txA";',
+            'chrA\tfixture\texon\t10001\t10300\t.\t+\t.\tgene_id "geneA"; transcript_id "txA_alt";',
+            'chrA\tfixture\texon\t11001\t11300\t.\t+\t.\tgene_id "geneA"; transcript_id "txA_alt";',
             'chrA\tfixture\texon\t90001\t90600\t.\t+\t.\tgene_id "geneW"; transcript_id "txW";',
             'chrB\tfixture\texon\t30001\t30600\t.\t+\t.\tgene_id "geneB"; transcript_id "txB";',
         )
@@ -230,6 +232,12 @@ normalize_bam() {
     samtools view "${input}" | LC_ALL=C sort > "${output}"
 }
 
+normalize_bam_without_secondary() {
+    local input="$1"
+    local output="$2"
+    samtools view --remove-flags 0x100 "${input}" | LC_ALL=C sort > "${output}"
+}
+
 normalize_text() {
     local input="$1"
     local output="$2"
@@ -241,7 +249,7 @@ compare_exact() {
     local first="$2"
     local second="$3"
     if ! cmp -s "${first}" "${second}"; then
-        echo "ERROR: ${label} differs between official STAR and BlackSTAR" >&2
+        echo "ERROR: ${label} differs" >&2
         diff -u "${first}" "${second}" | sed -n '1,160p' >&2 || true
         exit 1
     fi
@@ -285,17 +293,58 @@ prepare_mode paired
     --quantMode TranscriptomeSAM GeneCounts \
     --outFileNamePrefix "${out_root}/paired/blackstar/" \
     > "${out_root}/paired/blackstar.stdout" 2>&1
+mkdir -p "${out_root}/paired/blackstar-repeat"
+"${star_bin}" \
+    --runThreadN 1 \
+    --genomeDir "${base_index}" \
+    --readFilesIn "${out_root}/inputs/paired_R1.fq" "${out_root}/inputs/paired_R2.fq" \
+    --outSAMtype SAM \
+    --outSAMattributes Standard \
+    --quantMode TranscriptomeSAM GeneCounts \
+    --outFileNamePrefix "${out_root}/paired/blackstar-repeat/" \
+    > "${out_root}/paired/blackstar-repeat.stdout" 2>&1
 compare_sam_outputs paired
-normalize_bam \
+normalize_bam_without_secondary \
     "${out_root}/paired/upstream/Aligned.toTranscriptome.out.bam" \
-    "${out_root}/paired/upstream/transcriptome.sorted.sam"
+    "${out_root}/paired/upstream/transcriptome.without-secondary.sorted.sam"
+normalize_bam_without_secondary \
+    "${out_root}/paired/blackstar/Aligned.toTranscriptome.out.bam" \
+    "${out_root}/paired/blackstar/transcriptome.without-secondary.sorted.sam"
+compare_exact \
+    "paired transcriptome BAM alignment set" \
+    "${out_root}/paired/upstream/transcriptome.without-secondary.sorted.sam" \
+    "${out_root}/paired/blackstar/transcriptome.without-secondary.sorted.sam"
 normalize_bam \
     "${out_root}/paired/blackstar/Aligned.toTranscriptome.out.bam" \
     "${out_root}/paired/blackstar/transcriptome.sorted.sam"
+normalize_bam \
+    "${out_root}/paired/blackstar-repeat/Aligned.toTranscriptome.out.bam" \
+    "${out_root}/paired/blackstar-repeat/transcriptome.sorted.sam"
 compare_exact \
-    "paired transcriptome BAM records" \
-    "${out_root}/paired/upstream/transcriptome.sorted.sam" \
-    "${out_root}/paired/blackstar/transcriptome.sorted.sam"
+    "paired transcriptome BAM deterministic primary flags" \
+    "${out_root}/paired/blackstar/transcriptome.sorted.sam" \
+    "${out_root}/paired/blackstar-repeat/transcriptome.sorted.sam"
+if ! samtools view \
+        "${out_root}/paired/blackstar/Aligned.toTranscriptome.out.bam" |
+    awk '
+        {
+            total[$1]++
+            if (int($2 / 256) % 2 == 0) {
+                primary[$1]++
+            }
+        }
+        END {
+            for (name in total) {
+                if (total[name] > 2 && primary[name] == 2) {
+                    found=1
+                }
+            }
+            exit found ? 0 : 1
+        }
+    '; then
+    echo "ERROR: transcriptome fixture did not exercise ambiguous primary selection" >&2
+    exit 1
+fi
 compare_exact \
     "paired gene counts" \
     "${out_root}/paired/upstream/ReadsPerGene.out.tab" \
@@ -624,6 +673,7 @@ cat <<'EOF_RESULTS'
 check	status
 paired_fragmented_alignment	pass
 transcriptome_bam	pass
+transcriptome_primary_determinism	pass
 gene_counts	pass
 two_pass_mapping	pass
 bysjout_filtering	pass

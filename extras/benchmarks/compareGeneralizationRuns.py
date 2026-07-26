@@ -212,12 +212,22 @@ def main() -> int:
         ) as raw:
             temp_root = Path(raw)
             for name in bam_names:
+                remove_flags = (
+                    0x100
+                    if name == "star.Aligned.toTranscriptome.out.bam"
+                    else 0
+                )
+                label = f"canonical {name} records"
+                if remove_flags:
+                    label += " ignoring primary/secondary choice"
                 add_presence_digest(
                     checks,
-                    f"canonical {name} records",
+                    label,
                     baseline / name,
                     candidate / name,
-                    lambda path, root=temp_root: canonical_bam_digest(path, root),
+                    lambda path, root=temp_root, flags=remove_flags: (
+                        canonical_bam_digest(path, root, flags)
+                    ),
                 )
 
     if args.mode == "starsolo":
@@ -228,6 +238,12 @@ def main() -> int:
         "mode": args.mode,
         "baseline": str(baseline),
         "candidate": str(candidate),
+        "transcriptome_primary_oracle": (
+            "alignment records must match after clearing SAM flag 0x100; "
+            "candidate repeatability is qualified separately"
+            if args.mode == "transcriptome-bam"
+            else "not-applicable"
+        ),
         "passed": bool(checks) and all(bool(check["passed"]) for check in checks),
         "checks": checks,
     }

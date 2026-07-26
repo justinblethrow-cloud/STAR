@@ -54,6 +54,25 @@ if [[ "${mode}" == "starsolo" ]]; then
     printf '%%%%MatrixMarket matrix coordinate integer general\n1 1 1\n1 1 1\n' \
         > "${out}/star.Solo.out/Gene/raw/matrix.mtx"
 fi
+if [[ "${mode}" == "transcriptome-bam" ]]; then
+    cat > "${out}/main.sam" <<'EOF_MAIN'
+@HD	VN:1.6	SO:unsorted
+read1	4	*	0	0	*	*	0	0	ACGT	IIII
+EOF_MAIN
+    if [[ "$(basename "${binary}")" == "baseline" ]]; then
+        transcriptome_flag=260
+    else
+        transcriptome_flag=4
+    fi
+    cat > "${out}/transcriptome.sam" <<EOF_TRANSCRIPTOME
+@HD	VN:1.6	SO:unsorted
+read1	${transcriptome_flag}	*	0	0	*	*	0	0	ACGT	IIII
+EOF_TRANSCRIPTOME
+    samtools view -bS "${out}/main.sam" \
+        > "${out}/star.Aligned.out.bam"
+    samtools view -bS "${out}/transcriptome.sam" \
+        > "${out}/star.Aligned.toTranscriptome.out.bam"
+fi
 EOF_RUNNER
 chmod +x "${out_root}/fake-runner"
 
@@ -106,6 +125,33 @@ python3 "${repo_root}/extras/benchmarks/runGeneralizationPairs.py" \
 jq -e '
     .starsolo_whitelist_sha256 | length == 64
 ' "${out_root}/solo-result/contract.json" > /dev/null
+
+python3 "${repo_root}/extras/benchmarks/runGeneralizationPairs.py" \
+    --mode transcriptome-bam \
+    --baseline-bin "${out_root}/baseline" \
+    --candidate-bin "${out_root}/candidate" \
+    --genome-dir "${out_root}/index" \
+    --read1 "${out_root}/read1.fq" \
+    --read2 "${out_root}/read2.fq" \
+    --output "${out_root}/transcriptome-result" \
+    --runner "${out_root}/fake-runner" \
+    --threads 4 \
+    --pairs 3 \
+    --settle-seconds 0 \
+    --skip-quiet-gate \
+    > "${out_root}/transcriptome-driver.log"
+jq -e '
+    .accepted and
+    .gates.correctness and
+    .gates.candidate_transcriptome_primary_determinism and
+    ([.candidate_transcriptome_primary_digests[].sha256] | unique | length) == 1
+' "${out_root}/transcriptome-result/result.json" > /dev/null
+jq -e '
+    .passed and
+    ([.checks[] |
+      select(.name | contains("ignoring primary/secondary choice"))] |
+      length) == 1
+' "${out_root}/transcriptome-result/pair-01-comparison.json" > /dev/null
 
 if env -u STARSOLO_WHITELIST \
     "${repo_root}/extras/benchmarks/runGeneralizationMode.sh" \

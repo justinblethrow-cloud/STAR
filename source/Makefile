@@ -91,7 +91,7 @@ OBJECTS = systemFunctions.o funPrimaryAlignMark.o \
 	Genome_genomeGenerate.o genomeParametersWrite.o genomeScanFastaFiles.o genomeSAindex.o \
 	Genome_insertSequences.o Genome_validateGenomeInsertAnnotations.o Genome_writeGenomeIndex.o insertSeqSA.o funCompareUintAndSuffixes.o funCompareUintAndSuffixesMemcmp.o \
 	TimeFunctions.o ErrorWarning.o streamFuns.o stringSubstituteAll.o \
-	Transcriptome.o Transcriptome_quantAlign.o Transcriptome_geneFullAlignOverlap.o \
+	Transcriptome.o Transcriptome_quantAlign.o Transcriptome_geneFullAlignOverlap.o TranscriptomePrimary.o \
 	ReadAlign_quantTranscriptome.o Quantifications.o Transcriptome_geneCountsAddAlign.o \
 	sjdbLoadFromFiles.o sjdbLoadFromStream.o sjdbPrepare.o sjdbBuildIndex.o sjdbInsertJunctions.o AlignmentThreadAffinity.o NumaMemoryPolicy.o ReadChunkConfig.o SystemMemory.o mapThreadsSpawn.o \
 	Parameters_readFilesInit.o Parameters_openReadsFiles.cpp Parameters_closeReadsFiles.cpp Parameters_readSAMheader.o \

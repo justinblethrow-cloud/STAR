@@ -1,8 +1,8 @@
 #include "Transcriptome.h"
 #include "ReadAlign.h"
 #include "Transcript.h"
+#include "TranscriptomePrimary.h"
 #include "serviceFuns.cpp"
-#include <random>
 
 uint ReadAlign::quantTranscriptome (Transcriptome *Tr, uint nAlignG, Transcript **alignG, Transcript *alignT) {
     uint nAlignT=0;
@@ -66,7 +66,18 @@ uint ReadAlign::quantTranscriptome (Transcriptome *Tr, uint nAlignG, Transcript 
     };
 
     if (P.quant.trSAM.bamYes) {//output Aligned.toTranscriptome.bam
-        alignT[int(rngUniformReal0to1(rngMultOrder)*nAlignT)].primaryFlag=true;
+        // Keep the inherited RNG stream position unchanged for later reads;
+        // only the compatibility-visible transcript primary choice is made
+        // independently of worker scheduling.
+        (void) rngUniformReal0to1(rngMultOrder);
+        if (nAlignT > 0) {
+            // STAR's thread-local RNG makes this flag depend on which worker
+            // acquires a read. Select from the same alignment set using only
+            // stable run and read identities instead.
+            alignT[transcriptomePrimaryIndex(
+                P.runRNGseed, iReadAll, nAlignT
+            )].primaryFlag=true;
+        }
 
         for (uint iatr=0;iatr<nAlignT;iatr++) {//write all transcripts
             alignBAM(alignT[iatr], nAlignT, iatr, 0, (uint) -1, (uint) -1, 0, -1, NULL, P.outSAMattrOrderQuant, outBAMoneAlign, outBAMoneAlignNbytes);
