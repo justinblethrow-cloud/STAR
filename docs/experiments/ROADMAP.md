@@ -22,11 +22,28 @@ until it passes cumulative qualification and is deliberately promoted.
 | A09 | Toolchain | LTO and profile-guided optimization improve the accepted cumulative alignment stack without semantic changes. | Rejected; LTO and PGO each gained about 1.2%, below the 2% practical gate | A06 |
 | Q01 | Cumulative alignment qualification | The complete H01+A02+A05+A06 stack preserves release behavior and generalizes across private, shared, compressed, BAM, affinity, sanitizer, compatibility, and package gates. | Complete; promoted in blackstar.2 | A06 and A09 decision |
 | Q02 | Cross-workload generalization | The released high-thread stack and new compatibility hardening preserve behavior beyond paired gene-count-only RNA-seq. | Complete; nine public series passed, single-end timing remains unresolved, no release promotion | Q01 and successor transition |
+| S01 | STARsolo post-mapping parallelism | Phase-resolved profiling may identify deterministic parallelism in barcode aggregation, Solo-record ingestion, per-cell UMI collapse, cell filtering, and matrix output. | Deferred future opportunity; no implementation scheduled | Q02 and dedicated STARsolo profile |
 | I01 | Genome preparation | Parallel reverse-complement and bounded private prefix histograms reduce serial setup. | Proposed | Cumulative alignment qualification |
 | I02 | SA packing | Record-block partitioning permits deterministic disjoint-byte parallel packing. | Proposed | I01 |
 | I03 | Junction merge | Partitioned merge and rank calculation reduce the remaining serial junction stage. | Proposed | I02 |
 | I04 | Suffix sorting | Comparator correction plus inlined multikey radix sorting reduces dominant bin-sort work. | Proposed | I03 |
 | I05 | Index v2 | Pinned libsais64 may justify an opt-in incompatible format only if I04 is insufficient. | Conditional | I04 decision |
+
+## Deferred STARsolo Opportunity
+
+Q02 established STARsolo compatibility and noninferiority, not a speed claim:
+the 10x v3 Gene fixture improved by a median 3.78 percent, with a 95 percent
+interval from -1.43 to 10.49 percent. BlackSTAR's shared alignment changes are
+active in STARsolo, but they did not target its distinct post-mapping barcode,
+UMI, filtering, and matrix-generation paths.
+
+If S01 is prioritized later, begin with phase-resolved profiling on a
+realistically sized dataset. Do not assume that the currently visible serial
+loops dominate wall time. Any implementation must preserve deterministic
+output and qualify at least 10x 3-prime Gene, single-nucleus GeneFull, UMI
+deduplication, cell filtering, and complete matrix output before broader
+claims. Additional 10x chemistries, multimapper modes, and Velocyto output
+belong in the cumulative gate.
 
 ## Stop Conditions
 
@@ -50,5 +67,7 @@ until it passes cumulative qualification and is deliberately promoted.
 - Q02 TranscriptomeSAM output intentionally stabilizes the primary transcript
   flag across worker schedules. The complete upstream alignment set remains the
   compatibility oracle after clearing only flag `0x100`.
+- Do not begin S01 without an explicit prioritization decision. Its first
+  artifact is a phase profile, not a source change.
 - I05 begins only after a documented I04 decision and retains the default v1
   index format.

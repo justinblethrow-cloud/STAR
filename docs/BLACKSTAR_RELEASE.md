@@ -6,6 +6,10 @@ genome-format boundaries while adding genome-generation, persistent
 named-sequence insertion, and high-thread alignment improvements. The
 transitional executable lineage token is `2.7.11b-blackstar.3`.
 
+This document describes the `v1.0.0` release boundary. Changes and measurements
+explicitly labeled `Unreleased` or Q02 Labs evidence are excluded until a later
+candidate passes release qualification and receives its own immutable tag.
+
 The qualified release target is x86-64 Linux. Release automation emits a
 baseline x86-64 artifact and an explicitly labeled AVX2 artifact. Inherited
 macOS source support has not been recertified for the BlackSTAR-specific paths

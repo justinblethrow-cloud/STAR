@@ -3,6 +3,11 @@
 This document defines the compatibility promises made by stable BlackSTAR
 releases. Anything not stated here remains best-effort.
 
+Stable promises attach to release tags, not merely to the tip of `main` or an
+unreleased source checkout. An explicitly labeled unreleased section documents
+a candidate behavior and its evidence, but does not extend the stable contract
+until a later release deliberately promotes it.
+
 ## Compatibility Identities
 
 BlackSTAR tracks three separate identities:
