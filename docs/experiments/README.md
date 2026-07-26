@@ -1,8 +1,10 @@
 # BlackSTAR Labs Experiments
 
-Labs experiments are isolated from the qualified release. Every experiment has
-a stable ID, a frozen parent commit, a falsifiable hypothesis, correctness and
-resource gates, raw evidence locations, diagrams, and an explicit decision.
+Labs experiments are isolated investigations. A change enters the qualified
+release only through a separate cumulative acceptance and publication path.
+Every experiment has a stable ID, a frozen parent commit, a falsifiable
+hypothesis, correctness and resource gates, raw evidence locations, diagrams,
+and an explicit decision.
 
 ## Required Lifecycle
 
@@ -60,6 +62,8 @@ claim an ordinary-path speedup.
 - [Q02](Q02-cross-workload-generalization.md): complete cross-workload
   hardening and compatibility record; nine public series passed, while the
   exclusive-node single-end timing series retained a variability-gate failure.
+  The hardening source was later accepted in BlackSTAR 1.1.0 without converting
+  that failure into a speed claim.
   Its bounded receipts are tracked under
   [`docs/benchmarks/Q02-cross-workload-20260726/`](../benchmarks/Q02-cross-workload-20260726/README.md).
 

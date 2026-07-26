@@ -41,7 +41,13 @@
     },
     "required_status_checks": {
       "contexts": [
-        "build-and-test"
+        "build-and-test",
+        "compiler-gcc",
+        "compiler-clang",
+        "starlong-build-and-smoke",
+        "release-portability",
+        "codeql-c-cpp",
+        "codeql-python"
       ],
       "strict": true
     },

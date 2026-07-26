@@ -90,31 +90,49 @@ jobs:
 
       - name: Verify release identity and OpenMP linkage
         run: |
+          version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' source/VERSION)"
+          baseline="dist/blackstar-${version}-linux-x86_64-baseline"
+          avx2="dist/blackstar-${version}-linux-x86_64-avx2"
           test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
           EXPECTED_CPU_TARGET=avx2 extras/tests/scripts/testBlackstarVersion.sh
           ldd source/STAR | grep -Eq 'libgomp|libomp'
-          test -f dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
-          test -f dist/blackstar-1.0.0-linux-x86_64-baseline/LICENSE
-          test -f dist/blackstar-1.0.0-linux-x86_64-baseline/ATTRIBUTION.md
-          test -f dist/blackstar-1.0.0-linux-x86_64-avx2.spdx.json
+          test -f "${baseline}.spdx.json"
+          test -x "${baseline}.STAR"
+          test -f "${baseline}.STAR.sha256"
+          test -f "${baseline}.build-info.tsv"
+          test -f "${baseline}.compatibility.tsv"
+          test -f "${baseline}.ldd.txt"
+          test -f "${baseline}/LICENSE"
+          test -f "${baseline}/ATTRIBUTION.md"
+          test -f "${avx2}.spdx.json"
+          test -x "${avx2}.STAR"
+          test -f "${avx2}.STAR.sha256"
+          test -f "${avx2}.build-info.tsv"
+          test -f "${avx2}.compatibility.tsv"
+          test -f "${avx2}.ldd.txt"
+          (
+            cd dist
+            sha256sum -c "$(basename "${baseline}").STAR.sha256"
+            sha256sum -c "$(basename "${avx2}").STAR.sha256"
+          )
           grep -Fxq $'cpu_target\tbaseline' \
-            dist/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv
+            "${baseline}/compatibility.tsv"
           grep -Fxq $'ymm_instructions\tabsent' \
-            dist/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv
+            "${baseline}/compatibility.tsv"
           grep -Fxq $'cpu_target\tavx2' \
-            dist/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv
+            "${avx2}/compatibility.tsv"
           grep -Fxq $'ymm_instructions\tpresent' \
-            dist/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv
-          jq -e '
+            "${avx2}/compatibility.tsv"
+          jq -e --arg version "${version}" '
             .spdxVersion == "SPDX-2.3" and
-            (.packages[] | select(.name == "BlackSTAR").versionInfo) == "1.0.0"
-          ' dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
+            (.packages[] | select(.name == "BlackSTAR").versionInfo) == $version
+          ' "${baseline}.spdx.json"
           test "$(
             jq -r .documentNamespace \
-              dist/blackstar-1.0.0-linux-x86_64-baseline.spdx.json
+              "${baseline}.spdx.json"
           )" != "$(
             jq -r .documentNamespace \
-              dist/blackstar-1.0.0-linux-x86_64-avx2.spdx.json
+              "${avx2}.spdx.json"
           )"
 
       - name: Verify release variant result equivalence
@@ -210,8 +228,10 @@ jobs:
           CXX: ${{ matrix.cxx }}
         run: |
           make -C source -j2 STAR CXX="${CXX}"
+          version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' source/VERSION)"
           test "$(source/STAR --version)" = "2.7.11b-blackstar.3"
-          source/STAR --version-json | jq -e '.blackstar_version == "1.0.0"'
+          source/STAR --version-json |
+            jq -e --arg version "${version}" '.blackstar_version == $version'
           ldd source/STAR | grep -Eq 'libgomp|libomp'
 
   starlong-build-and-smoke:
@@ -285,15 +305,16 @@ jobs:
         env:
           DIST_DIR: ${{ runner.temp }}/portable-dist
         run: |
+          version="$(sed -n 's/^#define BLACKSTAR_VERSION "\(.*\)"$/\1/p' source/VERSION)"
           for target in baseline avx2; do
-            compatibility="${DIST_DIR}/blackstar-1.0.0-linux-x86_64-${target}/compatibility.tsv"
+            compatibility="${DIST_DIR}/blackstar-${version}-linux-x86_64-${target}/compatibility.tsv"
             minimum_glibc="$(awk -F '\t' '$1=="minimum_glibc" {print $2}' "${compatibility}")"
             dpkg --compare-versions "${minimum_glibc}" le "2.31"
           done
           grep -Fxq $'ymm_instructions\tabsent' \
-            "${DIST_DIR}/blackstar-1.0.0-linux-x86_64-baseline/compatibility.tsv"
+            "${DIST_DIR}/blackstar-${version}-linux-x86_64-baseline/compatibility.tsv"
           grep -Fxq $'ymm_instructions\tpresent' \
-            "${DIST_DIR}/blackstar-1.0.0-linux-x86_64-avx2/compatibility.tsv"
+            "${DIST_DIR}/blackstar-${version}-linux-x86_64-avx2/compatibility.tsv"
 
       - name: Verify release variant result equivalence
         env:

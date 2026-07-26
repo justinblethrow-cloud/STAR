@@ -1,0 +1,34 @@
+field	value	qualification	source
+schema	blackstar-source-candidate-qualification-v1	exact	local qualification procedure
+candidate_commit	b10c14c6515b62f3e730c4e25a3b6dca20caa508	exact	git
+runtime_source_commit	ef2a2560013293a3cd93403d876f50a3d5ec759c	code and test-harness tree exact	git diff
+host_class	dedicated dual-socket x86-64 Slurm node	exclusive during qualification	system inventory
+start_utc	2026-07-26T21:22:18Z	exact	system clock
+finish_utc	2026-07-26T21:47:55Z	includes supplemental stock-STAR gate	system clock
+local_gate_ledger	29/29	all recorded gates passed	gate ledger
+candidate_source_archive_sha256	293d88dae647a43128dcc12b830aeb33a312aaf17f3e7403c018f2e26e6bf79f	exact commit archive	source receipt
+candidate_baseline_binary_sha256	2f3e29293d2107ce40c93d12648dadb2c6dbdf1ec2d333c41f1dc809e647ec0c	exact qualification binary	build receipt
+candidate_avx2_binary_sha256	334e172ae963150e7dac81e8b996afacedaa460daab00f4695e29a0bcc4c0c49	exact qualification binary	build receipt
+cross_root_release_reproducibility	PASS	baseline and AVX2 products exact across two paths	build comparison
+release_identity_openmp_isa	PASS	baseline and AVX2 identities linkage and ISA labels exact	binary inspection
+release_variant_result_equivalence	PASS	baseline and AVX2 measured outputs exact	differential test
+specialized_mode_matrix	12/12	official STAR differential oracle	specialized test
+focused_asan_ubsan	11/11	all focused sanitizer scripts passed	focused tests
+deployment_selector	PASS	pinned selection rollback and negative cases	selector test
+genome_insert_hardening	32/32	includes stock STAR compatibility and cross-thread idempotence	genomeInsert test
+saindex_strategy_equivalence	PASS	serial bounded-parallel and constrained paths exact	SAindex test
+starlong	PASS	build long-read smoke chunk floor and upstream equivalence	STARlong test
+public_paired76_correctness	PASS	12768316 pairs metrics junctions and gene counts exact	public fixture
+real_gfp_gst_delta_package_identity	5/5	inserted FASTA GTF overlay delta and manifest exact	real Delta fixture
+real_gfp_gst_mapping_equivalence	PASS	metrics junctions counts and canonical BAM exact	real Delta fixture
+real_gfp_gst_counts	100 / 100	GFP / GST fragments	gene-count oracle
+full_chm13_ercc_index_identity	14/14	all retained substantive artifacts exact	full-index oracle
+architecture_render_reproducibility	28/28	pinned Mermaid SVG outputs exact	render check
+performance_classification	descriptive only	single-run RCQ timings are not speed claims	release policy
+publication_status	source candidate	local qualification does not replace protected CI or tagged artifacts	release policy
+claim_id_RCQ_001	RCQ-1.1-001	29/29 locally recorded gates passed	this receipt
+claim_id_RCQ_002	RCQ-1.1-002	12/12 specialized differential modes passed	this receipt
+claim_id_RCQ_003	RCQ-1.1-003	11/11 focused sanitizer scripts passed	this receipt
+claim_id_RCQ_004	RCQ-1.1-004	32/32 GenomeInsert hardening subchecks passed	this receipt
+claim_id_RCQ_005	RCQ-1.1-005	14/14 retained CHM13 plus ERCC index artifacts matched	this receipt
+claim_id_RCQ_006	RCQ-1.1-006	28/28 pre-release architecture figures reproduced	this receipt

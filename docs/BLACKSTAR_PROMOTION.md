@@ -7,11 +7,11 @@ authorize deployment and does not replace environment-specific pipeline tests.
 
 | Field | Value |
 |---|---|
-| Version | `2.7.11b-blackstar.2` |
-| Prior qualified release | `2.7.11b-blackstar.1` at `821457378fa38bfb23b061b8f11ee0a09431dda7` |
-| Cumulative qualification record | `9998c445c5b87adacd2a4663bd964ce744aea300` |
-| Alignment benchmark source | `7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb` |
-| Alignment benchmark executable SHA-256 | `6b08a7925022c6a03813660c69d0b0bd1ed98a377ac9c1136dd987e3d4c8f85e` |
+| Version | `1.1.0` |
+| Prior qualified release | `v1.0.0` at `cd3adb609539840bcbcdccbcb2635c4edec03ac2` |
+| Exact source qualification | `b10c14c6515b62f3e730c4e25a3b6dca20caa508` |
+| Cross-workload runtime source | `ef2a2560013293a3cd93403d876f50a3d5ec759c` |
+| Deployable executable SHA-256 | Read from the selected `v1.1.0` release asset `build-info.tsv` |
 | Platform | x86-64 Linux |
 | Required linkage | `libgomp` or `libomp` |
 
@@ -43,7 +43,7 @@ commit.
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
   --candidate-sha256 CANDIDATE_SHA256 \
-  --candidate-version 2.7.11b-blackstar.2 \
+  --candidate-version 2.7.11b-blackstar.3 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
   --fallback-version 2.7.11b \
@@ -72,7 +72,7 @@ Do not bypass the selector with an unpinned binary path.
 extras/scripts/selectBlackSTAR.sh \
   --candidate /opt/blackstar/STAR \
   --candidate-sha256 CANDIDATE_SHA256 \
-  --candidate-version 2.7.11b-blackstar.2 \
+  --candidate-version 2.7.11b-blackstar.3 \
   --fallback /opt/star-stock/STAR \
   --fallback-sha256 STOCK_SHA256 \
   --fallback-version 2.7.11b \

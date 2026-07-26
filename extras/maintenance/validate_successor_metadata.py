@@ -73,6 +73,14 @@ def main() -> int:
     if compatibility_version != "2.7.11b":
         raise ValueError("unexpected STAR compatibility base")
 
+    release_notes = repo / "docs" / "releases" / (
+        f"{blackstar_version}-release-notes.md"
+    )
+    if not release_notes.is_file():
+        raise ValueError(
+            f"release notes missing for BlackSTAR {blackstar_version}"
+        )
+
     defaults = (repo / "source" / "parametersDefault").read_text(encoding="utf-8")
     default_match = re.search(r"^versionGenome\s+(\S+)", defaults, re.MULTILINE)
     if not default_match or default_match.group(1) != genome_format_version:
@@ -95,6 +103,10 @@ def main() -> int:
     compatibility = (repo / "docs" / "COMPATIBILITY.md").read_text(
         encoding="utf-8"
     )
+    changelog = (repo / "CHANGELOG.md").read_text(encoding="utf-8")
+    release_boundary = (repo / "docs" / "BLACKSTAR_RELEASE.md").read_text(
+        encoding="utf-8"
+    )
     versioning = (repo / "docs" / "VERSIONING.md").read_text(encoding="utf-8")
     forbidden = [
         "github.com/alexdobin/STAR/issues",
@@ -114,6 +126,16 @@ def main() -> int:
             raise ValueError(f"{label} missing from compatibility contract")
     if executable_version not in versioning:
         raise ValueError("current executable identity missing from versioning policy")
+    for text, label in (
+        (readme, "README"),
+        (changelog, "changelog"),
+        (release_boundary, "release boundary"),
+        (release_notes.read_text(encoding="utf-8"), "release notes"),
+    ):
+        if blackstar_version not in text:
+            raise ValueError(
+                f"BlackSTAR release {blackstar_version} missing from {label}"
+            )
 
     settings = json.loads(
         (repo / ".github" / "repository-settings.json").read_text(
@@ -132,8 +154,17 @@ def main() -> int:
     }:
         raise ValueError("unexpected successor repository feature policy")
     contexts = settings["branch_protection"]["required_status_checks"]["contexts"]
-    if contexts != ["build-and-test"]:
-        raise ValueError("required branch-protection check is not build-and-test")
+    expected_contexts = [
+        "build-and-test",
+        "compiler-gcc",
+        "compiler-clang",
+        "starlong-build-and-smoke",
+        "release-portability",
+        "codeql-c-cpp",
+        "codeql-python",
+    ]
+    if contexts != expected_contexts:
+        raise ValueError("required branch-protection checks do not match policy")
 
     for relative in required:
         text = (repo / relative).read_text(encoding="utf-8")

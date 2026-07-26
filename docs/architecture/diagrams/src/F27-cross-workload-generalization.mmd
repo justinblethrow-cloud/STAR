@@ -1,6 +1,6 @@
 flowchart TB
     CONTROL["OFFICIAL STAR 2.7.11b<br/>PINNED CONTROL"] --> MATRIX["Q02 PUBLIC WORKLOAD MATRIX<br/>96 threads; local storage; balanced pairs"]
-    CANDIDATE["UNRELEASED BLACKSTAR LABS CANDIDATE<br/>blackstar.2 stack plus hardening"] --> MATRIX
+    CANDIDATE["BLACKSTAR 1.1.0 HARDENING SOURCE<br/>blackstar.2 stack plus Q02 corrections"] --> MATRIX
 
     MATRIX --> BULK["FRAGMENTED AND SPECIALIZED BULK"]
     BULK --> PE76["Paired 76-base<br/>20.05% measured gain<br/>5/5 outputs exact"]
@@ -27,7 +27,7 @@ flowchart TB
     LONG --> CORRECT
     SINGLE --> CORRECT
 
-    CORRECT --> DECISION["MIXED Q02 DECISION<br/>retain hardening candidate<br/>outside release boundary"]
+    CORRECT --> DECISION["MIXED PERFORMANCE DECISION<br/>compatibility source accepted in 1.1.0<br/>single-end speed claim rejected"]
     LIMIT["LIMITS<br/>one CPU family; local storage; 96-thread primary series<br/>STARlong requires symmetric seed-limit override<br/>single-end timing remains unresolved"] -.-> DECISION
 
     classDef control fill:#f3f4f6,stroke:#4b5563,color:#111827;

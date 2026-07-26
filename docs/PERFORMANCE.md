@@ -75,12 +75,12 @@ All 57 cold-versus-warm artifact checks passed. Full and Delta alignment
 matched timing-independent metrics, junctions, gene counts, and canonical BAM
 records, with exactly 100 GFP and 100 GST fragments counted in each mode.
 
-## Unreleased Cross-Workload Labs Evidence
+## BlackSTAR 1.1.0 Cross-Workload Qualification
 
-Q02 compared official STAR 2.7.11b with an unreleased BlackSTAR hardening
-candidate across common modes beyond paired gene-count-only alignment. These
-results are not part of the current release boundary and are not incremental
-effects of Q02 alone; most reflect the cumulative BlackSTAR runtime stack.
+Q02 compared official STAR 2.7.11b with the BlackSTAR 1.1.0 hardening source
+across common modes beyond paired gene-count-only alignment. These are
+cumulative workload results, not incremental effects of the 1.1.0 hardening
+changes alone; most reflect the complete BlackSTAR runtime stack.
 
 | Workload | Official STAR | BlackSTAR | Median paired change | 95% interval | Qualification |
 | --- | ---: | ---: | ---: | ---: | --- |
@@ -124,8 +124,8 @@ Bounded machine-readable receipts are committed under:
 
 - `docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/` for the stable
   cumulative comparison; and
-- `docs/benchmarks/Q02-cross-workload-20260726/` for the unreleased
-  cross-workload Labs candidate.
+- `docs/benchmarks/Q02-cross-workload-20260726/` for the 1.1.0
+  cross-workload qualification source.
 
 Large raw outputs remain outside Git. The receipts identify measured binaries
 and inputs and preserve the pair data, aggregate values, negative evidence, and

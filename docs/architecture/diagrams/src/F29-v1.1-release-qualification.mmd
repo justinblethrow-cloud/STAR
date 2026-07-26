@@ -1,0 +1,32 @@
+flowchart TB
+    SOURCE["EXACT SOURCE CANDIDATE<br/>b10c14c; Q02 runtime tree exact"] --> ROOTS["TWO INDEPENDENT CLEAN ROOTS<br/>baseline and AVX2 release builds"]
+    ROOTS --> REPRO["CROSS-PATH REPRODUCIBILITY<br/>release products byte-identical"]
+
+    SOURCE --> LOCAL["DEDICATED-NODE CUMULATIVE GATES<br/>29/29 recorded gates pass"]
+    LOCAL --> MODES["12 specialized modes<br/>11 sanitizer scripts<br/>STARlong and SAindex"]
+    LOCAL --> INSERT["32 GenomeInsert checks<br/>stock STAR compatibility<br/>GFP/GST Delta oracle"]
+    LOCAL --> WORKLOAD["12.77M paired reads exact<br/>CHM13+ERCC 14/14 artifacts<br/>28/28 architecture figures"]
+
+    REPRO --> PREP["BLACKSTAR 1.1.0 RELEASE PREPARATION<br/>version, records, architecture, CI policy"]
+    MODES --> PREP
+    INSERT --> PREP
+    WORKLOAD --> PREP
+
+    PREP --> CI["PROTECTED REQUIRED CHECKS<br/>GCC + Clang + Ubuntu 20.04 portability<br/>STARlong + CodeQL + full acceptance"]
+    CI --> MAIN["PROTECTED MAIN<br/>all checks successful"]
+    MAIN --> TAG["ANNOTATED v1.1.0 TAG<br/>exact protected commit"]
+    TAG --> RELEASE["TWO TAGGED CLEAN BUILDS<br/>compare + SBOM + attest + publish"]
+
+    LIMITS["RETAINED LIMITS<br/>no single-end speed claim<br/>STARsolo and TranscriptomeSAM noninferior only<br/>STARlong seed-limit caveat"] -.-> PREP
+    DEPLOY["EXTERNAL DEPLOYMENT<br/>separate authorization"] -.-> RELEASE
+
+    classDef source fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef passed fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef gate fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef release fill:#dcfce7,stroke:#15803d,color:#111827,stroke-width:3px;
+    classDef limit fill:#fef3c7,stroke:#a16207,color:#111827,stroke-dasharray:5 5;
+    class SOURCE,PREP source;
+    class ROOTS,LOCAL,MODES,INSERT,WORKLOAD,REPRO passed;
+    class CI,MAIN,TAG gate;
+    class RELEASE release;
+    class LIMITS,DEPLOY limit;

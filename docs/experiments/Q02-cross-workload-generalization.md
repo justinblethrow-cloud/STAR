@@ -2,14 +2,15 @@
 
 ## Status
 
-- State: complete; mixed qualification result
+- State: complete; mixed performance result and accepted compatibility source
 - Parent commit:
   `0978542f0957c47548f5f00fc706e1e08c021375`
 - Final experiment commit:
   `ef2a2560013293a3cd93403d876f50a3d5ec759c`
 - Opened: 2026-07-25
 - Decided: 2026-07-26
-- Release disposition: retained as an unreleased Labs hardening candidate
+- Release disposition: promoted by the separate BlackSTAR 1.1.0 release
+  qualification, with the negative timing evidence retained
 
 Q02 asked whether BlackSTAR's improvements and compatibility controls extend
 beyond the paired short-read, gene-count-only workload that originally drove
@@ -60,8 +61,9 @@ benchmark infrastructure, not the earlier measured FASTQ runtime paths.
 Performance values nevertheless remain claims about the exact measured binary,
 not an unmeasured future release artifact.
 
-This phase does not authorize a version bump, tag, GitHub update, release, or
-external pipeline deployment.
+Q02 alone did not authorize a version bump, tag, GitHub update, release, or
+external pipeline deployment. A later exact-candidate release qualification
+accepted the compatibility hardening for BlackSTAR 1.1.0.
 
 ## Correctness Contract
 
@@ -214,14 +216,16 @@ are not expected to resolve in a fresh clone.
 
 ## Decision
 
-- Outcome: retain the hardening source and evidence as a Labs candidate.
+- Outcome: retain the mixed performance decision and accept the hardening
+  source through the separate 1.1.0 release qualification.
 - Compatibility: no measured biological-output regression across the tested
   short-read, single-cell, specialized, and long-read modes.
 - Performance: strong cumulative gains generalize to several fragmented and
   specialized modes; STARsolo and TranscriptomeSAM are noninferior only.
 - Unresolved: single-end performance remains variable and does not qualify as
   an improvement.
-- Release: not promoted, versioned, tagged, pushed, or deployed by Q02.
+- Release: promoted in BlackSTAR 1.1.0 after cumulative exact-candidate gates;
+  Q02 itself did not authorize publication or deployment.
 - Follow-up: any release candidate must rebuild from the eventual protected
   commit and rerun release reproducibility plus the selected cumulative
   workload matrix.

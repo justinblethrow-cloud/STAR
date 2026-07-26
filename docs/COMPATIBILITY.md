@@ -18,7 +18,7 @@ BlackSTAR tracks three separate identities:
 | STAR compatibility base | Upstream source release from which inherited behavior is evaluated |
 | Genome format | `versionGenome` accepted when loading a conventional index |
 
-For BlackSTAR `1.0.0`, the executable lineage token is
+For BlackSTAR `1.1.0`, the executable lineage token is
 `2.7.11b-blackstar.3`. Its compatibility base is official STAR `2.7.11b` at
 commit `b1edc1208d91a53bf40ebae8669f71d50b994851`. The conventional genome format
 remains `2.7.4a`.
@@ -86,9 +86,9 @@ Changes caused by explicit BlackSTAR-only references are expected. In a
 base-versus-Delta test, noninserted biological output must remain equivalent
 outside mappings and counts attributable to requested added references.
 
-### Unreleased TranscriptomeSAM Correction
+### TranscriptomeSAM Primary Determinism
 
-The Q02 Labs candidate makes the `TranscriptomeSAM` primary-transcript flag
+BlackSTAR 1.1.0 makes the `TranscriptomeSAM` primary-transcript flag
 deterministic from `runRNGseed` and the stable input-read ordinal. Official STAR
 uses a worker-local random generator for this choice, so a controlled run on
 the same reads produced different raw primary flags at 1 and 96 threads.
@@ -99,9 +99,9 @@ flag `0x100` to a different member of an otherwise identical transcript
 alignment set than one particular official STAR run. One inherited random draw
 is retained per read so later inherited random choices do not shift.
 
-This correction is present only in the unreleased Labs candidate documented by
-[Q02](experiments/Q02-cross-workload-generalization.md). It is not a promise of
-the current stable release until deliberately promoted and versioned.
+The implementation and cross-thread oracle are documented by
+[Q02](experiments/Q02-cross-workload-generalization.md) and the 1.1.0
+acceptance record.
 
 ## Resource and Runtime Behavior
 
