@@ -21,6 +21,7 @@ until it passes cumulative qualification and is deliberately promoted.
 | A08 | Multi-sample scheduler | Shared immutable index memory plus explicit resource tokens improves node throughput with complete isolation. | Proposed | A07 |
 | A09 | Toolchain | LTO and profile-guided optimization improve the accepted cumulative alignment stack without semantic changes. | Rejected; LTO and PGO each gained about 1.2%, below the 2% practical gate | A06 |
 | Q01 | Cumulative alignment qualification | The complete H01+A02+A05+A06 stack preserves release behavior and generalizes across private, shared, compressed, BAM, affinity, sanitizer, compatibility, and package gates. | Complete; promoted in blackstar.2 | A06 and A09 decision |
+| Q02 | Cross-workload generalization | The released high-thread stack and new compatibility hardening preserve behavior beyond paired gene-count-only RNA-seq. | Complete; nine public series passed, single-end timing remains unresolved, no release promotion | Q01 and successor transition |
 | I01 | Genome preparation | Parallel reverse-complement and bounded private prefix histograms reduce serial setup. | Proposed | Cumulative alignment qualification |
 | I02 | SA packing | Record-block partitioning permits deterministic disjoint-byte parallel packing. | Proposed | I01 |
 | I03 | Junction merge | Partitioned merge and rank calculation reduce the remaining serial junction stage. | Proposed | I02 |
@@ -43,5 +44,11 @@ until it passes cumulative qualification and is deliberately promoted.
 - Q01 pre-promotion package artifacts retain the old `.1` source version and
   are not release assets. Only clean `.2` packages from the protected release
   commit are distributable.
+- Q02 does not establish a single-end speed improvement. Its exclusive-node
+  five-pair series passed correctness, RSS, and noninferiority but exceeded the
+  5 percent compatibility CV threshold.
+- Q02 TranscriptomeSAM output intentionally stabilizes the primary transcript
+  flag across worker schedules. The complete upstream alignment set remains the
+  compatibility oracle after clearing only flag `0x100`.
 - I05 begins only after a documented I04 decision and retains the default v1
   index format.

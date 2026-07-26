@@ -1,0 +1,34 @@
+flowchart LR
+    READS["INPUT DISPATCH<br/>stable global iReadAll ordinal"] --> UPWORK["OFFICIAL STAR WORKERS<br/>worker-local RNG seeded by chunk"]
+    UPWORK --> UPSELECT["PRIMARY TRANSCRIPT CHOICE<br/>depends on acquiring worker"]
+    UPSELECT --> UPTEST["CONTROLLED 1 VS 96 THREADS<br/>raw primary digests differ"]
+
+    READS --> BSTAR["BLACKSTAR SELECTOR<br/>SplitMix64(runRNGseed, iReadAll)<br/>modulo transcript alignment count"]
+    BSTAR --> BSELECT["PRIMARY TRANSCRIPT CHOICE<br/>independent of worker scheduling"]
+    BSELECT --> BTEST["CONTROLLED 1 VS 96 THREADS<br/>raw primary digests exact"]
+
+    UPSELECT --> LEGACY["ONE LEGACY RNG DRAW RETAINED<br/>later inherited RNG state does not shift"]
+    BSELECT --> LEGACY
+
+    UPTEST --> ORACLE["BIOLOGICAL COMPATIBILITY ORACLE"]
+    BTEST --> ORACLE
+    LEGACY --> ORACLE
+    ORACLE --> ALIGN["Transcript alignment set exact<br/>after clearing only SAM flag 0x100"]
+    ORACLE --> GENOME["Genomic BAM exact"]
+    ORACLE --> COUNTS["Gene counts and junctions exact"]
+    ALIGN --> RESULT["DETERMINISTIC COMPATIBILITY CORRECTION<br/>alignment set preserved; visible primary flag stabilized"]
+    GENOME --> RESULT
+    COUNTS --> RESULT
+
+    classDef input fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef upstream fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef guard fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef passed fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef result fill:#dbeafe,stroke:#1d4ed8,color:#111827,stroke-width:3px;
+    class READS input;
+    class UPWORK,UPSELECT,UPTEST upstream;
+    class BSTAR,BSELECT,BTEST candidate;
+    class LEGACY guard;
+    class ORACLE,ALIGN,GENOME,COUNTS passed;
+    class RESULT result;

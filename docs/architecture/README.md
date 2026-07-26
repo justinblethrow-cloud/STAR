@@ -33,6 +33,8 @@ customer-derived evidence belong in an untracked internal derivative.
 24. [Independent-successor transition](diagrams/svg/F24-independent-successor.svg)
 25. [Version and compatibility identities](diagrams/svg/F25-version-compatibility.svg)
 26. [Governance and release path](diagrams/svg/F26-governance-release.svg)
+27. [Q02 cross-workload generalization](diagrams/svg/F27-cross-workload-generalization.svg)
+28. [Transcriptome primary determinism](diagrams/svg/F28-transcriptome-primary-determinism.svg)
 
 The editable sources are under `diagrams/src/`. The generated SVG and PDF
 exports are presentation-ready but are never the source of truth.

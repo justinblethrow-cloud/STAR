@@ -316,6 +316,30 @@
       "caption": "BlackSTAR classifies issue origin, requires compatibility and correctness evidence, adds matched performance gates where needed, and publishes only reproducible protected-main release artifacts.",
       "alt_text": "Governance flow from issue, proposal, security report, or experiment through upstream-versus-BlackSTAR origin classification and a focused pull request. Required compiler, CodeQL, sanitizer, deterministic, and compatibility checks lead either directly to maintainer review or through matched performance and resource gates. Accepted work reaches protected main, two exact release builds, checksummed artifacts, SPDX SBOM and provenance, then an immutable semantic-version release. Prior release rollback and external deployment authorization remain separate boundaries.",
       "outputs": ["docs/architecture/diagrams/svg/F26-governance-release.svg", "docs/architecture/diagrams/pdf/F26-governance-release.pdf"]
+    },
+    {
+      "id": "F27",
+      "title": "Q02 cross-workload generalization",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "ef2a2560013293a3cd93403d876f50a3d5ec759c",
+      "source": "docs/architecture/diagrams/src/F27-cross-workload-generalization.mmd",
+      "evidence": ["docs/experiments/Q02-cross-workload-generalization.md", "docs/architecture/evidence/alignment-Q02-cross-workload-20260726.tsv"],
+      "caption": "Q02 extends direct official-STAR comparisons across fragmented paired, single-end, two-pass, junction, chimeric, BAM, single-cell, transcriptome, and long-read modes while retaining the failed single-end timing gate.",
+      "alt_text": "Cross-workload qualification diagram comparing official STAR 2.7.11b with the unreleased BlackSTAR Labs candidate at 96 threads. Paired 76-base, paired 150-base, two-pass, BySJout, chimeric, coordinate-sorted BAM, and STARlong modes show positive measured intervals with every applicable output comparison passing. TranscriptomeSAM and STARsolo pass noninferiority without a speed claim. Single-end preserves outputs and noninferiority but fails its variability gate. Thirty-six of thirty-six mode-specific pair comparisons pass, leading to a mixed decision that retains the hardening candidate outside the release boundary.",
+      "outputs": ["docs/architecture/diagrams/svg/F27-cross-workload-generalization.svg", "docs/architecture/diagrams/pdf/F27-cross-workload-generalization.pdf"]
+    },
+    {
+      "id": "F28",
+      "title": "Transcriptome primary determinism",
+      "maturity": "experimental",
+      "visibility": "public",
+      "code_commit": "ef2a2560013293a3cd93403d876f50a3d5ec759c",
+      "source": "docs/architecture/diagrams/src/F28-transcriptome-primary-determinism.mmd",
+      "evidence": ["docs/experiments/Q02-cross-workload-generalization.md", "docs/architecture/evidence/alignment-Q02-cross-workload-20260726.tsv", "source/ReadAlign_quantTranscriptome.cpp", "source/TranscriptomePrimary.cpp"],
+      "caption": "BlackSTAR replaces worker-dependent TranscriptomeSAM primary selection with a run-seed and read-ordinal selector while retaining the legacy RNG draw and preserving the complete upstream transcript alignment set.",
+      "alt_text": "Before-and-after determinism diagram. Official STAR routes a stable input read ordinal to workers whose chunk-seeded local random generators choose transcript primary flags; a controlled one-versus-96-thread test produces different raw primary digests. BlackSTAR hashes the run seed and stable read ordinal with SplitMix64, making the choice independent of worker scheduling; the same test produces exact raw digests. One legacy random draw is retained to preserve later random-stream position. Transcript alignment sets after clearing only flag 0x100, genomic BAM records, gene counts, junctions, and timing-independent metrics remain exact.",
+      "outputs": ["docs/architecture/diagrams/svg/F28-transcriptome-primary-determinism.svg", "docs/architecture/diagrams/pdf/F28-transcriptome-primary-determinism.pdf"]
     }
   ]
 }

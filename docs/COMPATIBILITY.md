@@ -81,6 +81,23 @@ Changes caused by explicit BlackSTAR-only references are expected. In a
 base-versus-Delta test, noninserted biological output must remain equivalent
 outside mappings and counts attributable to requested added references.
 
+### Unreleased TranscriptomeSAM Correction
+
+The Q02 Labs candidate makes the `TranscriptomeSAM` primary-transcript flag
+deterministic from `runRNGseed` and the stable input-read ordinal. Official STAR
+uses a worker-local random generator for this choice, so a controlled run on
+the same reads produced different raw primary flags at 1 and 96 threads.
+
+BlackSTAR preserves the complete transcript alignment set, genomic BAM records,
+gene counts, splice junctions, and timing-independent metrics. It may assign
+flag `0x100` to a different member of an otherwise identical transcript
+alignment set than one particular official STAR run. One inherited random draw
+is retained per read so later inherited random choices do not shift.
+
+This correction is present only in the unreleased Labs candidate documented by
+[Q02](experiments/Q02-cross-workload-generalization.md). It is not a promise of
+the current stable release until deliberately promoted and versioned.
+
 ## Resource and Runtime Behavior
 
 Wall time, peak memory, CPU placement, NUMA allocation, I/O scheduling, and
