@@ -77,9 +77,11 @@ jobs:
             minimum_glibc="$(awk -F '\t' '$1=="minimum_glibc" {print $2}' "${package}/compatibility.tsv")"
             dpkg --compare-versions "${minimum_glibc}" le "2.31"
           done
-          grep -Fxq $'ymm_instructions\tabsent' \
+          awk -F '\t' \
+            '$1=="ymm_instructions" && $2=="absent" {found=1} END {exit !found}' \
             "${RUNNER_TEMP}/build-1/blackstar-${version}-linux-x86_64-baseline/compatibility.tsv"
-          grep -Fxq $'ymm_instructions\tpresent' \
+          awk -F '\t' \
+            '$1=="ymm_instructions" && $2=="present" {found=1} END {exit !found}' \
             "${RUNNER_TEMP}/build-1/blackstar-${version}-linux-x86_64-avx2/compatibility.tsv"
 
       - name: Verify release variant result equivalence
