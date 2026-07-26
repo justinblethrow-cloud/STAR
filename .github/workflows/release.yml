@@ -125,7 +125,7 @@ jobs:
           subject-path: |
             ${{ runner.temp }}/build-1/*.tar.gz
             ${{ runner.temp }}/build-1/*.spdx.json
-            ${{ runner.temp }}/build-1/*/STAR
+            ${{ runner.temp }}/build-1/*.STAR
 
       - name: Publish immutable release
         env:
@@ -138,19 +138,21 @@ jobs:
             --verify-tag \
             --title "BlackSTAR ${version}" \
             --notes-file "docs/releases/${version}-release-notes.md" \
-            "${RUNNER_TEMP}/build-1/${baseline}/STAR#BlackSTAR baseline Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${baseline}.STAR#BlackSTAR baseline Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${baseline}.STAR.sha256#Baseline executable SHA-256 sidecar" \
             "${RUNNER_TEMP}/build-1/${baseline}.tar.gz#BlackSTAR baseline Linux x86-64 archive" \
             "${RUNNER_TEMP}/build-1/${baseline}.tar.gz.sha256#Baseline archive SHA-256 sidecar" \
             "${RUNNER_TEMP}/build-1/${baseline}.spdx.json#Baseline SPDX 2.3 SBOM" \
-            "${RUNNER_TEMP}/build-1/${baseline}/build-info.tsv#Baseline reproducible build metadata" \
-            "${RUNNER_TEMP}/build-1/${baseline}/compatibility.tsv#Baseline compatibility metadata" \
-            "${RUNNER_TEMP}/build-1/${baseline}/ldd.txt#Baseline runtime linkage metadata" \
-            "${RUNNER_TEMP}/build-1/${avx2}/STAR#BlackSTAR AVX2 Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${baseline}.build-info.tsv#Baseline reproducible build metadata" \
+            "${RUNNER_TEMP}/build-1/${baseline}.compatibility.tsv#Baseline compatibility metadata" \
+            "${RUNNER_TEMP}/build-1/${baseline}.ldd.txt#Baseline runtime linkage metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}.STAR#BlackSTAR AVX2 Linux x86-64 executable" \
+            "${RUNNER_TEMP}/build-1/${avx2}.STAR.sha256#AVX2 executable SHA-256 sidecar" \
             "${RUNNER_TEMP}/build-1/${avx2}.tar.gz#BlackSTAR AVX2 Linux x86-64 archive" \
             "${RUNNER_TEMP}/build-1/${avx2}.tar.gz.sha256#AVX2 archive SHA-256 sidecar" \
             "${RUNNER_TEMP}/build-1/${avx2}.spdx.json#AVX2 SPDX 2.3 SBOM" \
-            "${RUNNER_TEMP}/build-1/${avx2}/build-info.tsv#AVX2 reproducible build metadata" \
-            "${RUNNER_TEMP}/build-1/${avx2}/compatibility.tsv#AVX2 compatibility metadata" \
-            "${RUNNER_TEMP}/build-1/${avx2}/ldd.txt#AVX2 runtime linkage metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}.build-info.tsv#AVX2 reproducible build metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}.compatibility.tsv#AVX2 compatibility metadata" \
+            "${RUNNER_TEMP}/build-1/${avx2}.ldd.txt#AVX2 runtime linkage metadata" \
             "LICENSE#MIT license" \
             "ATTRIBUTION.md#Upstream lineage and citation"

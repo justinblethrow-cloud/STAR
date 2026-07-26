@@ -276,7 +276,7 @@
       "visibility": "public",
       "code_commit": "9998c445c5b87adacd2a4663bd964ce744aea300",
       "source": "docs/architecture/diagrams/src/F23-blackstar2-promotion.mmd",
-      "evidence": ["docs/BLACKSTAR_RELEASE.md", "docs/BLACKSTAR_ACCEPTANCE.md", "docs/experiments/Q01-cumulative-alignment-qualification.md", "docs/architecture/evidence/release-2.7.11b-blackstar.2.tsv"],
+      "evidence": ["docs/releases/2.7.11b-blackstar.2-release-notes.md", "docs/releases/2.7.11b-blackstar.2-acceptance.md", "docs/experiments/Q01-cumulative-alignment-qualification.md", "docs/architecture/evidence/release-2.7.11b-blackstar.2.tsv"],
       "caption": "Blackstar.2 promotes the Q01-qualified H01, A02, A05, and A06 alignment stack on top of blackstar.1 while preserving protected-master CI, explicit exclusions, and a separate external-deployment boundary.",
       "alt_text": "Promotion diagram from upstream STAR 2.7.11b to the qualified blackstar.1 index and insertion release, then through H01 affinity recovery, A02 adaptive input chunks, A05 NUMA-aware private loading, A06 transcript-recursion copy elision, and Q01 cumulative qualification. Replicated performance, exact-output safety, inherited insertion and SAindex compatibility, versioned release packaging, and protected-master build-and-test gates lead to the accepted blackstar.2 release boundary. A01, A02b, A09, alignReadsMulti, prefork workers, and threaded BAM compression remain excluded, and external deployment requires separate authorization.",
       "outputs": ["docs/architecture/diagrams/svg/F23-blackstar2-promotion.svg", "docs/architecture/diagrams/pdf/F23-blackstar2-promotion.pdf"]
@@ -296,13 +296,13 @@
     {
       "id": "F25",
       "title": "Version and compatibility identities",
-      "maturity": "roadmap",
+      "maturity": "accepted",
       "visibility": "public",
-      "code_commit": "d6fbf932ae2b155ce4f689bce106429ab2bc07f6",
+      "code_commit": "b10c14c6515b62f3e730c4e25a3b6dca20caa508",
       "source": "docs/architecture/diagrams/src/F25-version-compatibility.mmd",
       "evidence": ["docs/VERSIONING.md", "docs/COMPATIBILITY.md", "source/VERSION", "source/Parameters.cpp"],
       "caption": "Independent BlackSTAR release version, executable lineage token, pinned STAR compatibility base, and genome-format version are separate identities exposed together through machine-readable version metadata.",
-      "alt_text": "Four-part identity diagram showing BlackSTAR release 1.0.0 as the support and API boundary, the wrapper-compatible executable token 2.7.11b-blackstar.3, official STAR 2.7.11b as a pinned behavioral oracle, and genome format 2.7.4a for conventional index loading. All four feed version JSON, while inherited CLI, Full indexes, and BlackSTAR-only Overlay and Delta paths feed explicit compatibility tests.",
+      "alt_text": "Four-part identity diagram showing BlackSTAR release 1.1.0 as the support and API boundary, the wrapper-compatible executable token 2.7.11b-blackstar.3, official STAR 2.7.11b as a pinned behavioral oracle, and genome format 2.7.4a for conventional index loading. All four feed version JSON, while inherited CLI, Full indexes, and BlackSTAR-only Overlay and Delta paths feed explicit compatibility tests.",
       "outputs": ["docs/architecture/diagrams/svg/F25-version-compatibility.svg", "docs/architecture/diagrams/pdf/F25-version-compatibility.pdf"]
     },
     {
@@ -320,19 +320,19 @@
     {
       "id": "F27",
       "title": "Q02 cross-workload generalization",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "ef2a2560013293a3cd93403d876f50a3d5ec759c",
       "source": "docs/architecture/diagrams/src/F27-cross-workload-generalization.mmd",
       "evidence": ["docs/experiments/Q02-cross-workload-generalization.md", "docs/architecture/evidence/alignment-Q02-cross-workload-20260726.tsv"],
       "caption": "Q02 extends direct official-STAR comparisons across fragmented paired, single-end, two-pass, junction, chimeric, BAM, single-cell, transcriptome, and long-read modes while retaining the failed single-end timing gate.",
-      "alt_text": "Cross-workload qualification diagram comparing official STAR 2.7.11b with the unreleased BlackSTAR Labs candidate at 96 threads. Paired 76-base, paired 150-base, two-pass, BySJout, chimeric, coordinate-sorted BAM, and STARlong modes show positive measured intervals with every applicable output comparison passing. TranscriptomeSAM and STARsolo pass noninferiority without a speed claim. Single-end preserves outputs and noninferiority but fails its variability gate. Thirty-six of thirty-six mode-specific pair comparisons pass, leading to a mixed decision that retains the hardening candidate outside the release boundary.",
+      "alt_text": "Cross-workload qualification diagram comparing official STAR 2.7.11b with the BlackSTAR 1.1.0 hardening source at 96 threads. Paired 76-base, paired 150-base, two-pass, BySJout, chimeric, coordinate-sorted BAM, and STARlong modes show positive measured intervals with every applicable output comparison passing. TranscriptomeSAM and STARsolo pass noninferiority without a speed claim. Single-end preserves outputs and noninferiority but fails its variability gate. Thirty-six of thirty-six mode-specific pair comparisons pass; compatibility hardening is accepted in 1.1.0 while the single-end speed claim remains rejected.",
       "outputs": ["docs/architecture/diagrams/svg/F27-cross-workload-generalization.svg", "docs/architecture/diagrams/pdf/F27-cross-workload-generalization.pdf"]
     },
     {
       "id": "F28",
       "title": "Transcriptome primary determinism",
-      "maturity": "experimental",
+      "maturity": "accepted",
       "visibility": "public",
       "code_commit": "ef2a2560013293a3cd93403d876f50a3d5ec759c",
       "source": "docs/architecture/diagrams/src/F28-transcriptome-primary-determinism.mmd",
@@ -340,6 +340,18 @@
       "caption": "BlackSTAR replaces worker-dependent TranscriptomeSAM primary selection with a run-seed and read-ordinal selector while retaining the legacy RNG draw and preserving the complete upstream transcript alignment set.",
       "alt_text": "Before-and-after determinism diagram. Official STAR routes a stable input read ordinal to workers whose chunk-seeded local random generators choose transcript primary flags; a controlled one-versus-96-thread test produces different raw primary digests. BlackSTAR hashes the run seed and stable read ordinal with SplitMix64, making the choice independent of worker scheduling; the same test produces exact raw digests. One legacy random draw is retained to preserve later random-stream position. Transcript alignment sets after clearing only flag 0x100, genomic BAM records, gene counts, junctions, and timing-independent metrics remain exact.",
       "outputs": ["docs/architecture/diagrams/svg/F28-transcriptome-primary-determinism.svg", "docs/architecture/diagrams/pdf/F28-transcriptome-primary-determinism.pdf"]
+    },
+    {
+      "id": "F29",
+      "title": "BlackSTAR 1.1.0 qualification and release path",
+      "maturity": "accepted",
+      "visibility": "public",
+      "code_commit": "b10c14c6515b62f3e730c4e25a3b6dca20caa508",
+      "source": "docs/architecture/diagrams/src/F29-v1.1-release-qualification.mmd",
+      "evidence": ["docs/BLACKSTAR_ACCEPTANCE.md", "docs/RELEASE_POLICY.md", "docs/benchmarks/RCQ-1.1.0-source-20260726/qualification-receipt.tsv"],
+      "caption": "BlackSTAR 1.1.0 promotion requires exact-candidate cumulative qualification, seven protected GitHub checks, a protected-main tag, two byte-identical tagged builds, and attested immutable publication.",
+      "alt_text": "Release qualification diagram starting from exact source candidate b10c14c. Two independent clean roots produce byte-identical baseline and AVX2 artifacts, while 29 dedicated-node gates cover specialized modes, sanitizers, STARlong, SAindex, GenomeInsert, public paired reads, GFP and GST Delta mapping, full CHM13 plus ERCC indexes, and architecture rendering. Versioned release preparation then enters seven protected GitHub checks, protected main, an annotated v1.1.0 tag, two tagged clean builds, artifact comparison, SBOM generation, attestation, and publication. Single-end, STARsolo, TranscriptomeSAM, STARlong, and external-deployment limitations remain visible.",
+      "outputs": ["docs/architecture/diagrams/svg/F29-v1.1-release-qualification.svg", "docs/architecture/diagrams/pdf/F29-v1.1-release-qualification.pdf"]
     }
   ]
 }

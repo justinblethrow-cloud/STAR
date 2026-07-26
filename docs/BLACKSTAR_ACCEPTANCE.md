@@ -1,189 +1,169 @@
-# BlackSTAR 2.7.11b-blackstar.2 Acceptance Record
+# BlackSTAR 1.1.0 Acceptance Record
 
 ## Verdict
 
-BlackSTAR `2.7.11b-blackstar.2` has passed the technical gates for an x86-64
-Linux release. It inherits the accepted index-generation, genome-insert,
-integrity, and deployment boundary from `2.7.11b-blackstar.1` and adds the
-cumulatively qualified H01, A02, A05, and A06 alignment changes.
+BlackSTAR 1.1.0 is accepted for an x86-64 Linux release after the protected
+release commit passes every required GitHub check and the tagged release
+workflow reproduces, compares, attests, and publishes both CPU variants.
 
-The cumulative qualification record is commit
-`9998c445c5b87adacd2a4663bd964ce744aea300`. Paired timing used cumulative
-source revision `7b31a5fe5cb966c9146b99d5ca1ad81ea9c81cdb`; the final runtime
-implementation commit is `6032393155317b17fef1750672f1da6770ae6042`.
-The benchmark harness revision is
-`9d37e0f8009c28fd72e84c3c42fa272ed53b1f71`.
+This release promotes the Q02 compatibility hardening while retaining every
+negative and limiting result. It does not claim a single-end speedup, a
+STARsolo speedup, or a TranscriptomeSAM speedup.
 
-This is a source and release-artifact qualification. It is not authorization
-for integration into any external pipeline or production environment.
+This is source and release-artifact qualification. It is not authorization for
+integration into an external pipeline or production environment.
 
-## Release Ancestry
+## Qualification Anchors
 
 | Boundary | Commit or tag | Role |
 | --- | --- | --- |
-| Upstream STAR | `2.7.11b` at `b1edc1208d91a53bf40ebae8669f71d50b994851` | Compatibility oracle and inherited core |
-| BlackSTAR prior release | `2.7.11b-blackstar.1` at `821457378fa38bfb23b061b8f11ee0a09431dda7` | Qualified index, insertion, integrity, and deployment boundary |
-| Cumulative alignment qualification | `9998c445c5b87adacd2a4663bd964ce744aea300` | Qualified H01+A02+A05+A06 source and evidence |
-| BlackSTAR current release | `2.7.11b-blackstar.2` | Prior release plus the qualified cumulative alignment stack |
+| Official STAR | `2.7.11b` at `b1edc1208d91a53bf40ebae8669f71d50b994851` | Compatibility oracle and inherited core |
+| Prior stable BlackSTAR | `v1.0.0` at `cd3adb609539840bcbcdccbcb2635c4edec03ac2` | Independent-project and rollback boundary |
+| Final Q02 runtime source | `ef2a2560013293a3cd93403d876f50a3d5ec759c` | Cross-workload implementation and public evidence |
+| Exact local release candidate | `b10c14c6515b62f3e730c4e25a3b6dca20caa508` | Dedicated-node 29-gate cumulative qualification |
+| Stable release | `v1.1.0` | Protected release commit and immutable artifact identity |
 
-The complete `blackstar.1` acceptance record is preserved at
-[releases/2.7.11b-blackstar.1-acceptance.md](releases/2.7.11b-blackstar.1-acceptance.md).
+The code and test-harness tree at the exact local candidate was identical to
+the Q02 runtime source; intervening changes were documentation. Release
+preparation after that candidate is limited to version identity, release
+records, generated architecture status, dynamic CI package paths, and required
+check policy. The protected branch and tag remain authoritative for the final
+commit and executable checksums.
 
-## Supported Boundary
+## Supported Additions
 
-The supported target is x86-64 Linux and includes:
+BlackSTAR 1.1.0 adds the following to the 1.0.0 contract:
 
-- deterministic, memory-adaptive `genomeGenerate` suffix-array, SAindex, and
-  junction-index construction;
-- `genomeInsert Full`, packaged `Overlay`, and cached `Delta` modes with
-  insert-only GTF support;
-- virtual-SA no-junction Delta alignment;
-- strict package identity, validation, and atomic publication;
-- the upstream correctness fixes carried by BlackSTAR;
-- recovery from inherited OpenMP affinity narrowing before alignment pthread
-  creation;
-- adaptive record-safe alignment input chunks at 64 or more threads;
-- NUMA-aware placement for eligible high-thread private genome loads; and
-- transcript-recursion copy elision on nonmutating branches.
+- record-safe SAM-input handling when automatic high-thread chunk sizing is
+  active;
+- cgroup-aware memory limits for automatic index strategies;
+- restoration of inherited NUMA policy after eligible private genome loading;
+- stricter named-sequence annotation, namespace, package-identity, relocation,
+  and corruption checks;
+- isolated short-read and STARlong build state;
+- explicit baseline x86-64 and AVX2 release variants with ISA inspection and
+  output-equivalence checks; and
+- deterministic `TranscriptomeSAM` primary selection from the run seed and
+  stable read ordinal while preserving the complete transcript alignment set
+  and later inherited random-stream position.
 
-The release excludes `alignReadsMulti`, persistent prefork workers, threaded
-BAM-compression prototypes, A01 touched-bin reset, A02b producer/consumer
-queue, and A09 LTO/PGO variants. Their source is not stacked into the release.
+The conventional genome format remains `2.7.4a`. Full indexes retain official
+STAR 2.7.11b compatibility. Overlay and Delta remain BlackSTAR-specific and
+require `--genomeLoad NoSharedMemory`.
 
-## Closed Alignment Findings
+## Exact-Candidate Qualification
 
-| Finding | Resolution | Acceptance evidence |
-| --- | --- | --- |
-| Explicit OpenMP binding could confine all STAR alignment pthreads to one physical core | Restore the complete allowed OpenMP-place union before pthread creation; avoid OpenMP initialization when recovery is not needed | Matched failure control, ordinary-path noninferiority, focused sanitizer test, and Q01 repeat |
-| Coarse high-thread input chunks produced a long completion tail | Select 1 MB record-safe chunks automatically at 64 or more mapping threads while retaining legacy behavior below the threshold | Replicated uncompressed and compressed gains, lower RSS, exact outputs, and canonical BAM |
-| Private genome pages incurred avoidable NUMA migration and fault work | Interleave eligible high-thread private loads while preserving inherited policy, low-thread fallback, and shared-memory behavior | Replicated 96- and 64-thread gates, policy matrix, shared-index fallback, portability test, and Q01 |
-| Recursive transcript search copied unchanged state on exclude branches | Pass the current transcript by const reference and copy only mutating or terminal branches | Copy-constructor CPU reduction, five-pair end-to-end gain, compressed input, canonical BAM, and sanitizers |
-| Individually accepted changes lacked one cumulative release-style gate | Compare the full stack with the qualified prior release across input, memory, output, affinity, compatibility, and package paths | Q01 cumulative qualification |
+The exact candidate ran on dedicated Slurm node CA2 from two independent clean
+source paths. Twenty-nine recorded gates passed:
 
-## Cumulative Performance
+- baseline and AVX2 release products were byte-identical across independent
+  absolute source paths;
+- release identity, OpenMP linkage, CPU-target metadata, ISA labels, and
+  baseline-versus-AVX2 result equivalence passed;
+- 12/12 specialized official-STAR differential modes passed;
+- 11/11 focused ASan and UBSan scripts passed;
+- all 32 GenomeInsert hardening subchecks passed, including stock-STAR
+  full-index compatibility, cross-thread idempotence, package relocation,
+  corruption rejection, namespace validation, and insert-only GTF contracts;
+- serial, bounded-parallel, and constrained-memory SAindex strategies produced
+  identical indexes;
+- STARlong built independently and passed the high-thread and official-STARlong
+  smoke oracle;
+- 12,768,316 paired 76-base public reads matched official STAR in every
+  timing-independent metric, splice junction, and gene count;
+- the real GRCh38 GFP/GST Delta package matched the previously accepted package
+  byte-for-byte and matched its conventional full-index mapping oracle,
+  including exactly 100 GFP and 100 GST fragments;
+- a full CHM13+ERCC build matched all 14 retained substantive index artifacts
+  byte-for-byte; and
+- all 28 pre-release architecture figures reproduced exactly.
 
-The primary public workload used GRCh38 with Ensembl 114 annotations,
-12,768,316 paired 76-base ENCODE reads, local SSD, 96 requested logical CPUs,
-gene counts, and three seeded order-balanced pairs per input mode.
+The full-index and public-read timings from this cumulative run were
+descriptive single runs, not replacement performance claims.
 
-| Input | `blackstar.1` control | `blackstar.2` source | Median paired improvement | 95% interval | Correctness |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| Uncompressed | 84.28 s | 56.17 s | **33.2025%** | 33.0802 to 35.8089% | 3/3 |
-| `zcat` | 90.61 s | 64.03 s | **28.5399%** | 28.4661 to 29.6105% | 3/3 |
+## Cross-Workload Evidence
 
-Both arms remained below the 3% variability gate. Median peak RSS fell by
-6.81% uncompressed and 6.77% through `zcat`. Every pair matched
-timing-independent final metrics, splice junctions, and gene counts.
+Q02 evaluated ten public workload series and a specialized synthetic matrix.
+All 36/36 public pair-level output comparisons and 12/12 specialized checks
+passed their applicable metrics, junction, count, SAM, BAM, chimeric,
+STARsolo, shared-memory, or transformed-genome oracle.
 
-These values are cumulative measurements against `blackstar.1`; individual
-experiment percentages must not be added to them. They apply to the measured
-host, corpus, index, storage, and thread count.
+| Workload | Median paired result | Release interpretation |
+| --- | ---: | --- |
+| Paired 150-base fragmented | 12.67% less wall time | Replicated gain |
+| BySJout | 31.45% less wall time | Replicated gain |
+| Chimeric detection | 31.76% less wall time | Replicated gain |
+| STARlong direct RNA | 19.48% less wall time | Replicated gain under symmetric seed-limit override |
+| TranscriptomeSAM | 1.55% point estimate | Noninferior; no speed claim |
+| STARsolo 10x v3 Gene | 3.78% point estimate | Noninferior; no speed claim |
+| Single-end 150-base | 1.67% point estimate | Correctness passed; variability gate failed; no speed claim |
 
-## Affinity Failure Recovery
+Paired 76-base, two-pass, and coordinate-sorted BAM also had positive paired
+intervals, but their control-arm variability exceeded the stricter 3 percent
+preference for a new release speed claim. Their compatibility evidence remains
+accepted.
 
-A one-pair positive control deliberately set:
+## Compatibility-Visible Correction
 
-```text
-OMP_PROC_BIND=close
-OMP_PLACES=cores
-```
+Official STAR chooses a `TranscriptomeSAM` primary alignment from worker-local
+random state. A controlled 1-versus-96-thread run therefore produced different
+primary flags for the same input.
 
-with 96 requested STAR threads and 2,000,000 public read pairs.
-`blackstar.1` took 226.13 seconds at 186% mean CPU. The cumulative source
-restored 128 OpenMP places and 256 allowed CPUs, then completed in 37.69
-seconds at 952% mean CPU. All three timing-independent comparisons passed.
+BlackSTAR 1.1.0 selects from `runRNGseed` and the stable input-read ordinal. The
+controlled primary digest was exact across 1 and 96 threads. The complete
+transcript alignment set after clearing only flag `0x100`, genomic BAM records,
+gene counts, junctions, and timing-independent metrics remained exact. One
+legacy random draw is retained so later inherited random choices do not shift.
 
-The 83.33% reduction is a matched failure-mode result, not an ordinary-path
-performance estimate. H01's separate five-pair unbound gate was noninferior.
+This is an intentional, documented compatibility correction rather than a
+claim of byte identity with one particular official-STAR primary flag.
 
-## Shared Index and BAM Safety
+## Required Protected Checks
 
-The cumulative source preloaded a 29,940,711,542-byte shared genome segment,
-retained the default shared-memory NUMA policy, mapped 2,000,000 public paired
-reads with `LoadAndKeep`, emitted an unsorted BAM, and passed all five checks:
+The tracked and live branch policy requires all of:
 
-- timing-independent final metrics;
-- splice junctions;
-- gene counts;
-- BAM presence; and
-- canonical BAM records.
+1. `build-and-test`;
+2. `compiler-gcc`;
+3. `compiler-clang`;
+4. `starlong-build-and-smoke`;
+5. `release-portability`;
+6. `codeql-c-cpp`; and
+7. `codeql-python`.
 
-The control and candidate canonical BAM digest was
-`e3f67bccb149277f6f9673e204071b80afab5021c8182028ec17678cdbc750ac`.
-`LoadAndRemove` then removed the test segment. This one-pair check establishes
-safety, not shared-index performance.
-
-## Inherited Index and Insertion Qualification
-
-The `blackstar.1` qualification remains applicable because H01, A02, A05, and
-A06 do not change index formats or genome-insert package formats.
-
-Inherited gates include:
-
-- three order-balanced full-CHM13 index-build pairs with 49.48% less mean wall
-  time than upstream STAR and 42/42 substantive file comparisons byte-exact;
-- 24/24 Full, Overlay, and Delta hardening checks;
-- 4/4 serial, bounded-parallel, and RAM-constrained SAindex strategy checks;
-- named-sequence FASTA and GTF insertion, namespace collision rejection,
-  package relocation, stale-base rejection, corruption rejection, and atomic
-  cleanup; and
-- full-index alignment compatibility under official upstream STAR 2.7.11b.
-
-## Automated and Reproducibility Gates
-
-The release-candidate source passed:
-
-- architecture provenance and public-hygiene validation;
-- deterministic rendering of all canonical SVG figures;
-- benchmark-harness regression tests;
-- eight focused ASan/UBSan scripts;
-- the deployment-selector matrix, including expected negative cases;
-- 24 genome-insert hardening checks;
-- four SAindex strategy checks; and
-- clean reproducible release-package builds with OpenMP linkage.
-
-The final deployable binary and archive are built from the clean protected
-`master` commit. Their exact checksums belong in `build-info.tsv`, the checksum
-sidecar, and GitHub release metadata. Embedded Git provenance means a
-documentation-only promotion commit changes the executable checksum, so the
-final artifact checksum is not edited back into this source record.
-
-## Rejected Toolchain Variants
-
-LTO and PGO each preserved exact measured outputs and reduced binary size.
-Their independent five-pair median improvements were 1.21% and 1.20%,
-respectively, below the predeclared 2% practical gate. Neither variant is
-included in `blackstar.2`.
+The portability job builds baseline and AVX2 packages on Ubuntu 20.04 with
+glibc 2.31, verifies the ABI and ISA floors, and compares variant outputs. The
+release workflow repeats two clean builds from different absolute paths before
+publication.
 
 ## Residual Risk
 
-- Performance qualification covers one x86-64 Linux host, one GCC version,
-  one public paired short-read corpus, one index, one high-thread count, and
-  local SSD.
-- Long reads, single-end performance, network-storage performance, BAM sorting,
-  macOS, and non-x86-64 targets were not performance-qualified.
-- NUMA auto-placement activates only for eligible high-thread private loads;
-  callers can select `--genomeLoadNumaPolicy Default` to retain inherited
-  placement.
-- Overlay and Delta still require `NoSharedMemory`.
+- Release qualification covers x86-64 Linux. Inherited macOS and non-x86
+  source paths are not release-qualified.
+- Performance evidence covers the recorded CPU family, toolchains, fixtures,
+  local storage, and primarily 96-thread runs.
+- Full-index acceleration can use substantially more memory than official
+  STAR; host-memory assessment remains mandatory.
+- Single-end performance is unresolved and must not be described as faster.
+- STARsolo post-mapping work is a deferred profile-first opportunity.
+- Both official STARlong and BlackSTAR STARlong fail the real direct-RNA
+  fixture under the inherited default `seedPerReadNmax`; the accepted
+  comparison raises the limit equally in both arms.
+- Overlay and Delta packages are not loadable by official STAR.
 - Bundled HTSlib remains old and is not an accepted base for new compression
   work.
-- Broad process-lifetime allocations and longstanding inherited compiler
-  warnings remain outside this release.
-
-These limitations constrain claims and deployment scope; they are not observed
-correctness regressions in the supported release boundary.
 
 ## Publication Requirements
 
-1. Push the release-candidate branch and require the protected
-   `build-and-test` check.
-2. Preserve linear history when promoting the tested commit to `master`.
-3. Create annotated tag `2.7.11b-blackstar.2` at the exact tested `master`
-   commit.
-4. Build and publish the exact clean-commit binary, deterministic archive,
-   checksum sidecar, `build-info.tsv`, and `ldd.txt`.
-5. Verify the live default branch, tag target, required check, release assets,
-   and asset digests after publication.
+1. Merge through a pull request with every required check successful.
+2. Verify the protected `main` push reruns the same required checks.
+3. Create annotated tag `v1.1.0` at that exact protected commit.
+4. Run the release workflow from the tag.
+5. Require byte-identical independent package builds for baseline and AVX2.
+6. Publish the binaries, deterministic archives, SHA-256 sidecars,
+   compatibility metadata, build metadata, linkage metadata, SPDX SBOMs,
+   license, attribution, and provenance attestations.
+7. Verify public asset digests, executable identities, installation smoke,
+   prior-release rollback, and repository recovery evidence.
 
-Publication does not authorize deployment into an external pipeline.
+The historical blackstar.2 record is retained at
+[2.7.11b-blackstar.2-acceptance.md](releases/2.7.11b-blackstar.2-acceptance.md).

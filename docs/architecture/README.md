@@ -35,6 +35,7 @@ customer-derived evidence belong in an untracked internal derivative.
 26. [Governance and release path](diagrams/svg/F26-governance-release.svg)
 27. [Q02 cross-workload generalization](diagrams/svg/F27-cross-workload-generalization.svg)
 28. [Transcriptome primary determinism](diagrams/svg/F28-transcriptome-primary-determinism.svg)
+29. [BlackSTAR 1.1.0 qualification and release path](diagrams/svg/F29-v1.1-release-qualification.svg)
 
 The editable sources are under `diagrams/src/`. The generated SVG and PDF
 exports are presentation-ready but are never the source of truth.

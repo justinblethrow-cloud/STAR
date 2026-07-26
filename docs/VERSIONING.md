@@ -7,7 +7,7 @@ machine-readable STAR ancestry and genome-format identities.
 
 | Surface | Example | Purpose |
 | --- | --- | --- |
-| BlackSTAR release | `1.0.0` | Independent API, support, and release boundary |
+| BlackSTAR release | `1.1.0` | Independent API, support, and release boundary |
 | STAR compatibility base | `2.7.11b` | Pinned inherited behavior oracle |
 | BlackSTAR lineage identity | `2.7.11b-blackstar.3` | Transitional executable identity |
 | Genome format | `2.7.4a` | Conventional index loading compatibility |

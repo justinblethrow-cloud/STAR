@@ -5,6 +5,10 @@ remains available in `CHANGES.md` and `RELEASEnotes.md`.
 
 ## Unreleased
 
+_No changes yet._
+
+## 1.1.0 - 2026-07-26
+
 - Harden SAM-input chunk sizing and genome-insert annotation and identity
   validation.
 - Bound automatic index strategies by cgroup-aware available memory.
@@ -22,9 +26,10 @@ remains available in `CHANGES.md` and `RELEASEnotes.md`.
 - Record STARsolo post-mapping profiling as a deferred, profile-first
   opportunity without making a speed claim or scheduling an implementation.
 
-These changes remain outside the current release boundary. The Q02 single-end
-timing series failed its variability gate, and neither a release nor an external
-deployment is authorized by this entry.
+The Q02 single-end timing series failed its variability gate and does not
+support a speed claim. STARsolo and TranscriptomeSAM performance remain
+noninferior-only results. Release publication does not authorize integration
+into an external pipeline.
 
 ## 1.0.0 - 2026-07-24
 

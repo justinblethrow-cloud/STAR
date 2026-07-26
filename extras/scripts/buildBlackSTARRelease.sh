@@ -57,7 +57,20 @@ package_name="blackstar-${version}-linux-x86_64-${cpu_target}"
 package_final="${dist_root}/${package_name}"
 archive="${dist_root}/${package_name}.tar.gz"
 sbom="${dist_root}/${package_name}.spdx.json"
-if [[ -e "${package_final}" || -e "${archive}" || -e "${archive}.sha256" || -e "${sbom}" ]]; then
+binary_asset="${dist_root}/${package_name}.STAR"
+binary_checksum="${binary_asset}.sha256"
+build_info_asset="${dist_root}/${package_name}.build-info.tsv"
+compatibility_asset="${dist_root}/${package_name}.compatibility.tsv"
+ldd_asset="${dist_root}/${package_name}.ldd.txt"
+if [[ -e "${package_final}" ||
+      -e "${archive}" ||
+      -e "${archive}.sha256" ||
+      -e "${sbom}" ||
+      -e "${binary_asset}" ||
+      -e "${binary_checksum}" ||
+      -e "${build_info_asset}" ||
+      -e "${compatibility_asset}" ||
+      -e "${ldd_asset}" ]]; then
     echo "ERROR: release destination already exists for ${package_name}" >&2
     exit 1
 fi
@@ -168,6 +181,11 @@ mv "${package_dir}" "${package_final}"
 mv "${archive_staged}" "${archive}"
 mv "${checksum_staged}" "${archive}.sha256"
 cp -p "${package_final}/sbom.spdx.json" "${sbom}"
+cp -p "${package_final}/STAR" "${binary_asset}"
+printf '%s  %s\n' "${binary_sha256}" "$(basename "${binary_asset}")" > "${binary_checksum}"
+cp -p "${package_final}/build-info.tsv" "${build_info_asset}"
+cp -p "${package_final}/compatibility.tsv" "${compatibility_asset}"
+cp -p "${package_final}/ldd.txt" "${ldd_asset}"
 rmdir "${stage_root}"
 stage_root=""
 trap - EXIT

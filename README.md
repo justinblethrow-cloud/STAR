@@ -11,11 +11,10 @@ scientific citation are preserved in [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Release and Development Status
 
-`v1.0.0` is the current stable BlackSTAR release. Repository source can be
+`v1.1.0` is the current stable BlackSTAR release. Repository source can be
 ahead of that tag: changes listed under `Unreleased` in
-[CHANGELOG.md](CHANGELOG.md), including the Q02 hardening candidate, are not
-part of the stable release contract until they are deliberately qualified,
-versioned, and tagged.
+[CHANGELOG.md](CHANGELOG.md) are not part of the stable release contract until
+they are deliberately qualified, versioned, and tagged.
 
 Use release artifacts for stable adoption. When evaluating an unreleased
 checkout, record the full Git commit, `STAR --version-json`, and executable

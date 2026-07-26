@@ -1,10 +1,10 @@
 # BlackSTAR Labs Experimental Roadmap
 
-The current qualified release is `2.7.11b-blackstar.2`. It inherits
-`2.7.11b-blackstar.1` at
-`821457378fa38bfb23b061b8f11ee0a09431dda7` and promotes the Q01-qualified
-H01+A02+A05+A06 alignment stack. Later Labs work remains outside the release
-until it passes cumulative qualification and is deliberately promoted.
+The current qualified release is BlackSTAR `1.1.0`. It retains the
+Q01-qualified H01+A02+A05+A06 alignment stack and promotes the Q02
+compatibility hardening after separate cumulative release qualification. Later
+Labs work remains outside the release until it passes cumulative qualification
+and is deliberately promoted.
 
 | ID | Area | Hypothesis | State | Dependency |
 | --- | --- | --- | --- | --- |
@@ -21,7 +21,7 @@ until it passes cumulative qualification and is deliberately promoted.
 | A08 | Multi-sample scheduler | Shared immutable index memory plus explicit resource tokens improves node throughput with complete isolation. | Proposed | A07 |
 | A09 | Toolchain | LTO and profile-guided optimization improve the accepted cumulative alignment stack without semantic changes. | Rejected; LTO and PGO each gained about 1.2%, below the 2% practical gate | A06 |
 | Q01 | Cumulative alignment qualification | The complete H01+A02+A05+A06 stack preserves release behavior and generalizes across private, shared, compressed, BAM, affinity, sanitizer, compatibility, and package gates. | Complete; promoted in blackstar.2 | A06 and A09 decision |
-| Q02 | Cross-workload generalization | The released high-thread stack and new compatibility hardening preserve behavior beyond paired gene-count-only RNA-seq. | Complete; nine public series passed, single-end timing remains unresolved, no release promotion | Q01 and successor transition |
+| Q02 | Cross-workload generalization | The released high-thread stack and new compatibility hardening preserve behavior beyond paired gene-count-only RNA-seq. | Complete; compatibility hardening accepted in 1.1.0, single-end speed remains unresolved | Q01 and successor transition |
 | S01 | STARsolo post-mapping parallelism | Phase-resolved profiling may identify deterministic parallelism in barcode aggregation, Solo-record ingestion, per-cell UMI collapse, cell filtering, and matrix output. | Deferred future opportunity; no implementation scheduled | Q02 and dedicated STARsolo profile |
 | I01 | Genome preparation | Parallel reverse-complement and bounded private prefix histograms reduce serial setup. | Proposed | Cumulative alignment qualification |
 | I02 | SA packing | Record-block partitioning permits deterministic disjoint-byte parallel packing. | Proposed | I01 |
@@ -61,7 +61,8 @@ belong in the cumulative gate.
 - Q01 pre-promotion package artifacts retain the old `.1` source version and
   are not release assets. Only clean `.2` packages from the protected release
   commit are distributable.
-- Q02 does not establish a single-end speed improvement. Its exclusive-node
+- Q02 does not establish a single-end speed improvement. BlackSTAR 1.1.0
+  retains this limitation: its exclusive-node
   five-pair series passed correctness, RSS, and noninferiority but exceeded the
   5 percent compatibility CV threshold.
 - Q02 TranscriptomeSAM output intentionally stabilizes the primary transcript

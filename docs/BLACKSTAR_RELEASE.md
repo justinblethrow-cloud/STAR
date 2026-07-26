@@ -1,14 +1,14 @@
 # BlackSTAR Release Boundary
 
-BlackSTAR `1.0.0` is an independently maintained successor derived from
+BlackSTAR `1.1.0` is an independently maintained successor derived from
 upstream STAR `2.7.11b`. It preserves the qualified STAR compatibility and
 genome-format boundaries while adding genome-generation, persistent
 named-sequence insertion, and high-thread alignment improvements. The
 transitional executable lineage token is `2.7.11b-blackstar.3`.
 
-This document describes the `v1.0.0` release boundary. Changes and measurements
-explicitly labeled `Unreleased` or Q02 Labs evidence are excluded until a later
-candidate passes release qualification and receives its own immutable tag.
+This document describes the `v1.1.0` release boundary. Changes and measurements
+explicitly labeled `Unreleased` remain excluded until a later candidate passes
+release qualification and receives its own immutable tag.
 
 The qualified release target is x86-64 Linux. Release automation emits a
 baseline x86-64 artifact and an explicitly labeled AVX2 artifact. Inherited
@@ -37,6 +37,14 @@ The original `blackstar.1` acceptance record is retained under
   inherited-policy preservation and shared-memory fallback.
 - Transcript-recursion copy elision that copies state only for mutating and
   terminal branches.
+- Record-safe SAM-input chunk sizing and cgroup-aware memory assessment.
+- Restoration of inherited NUMA policy after private genome loading.
+- Isolated short-read and STARlong build state.
+- Deterministic `TranscriptomeSAM` primary selection across worker schedules,
+  while preserving the complete transcript alignment set and later inherited
+  random-stream position.
+- Explicit baseline x86-64 and AVX2 release variants with result-equivalence
+  and ISA-floor validation.
 
 ## Explicitly Excluded Experiments
 
