@@ -57,6 +57,9 @@ claim an ordinary-path speedup.
   OpenMP binding accepted in `blackstar.2`.
 - [Q01](Q01-cumulative-alignment-qualification.md): cumulative H01+A02+A05+A06
   release qualification supporting promotion into `blackstar.2`.
+- [Q02](Q02-cross-workload-generalization.md): complete cross-workload
+  hardening and compatibility record; nine public series passed, while the
+  exclusive-node single-end timing series retained a variability-gate failure.
 
 ## Quiet-System Gate
 

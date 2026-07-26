@@ -1,0 +1,46 @@
+flowchart TB
+    CONTROL["OFFICIAL STAR 2.7.11b<br/>PINNED CONTROL"] --> MATRIX["Q02 PUBLIC WORKLOAD MATRIX<br/>96 threads; local storage; balanced pairs"]
+    CANDIDATE["UNRELEASED BLACKSTAR LABS CANDIDATE<br/>blackstar.2 stack plus hardening"] --> MATRIX
+
+    MATRIX --> BULK["FRAGMENTED AND SPECIALIZED BULK"]
+    BULK --> PE76["Paired 76-base<br/>20.05% measured gain<br/>5/5 outputs exact"]
+    BULK --> PE150["Paired 150-base<br/>12.67% measured gain<br/>3/3 outputs exact"]
+    BULK --> TWO["Two-pass<br/>20.25% measured gain<br/>3/3 outputs exact"]
+    BULK --> BYSJ["BySJout<br/>31.45% measured gain<br/>3/3 outputs exact"]
+    BULK --> CHIM["Chimeric<br/>31.76% measured gain<br/>3/3 outputs exact"]
+    BULK --> SORTED["Sorted BAM<br/>18.42% measured gain<br/>5/5 canonical BAM exact"]
+
+    MATRIX --> OTHER["OTHER COMMON MODES"]
+    OTHER --> TX["TranscriptomeSAM<br/>1.55% point estimate<br/>accepted noninferiority"]
+    OTHER --> SOLO["STARsolo 10x v3<br/>3.78% point estimate<br/>accepted noninferiority"]
+    OTHER --> LONG["STARlong direct RNA<br/>19.48% measured gain<br/>3/3 canonical SAM exact"]
+    OTHER --> SINGLE["Single-end 150-base<br/>1.67% point estimate<br/>CV gate failed; no speed claim"]
+
+    PE76 --> CORRECT["36/36 MODE-SPECIFIC<br/>PAIR COMPARISONS PASSED"]
+    PE150 --> CORRECT
+    TWO --> CORRECT
+    BYSJ --> CORRECT
+    CHIM --> CORRECT
+    SORTED --> CORRECT
+    TX --> CORRECT
+    SOLO --> CORRECT
+    LONG --> CORRECT
+    SINGLE --> CORRECT
+
+    CORRECT --> DECISION["MIXED Q02 DECISION<br/>retain hardening candidate<br/>outside release boundary"]
+    LIMIT["LIMITS<br/>one CPU family; local storage; 96-thread primary series<br/>STARlong requires symmetric seed-limit override<br/>single-end timing remains unresolved"] -.-> DECISION
+
+    classDef control fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef candidate fill:#dbeafe,stroke:#1d4ed8,color:#111827;
+    classDef group fill:#f3f4f6,stroke:#4b5563,color:#111827;
+    classDef gain fill:#ecfdf5,stroke:#047857,color:#111827;
+    classDef neutral fill:#fef3c7,stroke:#a16207,color:#111827;
+    classDef failed fill:#fee2e2,stroke:#b91c1c,color:#111827;
+    classDef decision fill:#dbeafe,stroke:#1d4ed8,color:#111827,stroke-width:3px;
+    class CONTROL control;
+    class CANDIDATE candidate;
+    class MATRIX,BULK,OTHER group;
+    class PE76,PE150,TWO,BYSJ,CHIM,SORTED,LONG,CORRECT gain;
+    class TX,SOLO,LIMIT neutral;
+    class SINGLE failed;
+    class DECISION decision;

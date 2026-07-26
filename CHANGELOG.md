@@ -3,6 +3,25 @@
 This changelog records BlackSTAR project releases. The inherited STAR history
 remains available in `CHANGES.md` and `RELEASEnotes.md`.
 
+## Unreleased
+
+- Harden SAM-input chunk sizing and genome-insert annotation and identity
+  validation.
+- Bound automatic index strategies by cgroup-aware available memory.
+- Restore inherited NUMA policy after private genome loading.
+- Isolate short-read and STARlong build state and add explicit baseline x86-64
+  and AVX2 release variants.
+- Add differential and paired benchmark coverage for fragmented, single-end,
+  two-pass, BySJout, chimeric, sorted-BAM, transcriptome-BAM, STARsolo, and
+  STARlong modes.
+- Make TranscriptomeSAM primary-alignment flags deterministic across worker
+  schedules while preserving the complete alignment set and later inherited
+  random-stream position.
+
+These changes remain outside the current release boundary. The Q02 single-end
+timing series failed its variability gate, and neither a release nor an external
+deployment is authorized by this entry.
+
 ## 1.0.0 - 2026-07-24
 
 - Transition project identity from a GitHub fork to an independently maintained
