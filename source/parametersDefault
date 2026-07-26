@@ -30,7 +30,7 @@ runDirPerm                      User_RWX
                                 All_RWX  ... all-read/write/execute (same as chmod 777)
 
 runRNGseed                      777
-    int: random number generator seed.
+    int: random number generator seed; also seeds deterministic primary-alignment selection for TranscriptomeSAM output.
 
 
 ### Genome Parameters
@@ -250,7 +250,7 @@ limitIObufferSize                    30000000 50000000
     int(s)>0: max available buffers size (bytes) for input/output, per thread
 
 readChunkSizeBytes                   0
-    int>=0: target input chunk buffer size (bytes), total across mates, per thread. 0 uses 1000000 bytes for >=64 mapping threads and limitIObufferSize otherwise; automatic sizing is disabled for SAM input and TranscriptomeSAM BAM compatibility
+    int>=0: target input chunk buffer size (bytes), total across mates, per thread. 0 uses 1000000 bytes for >=64 mapping threads and limitIObufferSize otherwise; automatic sizing is disabled for SAM input
 
 limitOutSAMoneReadBytes              100000
     int>0: max size of the SAM record (bytes) for one read. Recommended value: >(2*(LengthMate1+LengthMate2+100)*outFilterMultimapNmax

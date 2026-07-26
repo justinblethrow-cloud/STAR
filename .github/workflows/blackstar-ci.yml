@@ -138,6 +138,7 @@ jobs:
           extras/tests/scripts/testAlignmentThreadAffinity.sh
           extras/tests/scripts/testNumaMemoryPolicy.sh
           extras/tests/scripts/testReadChunkConfig.sh
+          extras/tests/scripts/testTranscriptomePrimary.sh
           extras/tests/scripts/testSystemMemory.sh
           extras/tests/scripts/testPackedArray.sh
           extras/tests/scripts/testSuffixComparator.sh

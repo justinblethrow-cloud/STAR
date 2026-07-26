@@ -19,11 +19,10 @@ std::invalid_argument invalidValue(const std::string &message)
 }
 
 bool automaticReadChunkSizingAllowed(
-    std::uint32_t readFilesType,
-    bool transcriptomeBam
+    std::uint32_t readFilesType
 )
 {
-    return readFilesType != 10 && !transcriptomeBam;
+    return readFilesType != 10;
 }
 
 ReadChunkConfig calculateReadChunkConfig(
