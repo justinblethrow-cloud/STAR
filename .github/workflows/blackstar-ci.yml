@@ -300,6 +300,7 @@ jobs:
           DIST_DIR: ${{ runner.temp }}/portable-dist
           JOBS: "2"
         run: |
+          git config --global --add safe.directory "${GITHUB_WORKSPACE}"
           CPU_TARGET=baseline extras/scripts/buildBlackSTARRelease.sh
           CPU_TARGET=avx2 extras/scripts/buildBlackSTARRelease.sh
 
