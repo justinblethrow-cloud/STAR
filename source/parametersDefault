@@ -250,7 +250,7 @@ limitIObufferSize                    30000000 50000000
     int(s)>0: max available buffers size (bytes) for input/output, per thread
 
 readChunkSizeBytes                   0
-    int>=0: target input chunk buffer size (bytes), total across mates, per thread. 0 uses 1000000 bytes for >=64 mapping threads and limitIObufferSize otherwise
+    int>=0: target input chunk buffer size (bytes), total across mates, per thread. 0 uses 1000000 bytes for >=64 mapping threads and limitIObufferSize otherwise; automatic sizing is disabled for SAM input and TranscriptomeSAM BAM compatibility
 
 limitOutSAMoneReadBytes              100000
     int>0: max size of the SAM record (bytes) for one read. Recommended value: >(2*(LengthMate1+LengthMate2+100)*outFilterMultimapNmax
