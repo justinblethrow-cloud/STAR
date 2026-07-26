@@ -25,6 +25,10 @@ int main()
 {
     const std::uint64_t reservePerEnd = 101302;
 
+    assert(automaticReadChunkSizingAllowed(1, false));
+    assert(!automaticReadChunkSizingAllowed(10, false));
+    assert(!automaticReadChunkSizingAllowed(1, true));
+
     const ReadChunkConfig adaptive = calculateReadChunkConfig(
         30000000, 0, 2, 64, reservePerEnd
     );
