@@ -1,0 +1,59 @@
+{
+  "baseline_bin": "/tmp/blackstar-upstream-specialized-20260725/source/STAR",
+  "baseline_sha256": "11fc7da05151720ea6245f6b66f40a33c96e46d934f97204dfb9f2ee3e148d85",
+  "candidate_bin": "/tmp/blackstar-generalization-build-20260725/source/STAR",
+  "candidate_sha256": "fb82a5cf2fb0fdd285f9d211045d3b11ad0d5a91d360bda3874c639dc6848489",
+  "created_utc": "2026-07-26T00:17:44.494945Z",
+  "environment": {
+    "ALLOW_OMP_THREAD_BINDING": "unset",
+    "BAM_SORT_RAM": "unset",
+    "GENOME_LOAD_MODE": "unset",
+    "OMP_DYNAMIC": "unset",
+    "OMP_PLACES": "unset",
+    "OMP_PROC_BIND": "unset",
+    "READ_FILES_COMMAND": "unset",
+    "STARSOLO_WHITELIST": "unset",
+    "STAR_EXTRA_ARGS": "unset"
+  },
+  "genome_core_sizes": {
+    "Genome": 3237267210,
+    "SA": 25137570409,
+    "SAindex": 1565873619
+  },
+  "genome_dir": "/tmp/blackstar-generalization-20260725/index",
+  "genome_parameters_sha256": "9f94d198b96294a04c990c97851da78813f5726098c8816f9bb3ab3b5532fd19",
+  "margin_percent": 2.0,
+  "max_cv_percent": 5.0,
+  "max_rss_increase_percent": 5.0,
+  "mode": "two-pass",
+  "orders": [
+    "AB",
+    "BA",
+    "AB"
+  ],
+  "pairs": 3,
+  "quiet_duration": 300.0,
+  "quiet_gate_skipped": false,
+  "read1": "/tmp/blackstar-generalization-20260725/data/bulk76_ENCFF000CXW.fastq",
+  "read1_sha256": "4d4f80b7cd721a5861d40bd57279683829f23fdc6ed1ad3269836b68ba952305",
+  "read2": "/tmp/blackstar-generalization-20260725/data/bulk76_ENCFF000CYM.fastq",
+  "read2_sha256": "9101c0e07e3a4ee01c495ed7fab0ecb90633d5143452c7f87d9c608d4154b8d5",
+  "schema": "blackstar-generalization-pairs-v1",
+  "seed": 20260725,
+  "settle_seconds": 5.0,
+  "starsolo_whitelist": "none",
+  "starsolo_whitelist_sha256": "none",
+  "threads": 96,
+  "tools": {
+    "comparator_sha256": "1f954fac878a21705bb6550b12bd198e35736034456d40dd75537f29b68a19cf",
+    "pair_driver_sha256": "d238aa754f877e275a70b1bb4cb038629c263e1bdb7bc479c0c5a2682b65c9b2",
+    "quiet_gate_sha256": "a9e7210f5e25e1ae079c308c9d70dc4e1df984e97f3a55328e1ccb40f6164da2",
+    "runner_sha256": "b7a06538b18af9787932f6043cd3b1ad22402a22b6499b3fd0cacbc09ca382de"
+  },
+  "warmup_order": "BA",
+  "warmup_position": "after_quiet_gate",
+  "warmup_read1": "/tmp/blackstar-a00-public/ENCFF000CXW.first-250000.fastq.gz",
+  "warmup_read1_sha256": "ff82aa39a6364e0ef135f77bcc478bcea872afb69471af79f403e72a9179d248",
+  "warmup_read2": "/tmp/blackstar-a00-public/ENCFF000CYM.first-250000.fastq.gz",
+  "warmup_read2_sha256": "6507ffb562a348c43323b1a0b06ad882bf8f6f6bb5462b5eb8dbe5e128ba0785"
+}
