@@ -17,6 +17,10 @@ remains available in `CHANGES.md` and `RELEASEnotes.md`.
 - Make TranscriptomeSAM primary-alignment flags deterministic across worker
   schedules while preserving the complete alignment set and later inherited
   random-stream position.
+- Preserve the bounded Q02 contracts, pair measurements, aggregate decisions,
+  and qualification receipt in a checksummed, tracked evidence package.
+- Record STARsolo post-mapping profiling as a deferred, profile-first
+  opportunity without making a speed claim or scheduling an implementation.
 
 These changes remain outside the current release boundary. The Q02 single-end
 timing series failed its variability gate, and neither a release nor an external

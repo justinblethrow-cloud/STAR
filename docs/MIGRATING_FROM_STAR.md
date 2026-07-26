@@ -16,6 +16,11 @@ that evaluation can begin without redesigning an RNA-seq workflow.
 6. Retain official STAR as an explicit fallback until downstream validation is
    complete.
 
+Prefer an immutable BlackSTAR release tag for adoption. If the evaluation
+requires an unreleased candidate, pin its full commit and executable checksum,
+treat its `Unreleased` changelog entry as outside the stable support boundary,
+and repeat the release gates relevant to the intended workflow.
+
 Do not compare runs that use different reference files, annotations, output
 modes, decompression commands, thread counts, storage tiers, or concurrent
 system load.

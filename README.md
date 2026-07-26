@@ -9,6 +9,19 @@ BlackSTAR is not the official STAR project and is not affiliated with or
 endorsed by the original STAR authors. The upstream lineage, license, and
 scientific citation are preserved in [ATTRIBUTION.md](ATTRIBUTION.md).
 
+## Release and Development Status
+
+`v1.0.0` is the current stable BlackSTAR release. Repository source can be
+ahead of that tag: changes listed under `Unreleased` in
+[CHANGELOG.md](CHANGELOG.md), including the Q02 hardening candidate, are not
+part of the stable release contract until they are deliberately qualified,
+versioned, and tagged.
+
+Use release artifacts for stable adoption. When evaluating an unreleased
+checkout, record the full Git commit, `STAR --version-json`, and executable
+SHA-256; the compatibility-shaped `STAR --version` token alone does not
+distinguish every development revision.
+
 ## Why BlackSTAR
 
 The current qualified release adds:
@@ -85,6 +98,7 @@ handling, validation, and package constraints.
 
 - [Compatibility contract](docs/COMPATIBILITY.md)
 - [Performance evidence and limitations](docs/PERFORMANCE.md)
+- [Q02 cross-workload receipts](docs/benchmarks/Q02-cross-workload-20260726/README.md)
 - [Architecture Atlas](docs/architecture/README.md)
 - [Release boundary](docs/BLACKSTAR_RELEASE.md)
 - [Release acceptance](docs/BLACKSTAR_ACCEPTANCE.md)

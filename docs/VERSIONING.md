@@ -17,6 +17,19 @@ These values must not be collapsed into one string. A project release can
 change without changing the genome format, and a compatibility-base update can
 require a new BlackSTAR major or minor release.
 
+## Development Checkouts
+
+An untagged checkout is not a release, even when its legacy `STAR --version`
+token matches the most recent release. Development revisions must be identified
+by full Git commit, `STAR --version-json`, executable SHA-256, CPU target, and
+build provenance. `CHANGELOG.md` is authoritative for whether a source change
+remains unreleased.
+
+Performance and compatibility evidence from a development candidate applies to
+the exact recorded binary. It becomes a stable project promise only after the
+candidate is rebuilt from the protected release commit, passes release
+qualification, and receives an immutable semantic-version tag.
+
 ## Semantic Versioning
 
 BlackSTAR release tags use `vMAJOR.MINOR.PATCH`.
