@@ -1,0 +1,45 @@
+{
+  "accepted": true,
+  "digests": {
+    "candidate-t1": {
+      "gene_counts_sha256": "ee1e46e35e495dc091c6c5aa8ef2dabc59811e83e8c6c961d2880bce41d2c4f5",
+      "genomic_bam_sha256": "d75786b32d9c360e99c8ef0e570e156b907222ffb0b73c330df362a88753aa0b",
+      "junctions_sha256": "0fd9bf0953f492f6802cae73e06fd3206c164016ed651a145cce9c6c21492e41",
+      "transcriptome_alignment_set_sha256": "5672c7e1447d4e4900cef79dc063e74caac1c90e72140583d1661e5df993dd86",
+      "transcriptome_primary_sha256": "f9f1417857e57087d5ffc260a7ff5ee5740c746a070b15acad842d85bb2c9091"
+    },
+    "candidate-t96": {
+      "gene_counts_sha256": "ee1e46e35e495dc091c6c5aa8ef2dabc59811e83e8c6c961d2880bce41d2c4f5",
+      "genomic_bam_sha256": "d75786b32d9c360e99c8ef0e570e156b907222ffb0b73c330df362a88753aa0b",
+      "junctions_sha256": "0fd9bf0953f492f6802cae73e06fd3206c164016ed651a145cce9c6c21492e41",
+      "transcriptome_alignment_set_sha256": "5672c7e1447d4e4900cef79dc063e74caac1c90e72140583d1661e5df993dd86",
+      "transcriptome_primary_sha256": "f9f1417857e57087d5ffc260a7ff5ee5740c746a070b15acad842d85bb2c9091"
+    },
+    "upstream-t1": {
+      "gene_counts_sha256": "ee1e46e35e495dc091c6c5aa8ef2dabc59811e83e8c6c961d2880bce41d2c4f5",
+      "genomic_bam_sha256": "d75786b32d9c360e99c8ef0e570e156b907222ffb0b73c330df362a88753aa0b",
+      "junctions_sha256": "0fd9bf0953f492f6802cae73e06fd3206c164016ed651a145cce9c6c21492e41",
+      "transcriptome_alignment_set_sha256": "5672c7e1447d4e4900cef79dc063e74caac1c90e72140583d1661e5df993dd86",
+      "transcriptome_primary_sha256": "903a7e8b900ad928c3e90b3c50e89f4f5ed53ac93211402ec64d38f419e03827"
+    },
+    "upstream-t96": {
+      "gene_counts_sha256": "ee1e46e35e495dc091c6c5aa8ef2dabc59811e83e8c6c961d2880bce41d2c4f5",
+      "genomic_bam_sha256": "d75786b32d9c360e99c8ef0e570e156b907222ffb0b73c330df362a88753aa0b",
+      "junctions_sha256": "0fd9bf0953f492f6802cae73e06fd3206c164016ed651a145cce9c6c21492e41",
+      "transcriptome_alignment_set_sha256": "5672c7e1447d4e4900cef79dc063e74caac1c90e72140583d1661e5df993dd86",
+      "transcriptome_primary_sha256": "b6b772c7b04b1cca7b5de4b7e0eb4e3a314e3bd8e4c1d83fd0314fe15ccdbb86"
+    }
+  },
+  "gates": {
+    "candidate_primary_flags_thread_invariant": true,
+    "gene_counts_identical": true,
+    "genomic_bams_identical": true,
+    "junctions_identical": true,
+    "timing_independent_final_metrics_identical": true,
+    "transcriptome_alignment_sets_identical": true
+  },
+  "observations": {
+    "upstream_primary_flags_thread_invariant": false
+  },
+  "schema": "blackstar-transcriptome-thread-invariance-v1"
+}

@@ -114,14 +114,24 @@ noninferiority, but candidate CV was 5.22 percent.
 
 See [Q02](experiments/Q02-cross-workload-generalization.md) for exact binary
 identities, fixtures, resource results, negative evidence, and the
-TranscriptomeSAM determinism correction.
+TranscriptomeSAM determinism correction. Its bounded
+[machine-readable receipts](benchmarks/Q02-cross-workload-20260726/README.md)
+are tracked with an independent checksum manifest.
 
 ## Evidence
 
-Bounded machine-readable receipts are committed under
-`docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/`. Large raw outputs remain
-outside Git. The receipts identify both binaries and preserve every published
-aggregate needed to audit the claims.
+Bounded machine-readable receipts are committed under:
+
+- `docs/benchmarks/official-star-2.7.11b-vs-blackstar.2/` for the stable
+  cumulative comparison; and
+- `docs/benchmarks/Q02-cross-workload-20260726/` for the unreleased
+  cross-workload Labs candidate.
+
+Large raw outputs remain outside Git. The receipts identify measured binaries
+and inputs and preserve the pair data, aggregate values, negative evidence, and
+gate decisions needed to audit the published claims. A retained absolute path
+inside a benchmark contract records the original ephemeral run environment; it
+is provenance, not a promise that the path exists in a fresh clone.
 
 ## Claim Rules
 

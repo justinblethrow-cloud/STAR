@@ -181,6 +181,18 @@ and deterministic primary flags, gene counts, two-pass, BySJout, chimeric,
 WASP, STARsolo, SAM input, shared-memory cross-binary lifecycle, and
 transformed-genome output.
 
+## Retained Evidence Package
+
+The bounded [Q02 receipt package](../benchmarks/Q02-cross-workload-20260726/README.md)
+is committed with the exact qualification receipt, per-mode contracts, pair
+measurements, aggregate result objects, and a SHA-256 manifest. It preserves
+the evidence behind both accepted and rejected claims.
+
+Large inputs, genome indexes, binaries, BAMs, logs, and generated output trees
+remain outside Git. Their hashes are retained in the contracts. Absolute paths
+inside those contracts record the original ephemeral execution environment and
+are not expected to resolve in a fresh clone.
+
 ## Negative and Limiting Evidence
 
 - The first three-pair sorted-BAM series had 6.59 percent upstream CV and was

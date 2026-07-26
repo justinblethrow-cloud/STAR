@@ -1,0 +1,4 @@
+pair	order	baseline_wall_seconds	candidate_wall_seconds	improvement_percent	baseline_max_rss_kib	candidate_max_rss_kib	correctness_passed
+1	AB	223.91	177.05	20.928051449242993	51163048	46664352	True
+2	BA	223.97	178.61	20.252712416841533	51149884	46679956	True
+3	AB	207.04	175.07999999999998	15.436630602782076	51160168	46678456	True

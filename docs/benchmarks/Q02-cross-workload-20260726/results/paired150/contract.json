@@ -1,0 +1,58 @@
+{
+  "baseline_bin": "/tmp/blackstar-upstream-specialized-20260725/source/STAR",
+  "baseline_sha256": "11fc7da05151720ea6245f6b66f40a33c96e46d934f97204dfb9f2ee3e148d85",
+  "candidate_bin": "/tmp/blackstar-generalization-build-20260725/source/STAR",
+  "candidate_sha256": "fb82a5cf2fb0fdd285f9d211045d3b11ad0d5a91d360bda3874c639dc6848489",
+  "created_utc": "2026-07-25T22:11:41.910803Z",
+  "environment": {
+    "ALLOW_OMP_THREAD_BINDING": "unset",
+    "BAM_SORT_RAM": "unset",
+    "GENOME_LOAD_MODE": "unset",
+    "OMP_DYNAMIC": "unset",
+    "OMP_PLACES": "unset",
+    "OMP_PROC_BIND": "unset",
+    "READ_FILES_COMMAND": "unset",
+    "STARSOLO_WHITELIST": "unset",
+    "STAR_EXTRA_ARGS": "unset"
+  },
+  "genome_core_sizes": {
+    "Genome": 3237267210,
+    "SA": 25137570409,
+    "SAindex": 1565873619
+  },
+  "genome_dir": "/tmp/blackstar-generalization-20260725/index",
+  "genome_parameters_sha256": "9f94d198b96294a04c990c97851da78813f5726098c8816f9bb3ab3b5532fd19",
+  "margin_percent": 2.0,
+  "max_cv_percent": 5.0,
+  "max_rss_increase_percent": 5.0,
+  "mode": "paired-mapping",
+  "orders": [
+    "AB",
+    "BA",
+    "AB"
+  ],
+  "pairs": 3,
+  "quiet_duration": 300.0,
+  "quiet_gate_skipped": false,
+  "read1": "/tmp/blackstar-generalization-20260725/data/bulk150/SRR23992141_1.fastq",
+  "read1_sha256": "cd5d6d8ca4bd23dbd8c13efe1b02b30ca1143e125c66cb1a3bd56bee70b1c191",
+  "read2": "/tmp/blackstar-generalization-20260725/data/bulk150/SRR23992141_2.fastq",
+  "read2_sha256": "cef190e1605779d65966a328d7369d509965c4ae9bc9d4f8b05d16b805d249ae",
+  "schema": "blackstar-generalization-pairs-v1",
+  "seed": 20260725,
+  "settle_seconds": 5.0,
+  "starsolo_whitelist": "none",
+  "starsolo_whitelist_sha256": "none",
+  "threads": 96,
+  "tools": {
+    "comparator_sha256": "1f954fac878a21705bb6550b12bd198e35736034456d40dd75537f29b68a19cf",
+    "pair_driver_sha256": "f1695024a74458a6264c59571b24497f116c3c686951a9e85bd9cbe8b6855e46",
+    "quiet_gate_sha256": "a9e7210f5e25e1ae079c308c9d70dc4e1df984e97f3a55328e1ccb40f6164da2",
+    "runner_sha256": "b7a06538b18af9787932f6043cd3b1ad22402a22b6499b3fd0cacbc09ca382de"
+  },
+  "warmup_order": "BA",
+  "warmup_read1": "/tmp/blackstar-generalization-20260725/data/bulk150/SRR23992141_1.first-250000.fastq.gz",
+  "warmup_read1_sha256": "b3013050ee42045df3bf880b4b1477720cbd014a5402d0da8134427c99b213dc",
+  "warmup_read2": "/tmp/blackstar-generalization-20260725/data/bulk150/SRR23992141_2.first-250000.fastq.gz",
+  "warmup_read2_sha256": "4a195a5437489788c340e22dc35f0a67ce4afb43b57270a594d27a901578480e"
+}

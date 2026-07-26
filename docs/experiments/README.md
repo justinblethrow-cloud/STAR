@@ -60,6 +60,8 @@ claim an ordinary-path speedup.
 - [Q02](Q02-cross-workload-generalization.md): complete cross-workload
   hardening and compatibility record; nine public series passed, while the
   exclusive-node single-end timing series retained a variability-gate failure.
+  Its bounded receipts are tracked under
+  [`docs/benchmarks/Q02-cross-workload-20260726/`](../benchmarks/Q02-cross-workload-20260726/README.md).
 
 ## Quiet-System Gate
 
@@ -83,6 +85,9 @@ Large raw evidence is stored outside Git under:
 
 `benchmarks/labs/<experiment-id>/<UTC timestamp>/`
 
-Small, anonymous summaries needed by public claims are copied into
-`docs/architecture/evidence/`. Never place customer identifiers or absolute
-internal paths in tracked public artifacts.
+Bounded, anonymous contracts, pair data, aggregate results, and qualification
+receipts needed to audit public claims are copied into
+`docs/benchmarks/<experiment-id>/` with a checksum manifest. Claim ledgers
+derived from those receipts live under `docs/architecture/evidence/`. Never
+place customer identifiers, credentials, or absolute internal mount and home
+paths in tracked public artifacts.

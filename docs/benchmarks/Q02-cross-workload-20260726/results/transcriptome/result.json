@@ -1,0 +1,45 @@
+{
+  "accepted": true,
+  "baseline_cv_percent": 1.5436287031370335,
+  "bootstrap_95_ci_percent": [
+    -0.44678549593189515,
+    2.629056552101885
+  ],
+  "candidate_cv_percent": 0.14849855980748802,
+  "candidate_transcriptome_primary_digests": [
+    {
+      "run": "warmup-1-candidate",
+      "sha256": "a993252b865e62ce17a6f2bb594187e69e1e869e1f5f679ba62dd00f37ca61dc"
+    },
+    {
+      "run": "pair-01-2-candidate",
+      "sha256": "a993252b865e62ce17a6f2bb594187e69e1e869e1f5f679ba62dd00f37ca61dc"
+    },
+    {
+      "run": "pair-02-1-candidate",
+      "sha256": "a993252b865e62ce17a6f2bb594187e69e1e869e1f5f679ba62dd00f37ca61dc"
+    },
+    {
+      "run": "pair-03-2-candidate",
+      "sha256": "a993252b865e62ce17a6f2bb594187e69e1e869e1f5f679ba62dd00f37ca61dc"
+    }
+  ],
+  "gates": {
+    "candidate_transcriptome_primary_determinism": true,
+    "correctness": true,
+    "pair_count": true,
+    "rss": true,
+    "variability": true,
+    "wall_time_noninferiority": true
+  },
+  "margin_percent": 2.0,
+  "median_baseline_wall_seconds": 217.32999999999998,
+  "median_candidate_wall_seconds": 213.57999999999998,
+  "median_gain_at_least_2_percent": false,
+  "median_improvement_percent": 1.5506372797128682,
+  "median_rss_increase_percent": -3.8239299562798434,
+  "mode": "transcriptome-bam",
+  "pair_count": 3,
+  "schema": "blackstar-generalization-result-v1",
+  "superiority_2_percent": false
+}

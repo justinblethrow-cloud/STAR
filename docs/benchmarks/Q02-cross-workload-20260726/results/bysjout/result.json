@@ -1,0 +1,26 @@
+{
+  "accepted": true,
+  "baseline_cv_percent": 1.0928135097509264,
+  "bootstrap_95_ci_percent": [
+    31.217162872154113,
+    35.639503507825154
+  ],
+  "candidate_cv_percent": 2.748499251264262,
+  "gates": {
+    "correctness": true,
+    "pair_count": true,
+    "rss": true,
+    "variability": true,
+    "wall_time_noninferiority": true
+  },
+  "margin_percent": 2.0,
+  "median_baseline_wall_seconds": 91.36,
+  "median_candidate_wall_seconds": 62.16,
+  "median_gain_at_least_2_percent": true,
+  "median_improvement_percent": 31.451257168063528,
+  "median_rss_increase_percent": -4.206012719213722,
+  "mode": "bysjout",
+  "pair_count": 3,
+  "schema": "blackstar-generalization-result-v1",
+  "superiority_2_percent": true
+}

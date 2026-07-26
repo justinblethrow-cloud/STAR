@@ -1,0 +1,23 @@
+field	value	qualification	source
+schema	blackstar-q02-qualification-v1	exact	qualification procedure
+created_utc	2026-07-26T04:23:01Z	recorded after all benchmark jobs completed	system clock
+upstream_source_commit	b1edc1208d91a53bf40ebae8669f71d50b994851	official STAR 2.7.11b compatibility oracle	git
+candidate_source_commit	ef2a2560013293a3cd93403d876f50a3d5ec759c	clean archive-derived current candidate	git
+upstream_short_read_binary_sha256	11fc7da05151720ea6245f6b66f40a33c96e46d934f97204dfb9f2ee3e148d85	exact binary identity	benchmark contracts
+phase_short_read_binary_sha256	fb82a5cf2fb0fdd285f9d211045d3b11ad0d5a91d360bda3874c639dc6848489	exact binary for paired, two-pass, BySJout, chimeric, sorted-BAM, and STARsolo series	benchmark contracts
+current_short_read_binary_sha256	297db5482236d970b2b19fed6016c1f9981d973fdbd6784a1700f1a7bba40635	exact ef2a256 binary for TranscriptomeSAM and single-end series	benchmark contracts
+upstream_starlong_binary_sha256	9d990982fbda6c6a6fc6615a194e4652dca0cf1d1d582afdc7e3d2ab7cddca3e	exact STARlong control binary	benchmark contract
+candidate_starlong_binary_sha256	0f99f0668dd1fc3d8d3086ff9b7af1d2f90afe80d9dcbb0126ce9f74e7088a62	exact BlackSTAR STARlong binary	benchmark contract
+genome_parameters_sha256	9f94d198b96294a04c990c97851da78813f5726098c8816f9bb3ab3b5532fd19	common GRCh38 and Ensembl 114 index	benchmark contracts
+host_topology	2 sockets; 64 cores per socket; 2 threads per core; 8 NUMA nodes	hardware-matched AMD EPYC 7742 hosts; each series stayed on one host	lscpu
+toolchain	GCC 13.3.0; samtools 1.19.2; Linux 6.8	x86-64 local builds	run provenance
+storage	node-local SSD or NVMe	no network filesystem in measured paths	run provenance
+threads	96	primary performance series	benchmark contracts
+quiet_gate	dedicated-host waiver or passed shared-host gate	waiver recorded per contract	benchmark contracts
+clean_archive_build	pass	STAR 2.7.11b-blackstar.3; OpenMP linked	clean build inspection
+focused_asan_ubsan	11/11	affinity; NUMA; chunks; transcriptome primary; system memory; packed array; suffix comparator; transcript initialization; parameters; junctions; SHA-256	local and clean-candidate test runs
+generalization_harness	pass	synthetic driver, comparator, and determinism regression	extras/tests/scripts/testGeneralizationHarness.sh
+specialized_mode_matrix	12/12	fragmented paired; transcriptome BAM and primary determinism; counts; two-pass; BySJout; chimeric; WASP; STARsolo; SAM input; shared lifecycle; transform	extras/tests/scripts/testSpecializedModes.sh
+single_end_performance_gate	fail	correctness, pair count, RSS, and noninferiority passed; candidate CV 5.2171 percent exceeded 5 percent	results/single150/result.json
+transcriptome_thread_invariance	pass	candidate raw primary flags exact at 1 and 96 threads; upstream raw primary flags differed	results/transcriptome-thread-invariance/result.json
+release_status	unreleased	no version bump, promotion, tag, GitHub push, or external deployment authorized	project boundary
